@@ -16,8 +16,8 @@ namespace WizardGrower.Player
         [SerializeField] private float autoMoveSpeed = 2.0f;
         [SerializeField] private float joystickDeadZone = 22f;
         [SerializeField] private float autoStopDistance = 2.25f;
-        [SerializeField] private Vector2 minBounds = new Vector2(-2.35f, -3.45f);
-        [SerializeField] private Vector2 maxBounds = new Vector2(2.35f, 3.15f);
+        [SerializeField] private Vector2 minBounds = new Vector2(-12f, -7f);
+        [SerializeField] private Vector2 maxBounds = new Vector2(12f, 7f);
 
         private bool autoModeEnabled = true;
         private bool manualPointerActive;

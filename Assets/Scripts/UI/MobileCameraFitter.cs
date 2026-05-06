@@ -9,6 +9,10 @@ namespace WizardGrower.UI
         [SerializeField] private float minVisibleHeight = 9.2f;
         [SerializeField] private float maxOrthographicSize = 6.2f;
         [SerializeField] private SpriteRenderer fittedBackground;
+        [SerializeField] private Transform followTarget;
+        [SerializeField] private Vector3 followOffset = new Vector3(0f, 0f, -10f);
+        [SerializeField] private Vector2 mapCenter = Vector2.zero;
+        [SerializeField] private Vector2 mapSize = new Vector2(28f, 18f);
 
         private Camera targetCamera;
         private int lastWidth;
@@ -22,6 +26,8 @@ namespace WizardGrower.UI
 
         private void LateUpdate()
         {
+            FollowTarget();
+
             if (lastWidth != Screen.width || lastHeight != Screen.height)
                 Apply();
         }
@@ -30,6 +36,12 @@ namespace WizardGrower.UI
         {
             fittedBackground = background;
             Apply();
+        }
+
+        public void SetFollowTarget(Transform target)
+        {
+            followTarget = target;
+            FollowTarget();
         }
 
         private void Apply()
@@ -47,6 +59,17 @@ namespace WizardGrower.UI
             FitBackground();
         }
 
+        private void FollowTarget()
+        {
+            if (followTarget == null)
+                return;
+
+            transform.position = new Vector3(
+                followTarget.position.x + followOffset.x,
+                followTarget.position.y + followOffset.y,
+                followOffset.z);
+        }
+
         private void FitBackground()
         {
             if (fittedBackground == null || fittedBackground.sprite == null)
@@ -56,11 +79,11 @@ namespace WizardGrower.UI
             if (spriteSize.x <= 0f || spriteSize.y <= 0f)
                 return;
 
-            float worldHeight = targetCamera.orthographicSize * 2f;
-            float worldWidth = worldHeight * targetCamera.aspect;
+            float worldHeight = Mathf.Max(mapSize.y, targetCamera.orthographicSize * 2f);
+            float worldWidth = Mathf.Max(mapSize.x, worldHeight * targetCamera.aspect);
             float scale = Mathf.Max(worldWidth / spriteSize.x, worldHeight / spriteSize.y);
             fittedBackground.transform.localScale = new Vector3(scale, scale, 1f);
-            fittedBackground.transform.position = new Vector3(targetCamera.transform.position.x, targetCamera.transform.position.y, 0f);
+            fittedBackground.transform.position = new Vector3(mapCenter.x, mapCenter.y, 0f);
         }
     }
 }

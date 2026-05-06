@@ -615,6 +615,8 @@ context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, c
 - 2026-05-06 시작: Bundle 2 Task D 착수. StageManager를 ChapterDatabase 기반 Field/BossRoom 모드 흐름으로 전면 교체하고, EnemySpawner armor 인자/ChapterDatabase 주입/GameManager 초기화/HUDController 구독 제거만 수행 예정.
 - 2026-05-06 종료: StageMode 추가, StageManager 필드 무한 리스폰/보스방 진입/클리어/실패 복귀 흐름 구현, EnemySpawner SpawnNormal/SpawnBoss armor 인자 반영, GameContext ChapterDatabase 필드 추가 및 MainScene 할당, GameManager 초기화 시그니처 갱신, HUDController의 기존 StageChanged 구독/핸들러 제거 완료. PlayMode 직접 검증: 초기 필드 1-1 NormalEnemy, 일반 몬스터 5회 처치 후 stage 1 유지 + 골드 획득, EnterBossRoom 보스/20초 타이머 시작, 보스 처치 stage 2 Field 복귀, 보스 실패 stage 2 유지 Field 복귀 통과. Console 게임 코드 에러/경고 없음.
 - 2026-05-06 리뷰 수정: 필드 모드가 단일 몬스터 반복이던 구조를 다중 일반 몬스터 필드로 재구성. EnemySpawner 활성 적 목록/가까운 적 탐색/NormalEnemy 5마리 그룹 스폰 추가, EnemyWanderController로 필드 몬스터 자유 배회 구현, 자동 이동/자동 공격/수동 공격/액티브 스킬 타겟을 가까운 생존 적 기준으로 변경. 보스 입장 시 필드 몬스터 전체 정리 후 BossEnemy 1마리만 유지 확인.
+- 2026-05-06 리뷰 수정: 필드 몬스터가 전체 사망 후에만 리스폰되던 문제 수정. EnemySpawner에 SpawnNormalReplacement 추가, StageManager에 RespawnFieldEnemyAfterDelay 코루틴과 fieldSpawnVersion 가드 추가, 몬스터 1마리 처치 시 7→6→7로 개별 리스폰 확인. EnemyHealthBarView를 추가해 모든 필드 몬스터와 보스가 각자 월드 체력바를 갖도록 변경. 필드 몬스터 수 7마리, 스폰 범위 x -5.8~5.8 / y -3.25~3.25, 최소 간격 1.15로 확장 적용. 보스방 진입 시 일반 몬스터 0, BossEnemy 1, 보스 체력바 1 확인. Console 게임 코드 에러/경고 없음.
+- 2026-05-06 리뷰 수정: 필드(맵) 크기가 작다는 피드백 반영. PlayerMovementController 이동 bounds를 x -12~12 / y -7~7로 확장, EnemySpawner 필드 몬스터 수 10마리 및 스폰/배회 범위를 x -12~12 / y -7~7 기준으로 재설정. MobileCameraFitter에 followTarget/followOffset/mapCenter/mapSize 추가 후 PlayerWizard를 추적하도록 MainScene에 연결, PlayMode에서 player=(11.80,6.80) 이동 후 camera=(11.80,6.80,-10.00), centerDelta=(0,0,0) 확인. 필드 몬스터 10마리 넓은 범위 분산 생성 확인. Console 게임 코드 에러/경고 없음.
 
 ### 🔍 검토 노트 (검토자 기록)
 - (비어있음)
@@ -692,6 +694,7 @@ private void OnBossEntryAvailabilityChanged(bool available)
 - 2026-05-06 시작: Bundle 2 Task E 착수. HUDController에 StageManager.StateChanged/BossEntryAvailabilityChanged 연결, 보스 입장 버튼 생성/할당, Task D 디버그 보스 진입 메뉴 제거 예정.
 - 2026-05-06 종료: HUDController에 bossEntryButton/bossEntryButtonLabel 필드 및 새 StateChanged/BossEntryAvailabilityChanged 핸들러 추가, BossEntryButton 씬 생성 및 필드 할당, StageManager의 Debug Enter Boss ContextMenu 제거 완료. 한글 HUD 표시 경고 방지를 위해 macOS 기본 AppleGothic 기반 TMP 폰트 에셋을 Assets/Fonts에 생성하고 StageLabel/BossEntryButton Label에 할당. PlayMode 검증: "음산한 숲 1-1" 라벨 + 보스 입장 버튼 활성, 클릭 시 "음산한 숲 1-1 BOSS" + 버튼 비활성 + BossEnemy, 보스 처치 후 "음산한 숲 1-2" + 버튼 재활성 통과. Bundle 2 종합 흐름: 필드 처치 stage 유지, 보스 실패 stage 유지 Field 복귀, 1-8 보스 클리어 후 마지막 챕터 All Cleared 경로 통과. Console 게임 코드 에러/경고 없음.
 - 2026-05-06 리뷰 수정: BossEntryButton을 하단 우측(anchor 1,0 / pos -24,124 / size 180x54)으로 이동해 ActiveSkillButton과 겹치지 않도록 조정. 버튼 라벨은 "보스 입장" 유지, AppleGothic_TMP 폰트 적용 상태 재확인.
+- 2026-05-06 리뷰 수정: 신규 EnemyHealthBarView와 기존 HUD 단일 HealthBarView가 동시에 노출되던 문제 수정. HUDController에서 spawner.EnemySpawned += healthBar.Bind 구독 제거, Initialize 시 기존 HUD HealthBarView 비활성화 처리. PlayMode에서 HUD HealthBarView active=false, EnemyHealthBarView 7개, 살아있는 몬스터 7마리 확인. Console 게임 코드 에러/경고 없음.
 
 ### 🔍 검토 노트 (검토자 기록)
 - (비어있음)
