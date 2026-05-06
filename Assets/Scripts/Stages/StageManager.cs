@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
@@ -17,6 +18,7 @@ namespace WizardGrower.Stages
         private int currentChapter = 1;
         private int currentStageNumber = 1;
         private StageMode mode = StageMode.Field;
+        private int fieldSpawnVersion;
 
         public event Action<ChapterDefinition, StageDefinition, StageMode> StateChanged;
         public event Action<string> Feedback;
@@ -53,7 +55,8 @@ namespace WizardGrower.Stages
             if (!CanEnterBoss)
                 return false;
 
-            CancelInvoke(nameof(SpawnFieldEnemies));
+            fieldSpawnVersion++;
+            StopAllCoroutines();
             mode = StageMode.BossRoom;
             SpawnBossEnemy();
             bossStageController.StartTimer(CurrentStage.bossTimeLimit);
@@ -73,8 +76,7 @@ namespace WizardGrower.Stages
                 return;
             }
 
-            if (spawner.CurrentEnemy == null)
-                Invoke(nameof(SpawnFieldEnemies), CurrentStage != null ? CurrentStage.fieldRespawnDelay : 0.5f);
+            StartCoroutine(RespawnFieldEnemyAfterDelay(fieldSpawnVersion, CurrentStage));
             RaiseStateChanged();
         }
 
@@ -126,8 +128,22 @@ namespace WizardGrower.Stages
             if (CurrentStage == null)
                 return;
 
+            fieldSpawnVersion++;
             bossStageController.StopTimer();
             spawner.SpawnNormalGroup(CurrentStage.fieldMonsterHealth, CurrentStage.fieldMonsterReward, CurrentStage.fieldMonsterArmor);
+        }
+
+        private IEnumerator RespawnFieldEnemyAfterDelay(int version, StageDefinition stage)
+        {
+            if (stage == null)
+                yield break;
+
+            yield return new WaitForSeconds(stage.fieldRespawnDelay);
+
+            if (mode != StageMode.Field || version != fieldSpawnVersion)
+                yield break;
+
+            spawner.SpawnNormalReplacement(stage.fieldMonsterHealth, stage.fieldMonsterReward, stage.fieldMonsterArmor);
         }
 
         private void SpawnBossEnemy()

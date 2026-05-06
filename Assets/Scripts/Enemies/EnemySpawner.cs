@@ -10,10 +10,11 @@ namespace WizardGrower.Enemies
         [SerializeField] private NormalEnemy normalEnemyPrefab;
         [SerializeField] private BossEnemy bossEnemyPrefab;
         [SerializeField] private Transform spawnPoint;
-        [SerializeField] private int fieldEnemyCount = 5;
-        [SerializeField] private Vector2 fieldSpawnExtents = new Vector2(2.2f, 2.4f);
-        [SerializeField] private Vector2 minWanderBounds = new Vector2(-2.35f, -3.45f);
-        [SerializeField] private Vector2 maxWanderBounds = new Vector2(2.35f, 3.15f);
+        [SerializeField] private int fieldEnemyCount = 7;
+        [SerializeField] private Vector2 fieldSpawnExtents = new Vector2(5.3f, 2.8f);
+        [SerializeField] private Vector2 minWanderBounds = new Vector2(-5.8f, -3.25f);
+        [SerializeField] private Vector2 maxWanderBounds = new Vector2(5.8f, 3.25f);
+        [SerializeField] private float minSpawnSpacing = 1.15f;
 
         public event Action<EnemyBase> EnemySpawned;
         public event Action<EnemyBase, DamageInfo> EnemyDamaged;
@@ -45,6 +46,11 @@ namespace WizardGrower.Enemies
         public EnemyBase SpawnNormal(float health, int reward, float armor)
         {
             ClearEnemies();
+            return SpawnNormalSingle(health, reward, armor, GetFieldSpawnPosition());
+        }
+
+        public EnemyBase SpawnNormalReplacement(float health, int reward, float armor)
+        {
             return SpawnNormalSingle(health, reward, armor, GetFieldSpawnPosition());
         }
 
@@ -112,6 +118,9 @@ namespace WizardGrower.Enemies
             enemy.Killed += damageable => OnEnemyKilled(enemy);
             activeEnemies.Add(enemy);
 
+            if (enemy.GetComponent<EnemyHealthBarView>() == null)
+                enemy.gameObject.AddComponent<EnemyHealthBarView>();
+
             if (canWander)
             {
                 EnemyWanderController wander = enemy.GetComponent<EnemyWanderController>();
@@ -142,11 +151,36 @@ namespace WizardGrower.Enemies
         private Vector3 GetFieldSpawnPosition()
         {
             Vector3 center = spawnPoint != null ? spawnPoint.position : transform.position;
-            center.x += UnityEngine.Random.Range(-fieldSpawnExtents.x, fieldSpawnExtents.x);
-            center.y += UnityEngine.Random.Range(-fieldSpawnExtents.y, fieldSpawnExtents.y);
-            center.x = Mathf.Clamp(center.x, minWanderBounds.x, maxWanderBounds.x);
-            center.y = Mathf.Clamp(center.y, minWanderBounds.y, maxWanderBounds.y);
-            return center;
+            Vector3 candidate = center;
+
+            for (int attempt = 0; attempt < 24; attempt++)
+            {
+                candidate = center;
+                candidate.x += UnityEngine.Random.Range(-fieldSpawnExtents.x, fieldSpawnExtents.x);
+                candidate.y += UnityEngine.Random.Range(-fieldSpawnExtents.y, fieldSpawnExtents.y);
+                candidate.x = Mathf.Clamp(candidate.x, minWanderBounds.x, maxWanderBounds.x);
+                candidate.y = Mathf.Clamp(candidate.y, minWanderBounds.y, maxWanderBounds.y);
+
+                if (HasEnoughSpacing(candidate))
+                    return candidate;
+            }
+
+            return candidate;
+        }
+
+        private bool HasEnoughSpacing(Vector3 position)
+        {
+            float minSqr = minSpawnSpacing * minSpawnSpacing;
+            foreach (EnemyBase enemy in activeEnemies)
+            {
+                if (enemy == null || !enemy.IsAlive)
+                    continue;
+
+                if ((enemy.transform.position - position).sqrMagnitude < minSqr)
+                    return false;
+            }
+
+            return true;
         }
     }
 }
