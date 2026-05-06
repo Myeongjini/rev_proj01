@@ -5,9 +5,9 @@ namespace WizardGrower.UI
     [RequireComponent(typeof(Camera))]
     public class MobileCameraFitter : MonoBehaviour
     {
-        [SerializeField] private float minVisibleWidth = 5.6f;
-        [SerializeField] private float minVisibleHeight = 9.2f;
-        [SerializeField] private float maxOrthographicSize = 6.2f;
+        [SerializeField] private float minVisibleWidth = 7.2f;
+        [SerializeField] private float minVisibleHeight = 12.4f;
+        [SerializeField] private float maxOrthographicSize = 8.0f;
         [SerializeField] private SpriteRenderer fittedBackground;
         [SerializeField] private Transform followTarget;
         [SerializeField] private Vector3 followOffset = new Vector3(0f, 0f, -10f);

@@ -5,6 +5,7 @@ using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.UI;
 using WizardGrower.Player;
+using WizardGrower.UI;
 
 namespace WizardGrower.EditorTools
 {
@@ -24,24 +25,26 @@ namespace WizardGrower.EditorTools
             Directory.CreateDirectory(ArtPath);
             Directory.CreateDirectory(AnimPath);
 
-            Sprite wizard0 = SaveSprite("Wizard", DrawWizardFrame(0), 96f);
-            Sprite wizardIdle0 = SaveSprite("Wizard_Idle_0", DrawWizardFrame(0), 96f);
-            Sprite wizardIdle1 = SaveSprite("Wizard_Idle_1", DrawWizardFrame(1), 96f);
-            Sprite wizardRun0 = SaveSprite("Wizard_Run_0", DrawWizardFrame(2), 96f);
-            Sprite wizardRun1 = SaveSprite("Wizard_Run_1", DrawWizardFrame(3), 96f);
+            Sprite wizard0 = SaveSprite("Wizard", DrawWizardFrame(0), 128f);
+            Sprite wizardIdle0 = SaveSprite("Wizard_Idle_0", DrawWizardFrame(0), 128f);
+            Sprite wizardIdle1 = SaveSprite("Wizard_Idle_1", DrawWizardFrame(1), 128f);
+            Sprite wizardRun0 = SaveSprite("Wizard_Run_0", DrawWizardFrame(2), 128f);
+            Sprite wizardRun1 = SaveSprite("Wizard_Run_1", DrawWizardFrame(3), 128f);
             Sprite slime = SaveSprite("Slime", DrawSlime(), 96f);
             Sprite boss = SaveSprite("Boss", DrawBoss(), 96f);
             Sprite background = SaveSprite("TopDownBackground", DrawBackground(), 96f);
 
-            UpdatePrefabSprite("Assets/Prefabs/PlayerWizard.prefab", wizard0, Vector3.one * 1.35f);
+            UpdatePrefabSprite("Assets/Prefabs/PlayerWizard.prefab", wizard0, Vector3.one * 1.05f);
             UpdatePrefabSprite("Assets/Prefabs/NormalEnemy.prefab", slime, Vector3.one * 1.25f);
             UpdatePrefabSprite("Assets/Prefabs/BossEnemy.prefab", boss, Vector3.one * 2.0f);
             UpdateSceneSprite("PlayerWizard", wizard0);
+            UpdateSceneScale("PlayerWizard", Vector3.one * 1.05f);
             UpdateSceneSprite("TopDownRpgTrainingGround", background);
 
             AnimatorController controller = CreateWizardAnimator(wizardIdle0, wizardIdle1, wizardRun0, wizardRun1);
             ApplyWizardAnimator(controller);
             FixTmpFonts();
+            FixHudCanvas();
             AdjustDamageText();
             AdjustCameraBackground();
 
@@ -83,45 +86,73 @@ namespace WizardGrower.EditorTools
 
         private static Texture2D DrawWizardFrame(int frame)
         {
-            Texture2D t = NewTexture(192, 192, Color.clear);
-            int bob = frame == 1 ? 3 : 0;
-            int step = frame == 2 ? 7 : frame == 3 ? -7 : 0;
+            Texture2D t = NewTexture(256, 256, Color.clear);
+            int bob = frame == 1 ? 4 : 0;
+            int run = frame == 2 ? 8 : frame == 3 ? -8 : 0;
 
-            Ellipse(t, 92, 44 + bob, 34, 14, new Color(0f, 0f, 0f, 0.22f));
-            Ellipse(t, 96, 88 + bob, 38, 42, new Color(0.05f, 0.06f, 0.08f, 1f), true);
-            Ellipse(t, 96, 88 + bob, 31, 35, new Color(0.10f, 0.13f, 0.18f, 1f), false);
-            Rect(t, 69, 63 + bob, 54, 38, new Color(0.07f, 0.08f, 0.12f, 1f));
-            Rect(t, 72, 65 + bob, 48, 32, new Color(0.13f, 0.16f, 0.23f, 1f));
-            Rect(t, 80, 66 + bob, 8, 29, new Color(0.94f, 0.50f, 0.13f, 1f));
-            Rect(t, 105, 66 + bob, 8, 29, new Color(0.94f, 0.50f, 0.13f, 1f));
-            Ellipse(t, 96, 80 + bob, 13, 13, new Color(0.96f, 0.42f, 0.08f, 1f), true);
-            Ellipse(t, 96, 80 + bob, 7, 7, new Color(0.16f, 0.44f, 0.95f, 1f), false);
-            Poly(t, new[] { new Vector2(66, 100 + bob), new Vector2(34, 78 + bob), new Vector2(54, 54 + bob), new Vector2(76, 62 + bob) }, new Color(0.48f, 0.08f, 0.03f, 1f));
-            Poly(t, new[] { new Vector2(126, 100 + bob), new Vector2(155, 78 + bob), new Vector2(138, 54 + bob), new Vector2(116, 62 + bob) }, new Color(0.56f, 0.11f, 0.03f, 1f));
-            Line(t, 39, 76 + bob, 62, 57 + bob, new Color(0.93f, 0.46f, 0.10f, 1f), 2);
-            Line(t, 153, 77 + bob, 132, 56 + bob, new Color(0.93f, 0.46f, 0.10f, 1f), 2);
+            Color ink = new Color(0.035f, 0.028f, 0.024f, 1f);
+            Color coat = new Color(0.035f, 0.045f, 0.070f, 1f);
+            Color coatLight = new Color(0.105f, 0.145f, 0.210f, 1f);
+            Color trim = new Color(0.985f, 0.590f, 0.115f, 1f);
+            Color red = new Color(0.630f, 0.060f, 0.030f, 1f);
+            Color redLight = new Color(0.920f, 0.210f, 0.075f, 1f);
+            Color skin = new Color(1.000f, 0.720f, 0.500f, 1f);
+            Color hair = new Color(0.235f, 0.105f, 0.040f, 1f);
+            Color hairLight = new Color(0.510f, 0.245f, 0.095f, 1f);
 
-            Ellipse(t, 96, 120 + bob, 35, 32, new Color(0.10f, 0.05f, 0.02f, 1f), true);
-            Ellipse(t, 96, 118 + bob, 28, 27, new Color(0.98f, 0.72f, 0.47f, 1f), false);
-            for (int i = 0; i < 8; i++)
+            Ellipse(t, 128, 43 + bob, 47, 13, new Color(0f, 0f, 0f, 0.24f));
+            Poly(t, new[] { new Vector2(85, 116 + bob), new Vector2(47, 92 + bob), new Vector2(50, 58 + bob), new Vector2(93, 77 + bob) }, ink);
+            Poly(t, new[] { new Vector2(91, 112 + bob), new Vector2(52, 91 + bob), new Vector2(59, 67 + bob), new Vector2(101, 80 + bob) }, red);
+            Line(t, 58, 74 + bob, 94, 85 + bob, trim, 3);
+            Poly(t, new[] { new Vector2(172, 116 + bob), new Vector2(212, 91 + bob), new Vector2(206, 60 + bob), new Vector2(160, 78 + bob) }, ink);
+            Poly(t, new[] { new Vector2(165, 112 + bob), new Vector2(204, 90 + bob), new Vector2(197, 68 + bob), new Vector2(156, 81 + bob) }, red);
+            Line(t, 197, 76 + bob, 163, 86 + bob, trim, 3);
+
+            Ellipse(t, 128, 91 + bob, 45, 46, ink, true);
+            Ellipse(t, 128, 92 + bob, 38, 39, coat, false);
+            Rect(t, 90, 60 + bob, 76, 51, ink);
+            Rect(t, 96, 65 + bob, 64, 44, coatLight);
+            Rect(t, 104, 64 + bob, 6, 46, trim);
+            Rect(t, 146, 64 + bob, 6, 46, trim);
+            Line(t, 101, 109 + bob, 155, 66 + bob, new Color(0.020f, 0.030f, 0.055f, 1f), 2);
+            Line(t, 155, 109 + bob, 101, 66 + bob, new Color(0.020f, 0.030f, 0.055f, 1f), 2);
+            Ellipse(t, 128, 83 + bob, 17, 17, trim, true);
+            Ellipse(t, 128, 83 + bob, 10, 10, new Color(0.135f, 0.530f, 1f, 1f), false);
+            Ellipse(t, 128, 83 + bob, 5, 5, new Color(0.760f, 0.950f, 1f, 1f), false);
+
+            Line(t, 93, 88 + bob, 67, 74 + bob, ink, 10);
+            Line(t, 166, 91 + bob, 196, 119 + bob, ink, 10);
+            Line(t, 194, 74 + bob, 214, 155 + bob, new Color(0.425f, 0.250f, 0.070f, 1f), 6);
+            Line(t, 195, 76 + bob, 215, 154 + bob, trim, 2);
+            Ellipse(t, 217, 163 + bob, 18, 18, trim, true);
+            Ellipse(t, 217, 163 + bob, 12, 12, new Color(0.080f, 0.610f, 1f, 1f), false);
+            Ellipse(t, 217, 163 + bob, 7, 7, new Color(0.710f, 0.930f, 1f, 1f), false);
+            Ellipse(t, 222, 170 + bob, 11, 4, new Color(0.820f, 0.970f, 1f, 0.65f), false);
+
+            Ellipse(t, 128, 142 + bob, 44, 39, ink, true);
+            Ellipse(t, 128, 139 + bob, 35, 32, skin, false);
+            Ellipse(t, 91, 132 + bob, 8, 12, skin, false);
+            Ellipse(t, 165, 132 + bob, 8, 12, skin, false);
+            for (int i = 0; i < 10; i++)
             {
-                int x = 66 + i * 8;
-                Poly(t, new[] { new Vector2(x, 137 + bob), new Vector2(x + 14, 160 + bob + (i % 2) * 5), new Vector2(x + 22, 132 + bob) }, new Color(0.26f, 0.12f, 0.04f, 1f));
+                int x = 84 + i * 9;
+                int h = 20 + (i % 3) * 7;
+                Poly(t, new[] { new Vector2(x, 161 + bob), new Vector2(x + 15, 188 + bob + h / 4), new Vector2(x + 28, 149 + bob) }, i % 2 == 0 ? hair : hairLight);
             }
-            Ellipse(t, 83, 119 + bob, 4, 6, Color.black, false);
-            Ellipse(t, 110, 119 + bob, 4, 6, Color.black, false);
-            Ellipse(t, 84, 121 + bob, 1, 2, Color.white, false);
-            Ellipse(t, 111, 121 + bob, 1, 2, Color.white, false);
-            Line(t, 89, 106 + bob, 103, 103 + bob, new Color(0.38f, 0.12f, 0.07f, 1f), 2);
+            Poly(t, new[] { new Vector2(94, 154 + bob), new Vector2(107, 185 + bob), new Vector2(121, 152 + bob) }, hairLight);
+            Poly(t, new[] { new Vector2(137, 154 + bob), new Vector2(154, 183 + bob), new Vector2(164, 150 + bob) }, hair);
+            Ellipse(t, 112, 139 + bob, 5, 8, ink, false);
+            Ellipse(t, 145, 139 + bob, 5, 8, ink, false);
+            Ellipse(t, 114, 143 + bob, 2, 3, Color.white, false);
+            Ellipse(t, 147, 143 + bob, 2, 3, Color.white, false);
+            Line(t, 119, 124 + bob, 137, 122 + bob, new Color(0.390f, 0.085f, 0.055f, 1f), 2);
+            Ellipse(t, 102, 130 + bob, 5, 3, new Color(1f, 0.430f, 0.360f, 0.35f), false);
+            Ellipse(t, 154, 130 + bob, 5, 3, new Color(1f, 0.430f, 0.360f, 0.35f), false);
 
-            Line(t, 72, 87 + bob, 52, 73 + bob, new Color(0.05f, 0.06f, 0.08f, 1f), 8);
-            Line(t, 120, 91 + bob, 146, 117 + bob, new Color(0.05f, 0.06f, 0.08f, 1f), 8);
-            Line(t, 139, 82 + bob, 154, 139 + bob, new Color(0.52f, 0.30f, 0.08f, 1f), 5);
-            Ellipse(t, 157, 147 + bob, 14, 14, new Color(0.94f, 0.58f, 0.10f, 1f), true);
-            Ellipse(t, 157, 147 + bob, 9, 9, new Color(0.16f, 0.65f, 1f, 1f), false);
-            Ellipse(t, 157, 147 + bob, 5, 5, new Color(0.72f, 0.94f, 1f, 1f), false);
-            Line(t, 82, 47 + bob, 84 + step, 26, new Color(0.08f, 0.06f, 0.05f, 1f), 9);
-            Line(t, 111, 47 + bob, 111 - step, 26, new Color(0.08f, 0.06f, 0.05f, 1f), 9);
+            Line(t, 111, 48 + bob, 103 + run, 22, ink, 11);
+            Line(t, 145, 48 + bob, 150 - run, 22, ink, 11);
+            Line(t, 111, 47 + bob, 103 + run, 24, coatLight, 5);
+            Line(t, 145, 47 + bob, 150 - run, 24, coatLight, 5);
             t.Apply();
             return t;
         }
@@ -314,6 +345,15 @@ namespace WizardGrower.EditorTools
             EditorUtility.SetDirty(go);
         }
 
+        private static void UpdateSceneScale(string objectName, Vector3 scale)
+        {
+            GameObject go = GameObject.Find(objectName);
+            if (go == null)
+                return;
+            go.transform.localScale = scale;
+            EditorUtility.SetDirty(go);
+        }
+
         private static void FixTmpFonts()
         {
             TMP_FontAsset font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/AppleGothic_TMP.asset");
@@ -331,6 +371,27 @@ namespace WizardGrower.EditorTools
                     text.font = font;
                 EditorUtility.SetDirty(prefab);
             }
+        }
+
+        private static void FixHudCanvas()
+        {
+            Canvas canvas = Object.FindAnyObjectByType<Canvas>(FindObjectsInactive.Include);
+            if (canvas == null)
+                return;
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 50;
+            if (canvas.GetComponent<HUDTextRenderFixer>() == null)
+                canvas.gameObject.AddComponent<HUDTextRenderFixer>();
+            CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
+            if (scaler != null)
+            {
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1920f, 1080f);
+                scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+                scaler.matchWidthOrHeight = 1f;
+                EditorUtility.SetDirty(scaler);
+            }
+            EditorUtility.SetDirty(canvas);
         }
 
         private static void AdjustDamageText()
@@ -434,6 +495,9 @@ namespace WizardGrower.EditorTools
             if (fitter == null)
                 return;
             SerializedObject so = new SerializedObject(fitter);
+            so.FindProperty("minVisibleWidth").floatValue = 7.2f;
+            so.FindProperty("minVisibleHeight").floatValue = 12.4f;
+            so.FindProperty("maxOrthographicSize").floatValue = 8.0f;
             so.FindProperty("fittedBackground").objectReferenceValue = background;
             so.FindProperty("mapSize").vector2Value = new Vector2(28f, 18f);
             so.ApplyModifiedPropertiesWithoutUndo();

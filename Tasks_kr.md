@@ -71,12 +71,12 @@
 | 2 | C | ChapterDefinition / StageDefinition 데이터 모델 | ✅ DONE | Bundle 1 게이트 |
 | 2 | D | StageManager 흐름 리팩터 (필드 ↔ 보스방) | ✅ DONE | C |
 | 2 | E | 보스 입장 버튼 + HUD 챕터/스테이지 표시 | ✅ DONE | D |
-| 3 | F | 업그레이드 드로어 UI (하단 토글, 2열 스크롤) | 🔴 TODO | Bundle 2 게이트 ✅ |
-| 4 | G | SaveData 모델 + 로컬 저장 | 🔴 TODO | Bundle 3 게이트 |
-| 5 | H | Firebase Auth (익명/Google/Apple) | 🔴 TODO | Bundle 4 게이트 + 사용자 사전작업 |
-| 5 | I | Firestore 클라우드 동기화 | 🔴 TODO | H |
+| 3 | F | 업그레이드 드로어 UI (하단 토글, 2열 스크롤) | ✅ DONE | Bundle 2 게이트 ✅ |
+| 4 | G | SaveData 모델 + 로컬 저장 | 🔴 TODO | Bundle 3 게이트 ✅ |
+| 5 | H | 서버 로그인 + 유저 식별 등록 | 🔴 TODO | Bundle 4 게이트 + 사용자 사전작업 |
+| 5 | I | Firestore 서버 정본(canonical) 게임 상태 | 🔴 TODO | H |
 
-> **Bundle 1·2 게이트 통과 (2026-05-06).** Bundle 3 / Task F 진행 가능.
+> **Bundle 1·2·3 게이트 통과 (2026-05-06).** Bundle 4 / Task G 진행 가능.
 
 상태 기호:
 - 🔴 TODO: 미착수
@@ -745,7 +745,7 @@ private void OnBossEntryAvailabilityChanged(bool available)
 
 ## Task F — 업그레이드 드로어 UI (하단 토글, 2열 스크롤)
 
-**Status:** 🔴 TODO
+**Status:** ✅ DONE
 **선행:** Bundle 2 게이트 통과
 
 ### 🎯 목표
@@ -906,10 +906,27 @@ HUD Canvas 안에:
 5. 토글 재클릭 → 슬라이드 다운
 
 ### 📝 작업 로그 (구현자 기록)
-- (비어있음)
+- 2026-05-06 시작: Bundle 3 Task F 착수. `Tasks.md` 확인 결과 Bundle 1·2 게이트 통과, Task F 진행 가능 상태. 시작 시점의 `Tasks.md` 미커밋 번역분, `Tasks_kr.md`, `.DS_Store`는 사용자/주변 변경으로 간주하고 무관한 편집은 피함. UpgradeType 9-stat 마이그레이션, UpgradeSystem 기본 항목/switch case, UpgradeDrawerView, HUD 동적 업그레이드 버튼 바인딩, UpgradeButton 프리팹, MainScene 드로어 구성 진행 예정.
+- 2026-05-06 종료: UpgradeType을 9개 stat 전용 항목으로 교체 후 UpgradeSystem 기본 정의/Apply switch 마이그레이션 완료. UpgradeDrawerView, UpgradeDrawerGridFitter 추가. HUDController가 ScrollRect Content 아래에 UpgradeButtonView 프리팹을 동적 생성하도록 변경. `Assets/Prefabs/UI/UpgradeButton.prefab` 신규 생성, MainScene에 하단 중앙 UpgradeToggleButton + UpgradeDrawerPanel/ScrollRect/GridLayoutGroup 구성. 구현 중 리뷰 피드백 반영: 버튼 셀이 드로어 폭을 채우는 반응형 2열 그리드로 동작하며, 셀이 더 커져(PlayMode 측정 셀 사이즈 907x176) 세로 스크롤이 의미 있도록 함. UpgradeButtonView 런타임 리스너 바인딩 수정으로 버튼 클릭 시 업그레이드 구매 정상 동작. PlayMode 검증: 패널이 y=-520에서 닫힌 상태로 시작, 토글 시 y=84로 펼쳐짐, 자식 9개·2열·세로 스크롤 활성, 9종 업그레이드 클릭 모두 골드 차감 + autoDamage/manualDamage/autoFireRate/manualFireRate/critChance/critMultiplier/armorPen/maxHealth/mana 즉시 반영, 토글 재클릭 시 y=-520으로 닫힘. Console에 게임 코드 에러/경고 없음.
+- 2026-05-06 리뷰 수정: 사용자가 메이플스토리/라테일 풍 2D 치비 비주얼 폴리시를 Wizard/Slime/Boss/Background에 적용 요청, Wizard 애니메이션 추가, 카메라 추종 변경 후 자연스러운 맵/배경 스케일, 데미지 텍스트 가독성 향상, 업그레이드 드로어의 깨진 TMP 렌더링 수정 요청. `VisualAssetUpdater` 에디터 유틸 추가, Wizard/Slime/Boss/TopDownBackground 스프라이트 재생성, Wizard idle/run 애니메이션 자산 + 이동 기반 애니메이션 컨트롤러 추가, 생성된 스프라이트를 프리팹/MainScene에 재할당, 런타임 데미지 텍스트 크기 확대, 모든 씬/업그레이드 TMP 텍스트를 `AppleGothic_TMP`로 재할당. PlayMode 검증: Wizard가 Run 스프라이트 + Animator + 드라이버 사용, 필드 배경이 `TopDownBackground` 사용, 스폰된 슬라임이 새 `Slime` 사용, `DamageText.prefab` 폰트 크기 38, 씬 TMP 중 비-AppleGothic 카운트 0.
 
 ### 🔍 검토 노트 (검토자 기록)
-- (비어있음)
+- 2026-05-06: 코드 + 자산 검증 완료. 스펙 부합 + 사용자 요청 비주얼 폴리시 모두 적절히 반영됨.
+  - **UpgradeDefinition.cs**: enum 9종(AutoDamage / ManualDamage / AutoFireRate / ManualFireRate / CriticalChance / CriticalMultiplier / ArmorPenetration / MaxHealth / Mana)으로 교체. 기존 `Attack` / `Critical` 제거. 스펙 일치.
+  - **UpgradeSystem.cs**: `EnsureDefaults`가 9개 항목을 정확한 한글 displayName, baseCost, value로 추가. `Apply` switch가 9 case 모두를 올바른 `PlayerStats.AddXxx` / `PlayerMana.IncreaseMax`에 매핑. 우발적 초기화 방지를 위한 `HasCurrentDefaultSet()` 방어 체크(9개 ID 순서 비교) 합리적 추가.
+  - **UpgradeDrawerView.cs**: `Toggle` / `Animate` / `ApplyImmediate` 스펙대로 구현, "강화 닫기/열기" 라벨 정확. 핫리로드 시 중복 바인딩 방지를 위한 `RemoveListener(Toggle)` 사전 호출 — 사소한 개선.
+  - **UpgradeDrawerGridFitter.cs (스펙 외)**: 패널 폭 기반으로 셀 폭을 동적 계산 (220 최소 + 설정 가능한 cellHeight=176). 스펙 외 합리적 반응형 솔루션, DoD 영향 없음.
+  - **HUDController.cs (F-4)**: 옛 `upgradeButtons[]` 배열 제거; 신규 필드 `upgradeDrawer` / `upgradeButtonContainer` / `upgradeButtonPrefab` / `upgradeIcons` 배치. `BindUpgradeButtons`가 리스트 클리어, 이전 자식 제거, `system.Upgrades` 순회, 프리팹 인스턴스화, 바인드, `upgradeButtonViews` 리스트 추적까지 정확히 수행. `RefreshUpgradeButtons`이 동적 리스트 사용. 스펙 일치.
+  - **UpgradeButton.prefab**: `Assets/Prefabs/UI/`에 존재.
+  - **🆕 사용자 요청 비주얼 폴리시 (commit 95d022b — 리뷰 수정):**
+    - `Wizard.png` / `Slime.png` / `Boss.png` / `TopDownBackground.png` 재생성
+    - Wizard 애니메이션: `Wizard_Idle_0/1.png` + `Wizard_Run_0/1.png` + `Wizard.controller` + `Wizard_Idle.anim` + `Wizard_Run.anim`
+    - 신규 `WizardAnimationController.cs` (29줄) — LateUpdate에서 위치 변화 임계값으로 Animator `Moving` bool 토글. 깔끔.
+    - 신규 `Editor/VisualAssetUpdater.cs` (451줄) — 스프라이트 재생성 유틸
+    - `DamageTextView.cs` 런타임 폰트 크기 확대
+    - 모든 씬/드로어 TMP 텍스트를 `AppleGothic_TMP`로 재할당 (한글 렌더링 수정)
+    - 카메라 추종 / 맵 스케일 조정이 MainScene + 관련 프리팹에 반영
+  - **결론: ✅ DONE.** Bundle 3 게이트 통과 가능 — F가 Bundle 3의 유일한 태스크.
 
 ---
 
@@ -936,6 +953,8 @@ HUD Canvas 안에:
 - `Application.persistentDataPath/save.json`에 JSON 저장
 - 게임 시작 시 자동 로드, 주요 이벤트마다 자동 저장
 - `saveVersion` + 마이그레이션 훅
+
+> **로컬 저장의 아키텍처상 역할:** Bundle 5 출시 후에는 **서버 DB가 정본(canonical)** 이 된다. 로컬 `save.json`은 그 시점부터 (a) 첫 실행 / 로그인 전 fallback과 (b) 클라우드 동기화(Task I)가 서버와 정합시키는 오프라인 캐시 두 가지 역할만 수행한다. 본 태스크에서는 H/I가 아직이므로 로컬 저장이 자족적인 단일 저장소처럼 동작하도록 구현하면 되고, 오프라인 캐시 역할로의 격하는 Task I에서 적용된다.
 
 ### ✅ Definition of Done
 - [ ] Unity Console 클린
@@ -1103,9 +1122,27 @@ private void OnApplicationQuit() { context.SaveService.Save(); }
 
 ---
 
-# Bundle 5 — Firebase Auth + Firestore 동기화
+# Bundle 5 — 서버 로그인 + 서버 정본(canonical) 유저 데이터베이스
 
-**목표:** 사용자별 클라우드 저장. 디바이스 간 동기화.
+**목표:** 모든 유저는 Google / Apple / 익명으로 서버에 로그인하여 고유 식별자를 등록하고, 게임 상태를 **서버측 DB(정본)** 에 저장한다. 로컬 `save.json`(Task G)은 오프라인 캐시로 격하된다. 동일 계정을 사용하는 두 기기는 진행도를 공유한다.
+
+**아키텍처 (정본 모델):**
+```
+   게임 상태 변경
+         │
+         ▼
+   ┌───────────────┐  push (debounce)    ┌──────────────────┐
+   │  로컬 캐시    │ ───────────────────▶│  Firestore       │  ← 정본
+   │  save.json    │                     │  users/{uid}     │
+   │  (오프라인 OK)│ ◀───────────────── │  + profile doc    │
+   └───────────────┘    pull / restore   └──────────────────┘
+                              │
+                              ▼
+                    동일 UID 다른 기기
+                    → 로그인 시 자동 복원
+```
+
+**저장소 선택:** Firebase Auth + Cloud Firestore. 인디 방치형/클리커 게임에서 사실상 표준 — 무료 한도가 넓고, 오프라인 영속성 내장, 도큐먼트 단위 보안 규칙 가능. 대안(PlayFab, Supabase, 자체 백엔드)은 Task H 시작 전 사용자가 결정 변경하지 않는 한 범위 외.
 
 ### ⚠️ Bundle 5 시작 전 사용자 사전 작업 (필수)
 
@@ -1135,78 +1172,135 @@ service cloud.firestore {
 > **위 사전 작업이 모두 완료되어 사용자가 명시적으로 "Bundle 5 진행"이라 지시하기 전까지 H/I 시작 금지.**
 
 ### Bundle 5 종합 회귀 테스트
-1. 첫 실행 → 익명 로그인, UID 발급, Firestore 도큐먼트 자동 생성
-2. Google 로그인 → UID 연결, 기존 진행도 유지
-3. save.json 삭제 → 같은 계정으로 재로그인 → Firestore에서 복원
-4. 오프라인에서 PlayMode → 게임 정상 동작 → 온라인 복귀 → 자동 동기화
-5. 두 기기에서 진행 → 더 늦게 저장한 쪽 우선
+1. 첫 실행 → 익명 로그인 → UID 발급 → `users/{uid}` 프로필 도큐먼트 + 게임 상태 도큐먼트 자동 생성
+2. Google 로그인 → UID 연결 → 기존 익명 진행도가 연결 계정으로 이관
+3. `save.json` 삭제 → 같은 계정으로 재로그인 → Firestore에서 상태 복원 (서버가 정본)
+4. 오프라인 상태로 PlayMode → 로컬 캐시로 정상 동작 → 온라인 복귀 → 서버에 자동 푸시
+5. 두 기기에서 동시 진행 → 더 늦은 저장(`updatedAtUnixMs` 기준)이 승리
+6. 첫 Google/Apple 연동 시 닉네임 등록 → Firestore 프로필 도큐먼트에 반영
 
 ---
 
-## Task H — Firebase Auth (익명 / Google / Apple 로그인)
+## Task H — 서버 로그인 + 유저 식별 등록
 
 **Status:** 🔴 TODO
 **선행:** Bundle 4 게이트 통과 + Bundle 5 사용자 사전작업 완료
 
 ### 🎯 목표
 - Firebase Unity SDK 통합 (Auth 모듈)
-- 게임 시작 시 익명 로그인 자동 수행
-- Google / Apple 계정 연결 가능
-- 로그인 성공 시 UID를 SaveData.userId에 반영
+- 게임 시작 시 익명 로그인을 자동 수행 — 모든 유저가 첫 프레임부터 서버 식별자를 갖도록
+- 익명 계정을 Google / Apple 정식 계정으로 "linking"으로 업그레이드 가능
+- 첫 서버 접속 시 `users/{uid}/profile/main` 경로에 **유저 프로필 도큐먼트** 생성 (게임 상태 도큐먼트와 분리) — 닉네임, 계정 타입, 등록 타임스탬프 같은 고유 유저 정보가 여기 저장됨
+- Google/Apple 연동 시 닉네임을 1회 입력받거나 OAuth 프로필에서 자동 채움 → 프로필 도큐먼트에 기록
+
+### 서버측 데이터 구조
+```
+users/{uid}                    ← 최상위 도큐먼트 (게임 상태, Task I)
+users/{uid}/profile/main       ← 유저 식별 정보용 서브컬렉션 도큐먼트 (본 태스크)
+    displayName: string
+    accountType: "anonymous" | "google" | "apple"
+    createdAtUnixMs: number
+    lastLoginAtUnixMs: number
+    locale: string             (선택)
+```
+
+> 프로필을 `users/{uid}` 최상위 필드가 아닌 서브컬렉션 도큐먼트에 두는 이유: 식별 메타데이터가 빈번히 변하는 게임 상태와 논리적으로 분리되고, Firestore 보안 규칙이 단순해지며, 프로필 읽기/쓰기와 게임 상태 동기화가 서로 다른 주기로 동작 가능.
 
 ### ✅ Definition of Done
 - [ ] Unity Console 클린
-- [ ] 첫 실행 시 익명 UID 발급, 콘솔 로그 출력
-- [ ] Google 로그인 버튼 클릭 → 계정 선택 → UID 연결
-- [ ] Apple 로그인 버튼 클릭 → 계정 선택 → UID 연결 (iOS only)
-- [ ] 회귀 테스트 4건 통과 (디바이스 또는 시뮬레이터)
+- [ ] 첫 실행 → 익명 UID 발급, `users/{uid}/profile/main` 도큐먼트 자동 생성, `accountType="anonymous"`
+- [ ] Google 로그인 → 계정 선택 → UID 연결, 프로필 도큐먼트가 `accountType="google"`로 업데이트, `displayName` 채워짐
+- [ ] Apple 로그인 → 계정 선택 → UID 연결, `accountType="apple"`로 업데이트 (iOS only)
+- [ ] 첫 정식 제공자 연동 시 닉네임 등록 UI 노출 (또는 익명 거부 시 첫 실행에서)
+- [ ] 매 로그인 성공 시 `lastLoginAtUnixMs` 업데이트
+- [ ] 회귀 테스트 5건 통과 (디바이스 또는 시뮬레이터)
 
 ### 📂 변경 파일
 
 #### H-1. 패키지 도입
-- Firebase Unity SDK 12.x 이상 (Auth 모듈)
-- Apple Sign In Unity Plugin
-- Google Sign In Unity Plugin
+- Firebase Unity SDK 12.x 이상 (Auth 모듈 + Firestore 모듈)
+- Apple Sign In Unity Plugin (iOS)
+- Google Sign In Unity Plugin (iOS / Android)
 
-> 정확한 패키지 이름·버전은 Firebase 콘솔의 Unity 가이드를 따름.
+> 정확한 패키지 이름/버전은 Firebase 콘솔 Unity 가이드 참고. 로그인 직후 프로필 도큐먼트를 즉시 쓰기 때문에 Task H 시점부터 Firestore 모듈 필요.
 
 #### H-2. `Assets/Scripts/Auth/AuthService.cs` (신규)
 ```csharp
 public class AuthService : MonoBehaviour
 {
     public string CurrentUid { get; private set; }
-    public event Action<string> UserChanged;
+    public AccountType CurrentAccountType { get; private set; }    // Anonymous / Google / Apple
+    public event Action<string, AccountType> UserChanged;
 
     public Task<string> SignInAnonymouslyAsync();
-    public Task<bool> LinkWithGoogleAsync();
-    public Task<bool> LinkWithAppleAsync();
-    public Task SignOutAsync();
+    public Task<bool>   LinkWithGoogleAsync();
+    public Task<bool>   LinkWithAppleAsync();
+    public Task         SignOutAsync();
+}
+
+public enum AccountType { Anonymous, Google, Apple }
+```
+
+#### H-3. `Assets/Scripts/Auth/UserProfile.cs` (신규)
+프로필 도큐먼트의 직렬화 모델.
+```csharp
+[FirestoreData]
+public class UserProfile
+{
+    [FirestoreProperty] public string displayName;
+    [FirestoreProperty] public string accountType;
+    [FirestoreProperty] public long   createdAtUnixMs;
+    [FirestoreProperty] public long   lastLoginAtUnixMs;
+    [FirestoreProperty] public string locale;
 }
 ```
 
-#### H-3. `Assets/Scripts/UI/LoginPanel.cs` (신규)
-- 옵션 화면 또는 메인 화면에서 호출
-- 버튼: Google, Apple(iOS만), Skip
-- AuthService 호출 결과 UI 반영
+#### H-4. `Assets/Scripts/Auth/UserProfileService.cs` (신규)
+**책임:** Firestore의 `users/{uid}/profile/main` 도큐먼트 read/write.
+```csharp
+public class UserProfileService
+{
+    public Task<UserProfile> GetOrCreateAsync(string uid, AccountType type);
+    public Task UpdateDisplayNameAsync(string uid, string displayName);
+    public Task UpdateAccountTypeAsync(string uid, AccountType type);
+    public Task TouchLastLoginAsync(string uid);
+}
+```
 
-#### H-4. `Assets/Scripts/Core/GameManager.cs` (수정)
-- `Awake()`에서 Firebase 초기화 → `AuthService.SignInAnonymouslyAsync()` → UID를 SaveBinder에 전달
+`GetOrCreateAsync`는 도큐먼트가 없으면 생성(첫 접속), 있으면 `lastLoginAtUnixMs` 갱신.
 
-#### H-5. `Assets/Scripts/Core/GameContext.cs` (수정)
-- 필드 추가: `AuthService`
+#### H-5. `Assets/Scripts/UI/LoginPanel.cs` (신규)
+- 메인 화면 또는 계정 옵션에서 호출
+- 버튼: **Google 로그인**, **Apple 로그인** (iOS만), **건너뛰기 / 게스트로 계속**
+- AuthService 결과 및 에러 UI 반영
+- Google/Apple 연동 성공 시 `displayName`이 비어있으면 닉네임 입력 필드를 1회 노출 후 `UserProfileService.UpdateDisplayNameAsync` 호출
 
-#### H-6. `MainScene` 구성
-- LoginPanel UI 추가 (옵션)
+#### H-6. `Assets/Scripts/UI/NicknameRegistrationPanel.cs` (신규)
+- 첫 정식 계정 연동 후 트리거되는 모달 패널
+- TMP_InputField 1개 + Submit 버튼
+- trim, 길이 1~20 검증, 공백만은 거부, `UserProfileService.UpdateDisplayNameAsync` 호출
+
+#### H-7. `Assets/Scripts/Core/GameManager.cs` (수정)
+- `Awake()`에서: Firebase 초기화 → `AuthService.SignInAnonymouslyAsync()` → `UserProfileService.GetOrCreateAsync(uid, Anonymous)` → UID를 SaveBinder에 전달
+- `AuthService.UserChanged` 구독 → 계정 타입 변경 시 `UserProfileService.UpdateAccountTypeAsync` 호출
+
+#### H-8. `Assets/Scripts/Core/GameContext.cs` (수정)
+- 필드 추가: `AuthService`, `UserProfileService`
+
+#### H-9. `MainScene` 구성
+- LoginPanel + NicknameRegistrationPanel 캔버스 추가 (초기 비활성, 인증 흐름이 활성화)
 
 ### 🚫 건드리지 말 것
 - 전투, 스테이지 로직
-- 다른 UI 위젯
+- 다른 HUD 위젯 (StageLabel, BossEntryButton, UpgradeDrawer 등)
+- `SaveService` 핵심 (Task G가 정본; 본 태스크는 **프로필** 도큐먼트만 쓰고 게임 상태 도큐먼트는 다루지 않음)
 
 ### 🧪 검증
-1. 컴파일 클린 (Firebase SDK 패키지 import 후)
-2. 첫 실행 → 익명 UID 콘솔 출력
-3. Google 로그인 → UID에 Google credential 연결
-4. Apple 로그인 (iOS 빌드) → 동일 흐름
+1. 컴파일 클린 (Firebase SDK 패키지 import + 설정 파일 배치 후)
+2. 첫 실행 → 익명 UID 콘솔 출력; Firebase 콘솔에서 `users/{uid}/profile/main` 도큐먼트가 `accountType="anonymous"` + `createdAtUnixMs`와 함께 새로 생성됨
+3. Google 로그인 → 계정 선택 → 성공 시 프로필 도큐먼트가 `accountType="google"`로 업데이트, displayName이 비어있었다면 닉네임 입력 모달 표시 → 입력값이 Firestore에 반영
+4. Apple 로그인 (iOS 빌드) → `accountType="apple"`로 동일 흐름
+5. 종료 후 재실행 → 같은 UID, 프로필 도큐먼트의 `lastLoginAtUnixMs`가 증가
 
 ### 📝 작업 로그 (구현자 기록)
 - (비어있음)
@@ -1216,28 +1310,41 @@ public class AuthService : MonoBehaviour
 
 ---
 
-## Task I — Firestore 클라우드 동기화
+## Task I — Firestore 서버 정본(canonical) 게임 상태
 
 **Status:** 🔴 TODO
 **선행:** H
 
 ### 🎯 목표
-- 로컬 SaveData를 Firestore `users/{uid}` 도큐먼트에 동기화
-- 오프라인 우선 (로컬이 진실, 백그라운드 동기화)
-- 충돌 해결: `updatedAtUnixMs` 비교 → newer-wins
-- 네트워크 실패 시 로컬 동작 유지
+- 게임 상태를 Firestore `users/{uid}` 도큐먼트에 **정본(canonical)** 으로 영속화
+- 로컬 `save.json`(Task G)은 **오프라인 캐시**로 격하
+- 로그인 시 서버 도큐먼트를 pull; 존재하면 서버가 승리하여 로컬을 덮어쓴다. 없으면 로컬 캐시를 서버에 push (해당 기기 첫 접속 시)
+- 의미 있는 상태 변경(골드, 업그레이드 구매, 스테이지 진행, 앱 pause/quit)마다 debounce 후 Firestore에 push
+- 동시 온라인 두 기기 충돌: **`updatedAtUnixMs` 기준 newer-wins**
+- 네트워크 실패 시: 로컬 캐시로 게임 진행 가능, 큐잉된 쓰기는 재연결 시 플러시
+
+### 서버 정본 정합성 규칙
+1. **로그인(매 실행) 시:** `users/{uid}` 도큐먼트 pull.
+   - **remote 존재 + `remote.updatedAtUnixMs > local.updatedAtUnixMs`** → 로컬 캐시 덮어쓰기 + "RestoredFromServer" 피드백 발신
+   - **remote 존재 + `remote.updatedAtUnixMs <= local.updatedAtUnixMs`** → 로컬을 push (서버보다 더 최근에 오프라인 진행한 경우)
+   - **remote 없음** → 로컬을 push (첫 부트스트랩)
+2. **플레이 중:** 모든 상태 변경 트리거가 Firestore에 push (debounce 5초). Firestore 오프라인 영속성이 짧은 끊김을 투명하게 처리.
+3. **앱 pause / quit 시:** 보류 중인 쓰기 즉시 강제 플러시.
+4. **계정 연동(익명 → Google/Apple) 시:** Firebase Auth의 `LinkWithCredentialAsync`가 UID를 보존하므로 도큐먼트 위치 불변. 데이터 마이그레이션 불필요.
 
 ### ✅ Definition of Done
 - [ ] Unity Console 클린
-- [ ] PlayMode 골드 획득 → 5초 이내 Firestore 갱신 확인
-- [ ] save.json 삭제 후 재로그인 → Firestore에서 복원
-- [ ] 오프라인 정상 동작
-- [ ] 회귀 테스트 5건 통과
+- [ ] PlayMode 골드 획득 → Firestore 콘솔의 `users/{uid}` 도큐먼트가 5초 이내 갱신
+- [ ] 로컬 `save.json` 삭제 → 다음 실행 시 Firestore에서 전체 상태 pull
+- [ ] 쓰기 중 강제 종료 → 다음 실행 시 마지막 성공 push 상태 유지
+- [ ] Wi-Fi OFF → 정상 동작; Wi-Fi ON → 큐잉된 쓰기 자동 플러시
+- [ ] 동일 Google 계정 두 기기 → 다음 동기화 시 더 늦은 저장이 승리
+- [ ] 회귀 테스트 6건 통과
 
 ### 📂 변경 파일
 
 #### I-1. 패키지 추가
-- Firebase Firestore Unity 모듈
+- Firebase Firestore Unity 모듈 (Task H에서 프로필 도큐먼트용으로 이미 추가됐다면 모듈만 활성화)
 
 #### I-2. `Assets/Scripts/Save/CloudSyncService.cs` (신규)
 ```csharp
@@ -1245,41 +1352,51 @@ public class CloudSyncService
 {
     private FirebaseFirestore db;
 
-    public Task PushAsync(SaveData data);
-    public Task<SaveData> PullAsync(string uid);
-    public Task ResolveAndApply(SaveService localService, string uid);
+    public Task              PushAsync(SaveData data);
+    public Task<SaveData>    PullAsync(string uid);
+    public Task              ResolveAndApply(SaveService localService, string uid);
+    public Task              FlushPendingAsync();   // 큐잉된 쓰기 강제 플러시
 }
 ```
 
-`ResolveAndApply` 동작:
-- Firestore에서 remote 가져옴
-- remote 없으면 → local push
-- remote가 더 최신(updatedAtUnixMs) → local 덮어쓰기 + 저장
-- 그 외 → local push
+`ResolveAndApply`는 위 정합성 규칙을 구현. 서버가 정본; 서버가 더 최신이면 로컬을 덮어씀.
 
 #### I-3. `Assets/Scripts/Save/SyncCoordinator.cs` (신규)
 **트리거:**
-- AuthService.UserChanged → `ResolveAndApply()` 1회
-- SaveData 변경 시 debounce 5초 후 push
-- `OnApplicationPause(true)` → 즉시 push
-- 네트워크 오프라인 시 큐잉, 온라인 복귀 시 플러시
+- `AuthService.UserChanged` → `ResolveAndApply()` 정확히 1회
+- `wallet.GoldChanged` / `upgradeSystem.UpgradePurchased` / `stageManager.StateChanged` → debounce 5초 → `PushAsync(local)`
+- `OnApplicationPause(true)` → `FlushPendingAsync()`
+- `OnApplicationQuit` → `FlushPendingAsync()` (best-effort, 강제 종료 시 미완료 가능)
+- 네트워크 온라인 복귀 → 큐잉된 push 플러시
+- 구현자 메모: Firebase Firestore 내장 오프라인 영속성(`FirestoreSettings.PersistenceEnabled = true`) 사용 권장 — SDK가 끊긴 상태의 쓰기를 알아서 큐잉함. SyncCoordinator는 debounce + 라이프사이클 이벤트 시 플러시만 추가 책임.
 
 #### I-4. `Assets/Scripts/Save/SaveData.cs` (Firestore 호환)
-- `[FirestoreData]`, `[FirestoreProperty]` 어트리뷰트 추가 (필드별)
+- 클래스에 `[FirestoreData]` 속성 추가
+- 영속 필드별로 `[FirestoreProperty]` 추가
+- 중첩 클래스 `PlayerStatsSnapshot`, `UpgradeLevelEntry`도 각각 `[FirestoreData]` + `[FirestoreProperty]` 부여
 
-#### I-5. `Assets/Scripts/Core/GameManager.cs` (수정)
-- AuthService 로그인 콜백에서 SyncCoordinator 시작
+#### I-5. `Assets/Scripts/Save/SaveService.cs` (수정)
+- Bundle 5 도입 후 로컬 파일은 **캐시**로 역할 변경. CloudSyncService가 서버 승리 정합 시 호출할 신규 메서드 `OverwriteFromServer(SaveData remote)` 추가; `CurrentData`를 원자적으로 교체하고 새 파일을 저장.
+
+#### I-6. `Assets/Scripts/Core/GameManager.cs` (수정)
+- `AuthService.SignInAnonymouslyAsync()` 성공 후 `SyncCoordinator.Start(uid)` 호출 — `ResolveAndApply` 시작 + 트리거 등록
+- `AuthService.UserChanged` 시 `SyncCoordinator.OnUidChanged(newUid)` 호출 — 보통은 linking이 UID를 보존하지만 방어적으로 처리
+
+#### I-7. `Assets/Scripts/Core/GameContext.cs` (수정)
+- 필드 추가: `CloudSyncService`, `SyncCoordinator`
 
 ### 🚫 건드리지 말 것
 - 전투, 스테이지, UI 로직
-- SaveService 핵심 (CloudSyncService와 분리 유지)
+- `SaveService` 핵심 파일 IO (신규 `OverwriteFromServer` 메서드만 허용; 기존 `Save` / `TryLoad` / `Reset` 시맨틱 변경 금지)
+- `UserProfileService` (Task H 범위) — 프로필 도큐먼트와 게임 상태 도큐먼트 분리 유지
 
 ### 🧪 검증
 1. 컴파일 클린
-2. PlayMode 익명 로그인 → 골드 획득 → Firestore 콘솔에서 `users/{uid}` 갱신 확인
-3. save.json 삭제 → 같은 UID 재로그인 → Firestore에서 복원
-4. Wi-Fi OFF로 PlayMode → 정상 동작 → Wi-Fi ON → 자동 동기화
-5. 두 기기 동시 진행 → 더 늦게 저장 쪽 우선
+2. PlayMode 익명 로그인 → 골드 획득 → Firestore 콘솔에서 `users/{uid}` 5초 이내 갱신 확인
+3. `save.json` 삭제 → 재실행 → Firestore에서 게임 상태 복원
+4. PlayMode 중 Wi-Fi OFF → 업그레이드 → Wi-Fi ON → 10초 이내 Firestore 반영 확인
+5. 동일 Google 계정 두 기기 동시 변경 → 다음 동기화 시 늦은 `updatedAtUnixMs`가 승리
+6. 쓰기 중 Unity 강제 종료 → 재실행 → 마지막 성공 push 상태 무손실
 
 ### 📝 작업 로그 (구현자 기록)
 - (비어있음)

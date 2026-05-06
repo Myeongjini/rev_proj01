@@ -71,12 +71,13 @@ Tasks are grouped into 5 **Bundles**. Until the last task of a bundle reaches �
 | 2 | C | ChapterDefinition / StageDefinition data model | ✅ DONE | Bundle 1 gate |
 | 2 | D | StageManager flow refactor (Field ↔ BossRoom) | ✅ DONE | C |
 | 2 | E | Boss-entry button + HUD chapter/stage label | ✅ DONE | D |
-| 3 | F | Upgrade drawer UI (bottom toggle, 2-column scroll) | 🟡 IN REVIEW | Bundle 2 gate ✅ |
-| 4 | G | SaveData model + local save | 🔴 TODO | Bundle 3 gate |
+| 3 | F | Upgrade drawer UI (bottom toggle, 2-column scroll) | ✅ DONE | Bundle 2 gate ✅ |
+| 4 | G0 | Pre-save structural cleanup (HP unification / dead upgrade / vestigial refs / player HP bar) | 🔴 TODO | Bundle 3 gate ✅ |
+| 4 | G | SaveData model + local save | 🔴 TODO | G0 |
 | 5 | H | Firebase Auth (anonymous / Google / Apple) | 🔴 TODO | Bundle 4 gate + user prework |
 | 5 | I | Firestore cloud sync | 🔴 TODO | H |
 
-> **Bundle 1 & 2 gates passed (2026-05-06).** Bundle 3 / Task F may begin.
+> **Bundle 1, 2 & 3 gates passed (2026-05-06).** Bundle 4 / Task G may begin.
 
 Status legend:
 - 🔴 TODO: not started
@@ -745,7 +746,7 @@ private void OnBossEntryAvailabilityChanged(bool available)
 
 ## Task F — Upgrade Drawer UI (bottom toggle, 2-column scroll)
 
-**Status:** 🟡 IN REVIEW
+**Status:** ✅ DONE
 **Depends On:** Bundle 2 gate
 
 ### 🎯 Goal
@@ -909,15 +910,32 @@ Inside the HUD Canvas:
 - 2026-05-06 start: Bundle 3 Task F started. `Tasks.md` confirms Bundle 1 & 2 gates passed and Task F may begin. Existing uncommitted `Tasks.md` translation changes, `Tasks_kr.md`, and `.DS_Store` files were present at start; treating them as user/ambient changes and avoiding unrelated edits. Implementing UpgradeType 9-stat migration, UpgradeSystem default entries/switch cases, UpgradeDrawerView, dynamic HUD upgrade button binding, UpgradeButton prefab, and MainScene drawer setup.
 - 2026-05-06 end: Replaced UpgradeType with 9 stat-specific entries and migrated UpgradeSystem default definitions/apply switch. Added UpgradeDrawerView and UpgradeDrawerGridFitter. HUDController now instantiates UpgradeButtonView prefab entries dynamically under ScrollRect Content. Created `Assets/Prefabs/UI/UpgradeButton.prefab` and configured MainScene with bottom-center UpgradeToggleButton plus UpgradeDrawerPanel/ScrollRect/GridLayoutGroup. Review feedback during implementation: button cells now fill the drawer width as a responsive 2-column grid and use larger cells (PlayMode measured cell size 907x176), making vertical scrolling meaningful. Fixed UpgradeButtonView runtime listener binding so button clicks purchase upgrades. PlayMode verified: panel starts closed at y=-520, toggle opens to y=84, 9 children, 2 columns, vertical scroll enabled, all 9 upgrade clicks spend gold and update autoDamage/manualDamage/autoFireRate/manualFireRate/critChance/critMultiplier/armorPen/maxHealth/mana immediately, toggle closes back to y=-520. Console has no game-code errors/warnings.
 - 2026-05-06 review fix: User requested MapleStory/Latale-inspired 2D chibi visual polish for Wizard/Slime/Boss/Background, Wizard animation, natural map/background scale after the camera-follow change, larger damage text readability, and repair of broken TMP rendering in the upgrade drawer. Added `VisualAssetUpdater` editor utility, regenerated Wizard/Slime/Boss/TopDownBackground sprites, added Wizard idle/run animation assets + movement-driven animation controller, reassigned generated sprites to prefabs/MainScene, enlarged runtime damage text sizes, and reassigned all scene/upgrade TMP text to `AppleGothic_TMP`. PlayMode verified: Wizard uses Run sprite with Animator + driver, field background uses `TopDownBackground`, spawned slime uses new `Slime`, `DamageText.prefab` font size is 38, and scene TMP non-AppleGothic count is 0.
+- 2026-05-06 review fix 2: User reported the Wizard sprite quality was still too low, the field camera was too close, and live value UI (DPS/Gold/Mana/etc.) was not displaying correctly. Reworked `DrawWizardFrame` into a higher-resolution 256px chibi fantasy wizard with richer hair/face/coat/cape/staff detailing, imported Wizard frames at 128 PPU, reduced Wizard prefab/scene scale to 1.05, increased `MobileCameraFitter` visible field size (`minVisibleHeight` 12.4, max ortho 8.0), and fixed HUD CanvasScaler to height-match (`matchWidthOrHeight = 1`) so portrait/mobile HUD values stay inside the visible screen. PlayMode verified: camera ortho 6.20, Wizard scale 1.05, Canvas ScreenSpaceOverlay match 1.0, Stage/Gold/DPS/Attack label corners are on-screen, and scene TMP non-AppleGothic count remains 0.
+- 2026-05-06 review fix 3: User confirmed the TMP value UI issue persisted. Added `HUDTextRenderFixer` runtime component to the HUD Canvas and wired it from `VisualAssetUpdater`. It forces the HUD Canvas to ScreenSpaceOverlay + height-matched scaling at runtime and switches ASCII value labels (Gold/DPS/Attack/Mana) to the default `LiberationSans SDF` font/material while leaving Korean labels on `AppleGothic_TMP`. PlayMode verified: fixer attached, Gold/DPS/Attack/Mana labels use `LiberationSans SDF Material`, all have nonzero mesh vertices, white color/alpha, and no game-code errors or warnings.
 
 ### 🔍 Review Notes (reviewer)
-- (empty)
+- 2026-05-06: Code + asset verification complete. Spec compliance + user-requested visual polish all properly applied.
+  - **UpgradeDefinition.cs**: Enum replaced with 9 stat-specific entries (AutoDamage / ManualDamage / AutoFireRate / ManualFireRate / CriticalChance / CriticalMultiplier / ArmorPenetration / MaxHealth / Mana). Legacy `Attack` / `Critical` removed. Spec match.
+  - **UpgradeSystem.cs**: `EnsureDefaults` adds 9 entries with correct Korean displayName values, baseCost, and value per spec. `Apply` switch covers all 9 cases mapped to the right `PlayerStats.AddXxx` / `PlayerMana.IncreaseMax` calls. Defensive `HasCurrentDefaultSet()` check (compares 9 IDs in order) prevents accidental clearing — sensible addition.
+  - **UpgradeDrawerView.cs**: `Toggle` / `Animate` / `ApplyImmediate` per spec, with the "강화 닫기/열기" labels. Defensive `RemoveListener(Toggle)` before AddListener prevents double-binding on hot reload — minor improvement.
+  - **UpgradeDrawerGridFitter.cs (extra)**: Computes column cell width dynamically based on panel width with a 220 minimum + configurable cellHeight=176. Reasonable responsive solution beyond spec; no DoD impact.
+  - **HUDController.cs (F-4)**: Removed legacy `upgradeButtons[]` array; new fields `upgradeDrawer` / `upgradeButtonContainer` / `upgradeButtonPrefab` / `upgradeIcons` in place. `BindUpgradeButtons` correctly clears list, destroys prior children, iterates `system.Upgrades`, instantiates prefab into container, binds, and tracks in `upgradeButtonViews` list. `RefreshUpgradeButtons` uses the dynamic list. Spec match.
+  - **UpgradeButton.prefab**: Present at `Assets/Prefabs/UI/`.
+  - **🆕 User-requested visual polish (commit 95d022b — review fix):**
+    - Regenerated `Wizard.png` / `Slime.png` / `Boss.png` / `TopDownBackground.png`
+    - Wizard animation: `Wizard_Idle_0/1.png` + `Wizard_Run_0/1.png` + `Wizard.controller` + `Wizard_Idle.anim` + `Wizard_Run.anim`
+    - New `WizardAnimationController.cs` (29 lines) — sets Animator `Moving` bool from position-delta threshold each LateUpdate. Clean.
+    - New `Editor/VisualAssetUpdater.cs` (451 lines) — utility for regenerating sprites
+    - `DamageTextView.cs` runtime font size enlarged
+    - All scene/drawer TMP text reassigned to `AppleGothic_TMP` (Korean rendering fix)
+    - Camera follow / map scale tweaks reflected in MainScene + relevant prefabs
+  - **Conclusion: ✅ DONE.** Bundle 3 gate may pass — F is the only task in this bundle.
 
 ---
 
 # Bundle 4 — Local Save
 
-**Goal:** Persist game progress to disk.
+**Goal:** Persist game progress to disk. Before introducing the save layer, run a structural cleanup pass (Task G0) so that the data we are about to serialize is canonical and free of dead-or-duplicated state.
 
 ### Bundle 4 Combined Regression Tests
 1. PlayMode → gold 100 + 1 upgrade → exit → re-enter → all restored
@@ -925,19 +943,126 @@ Inside the HUD Canvas:
 3. saveVersion field present
 4. Delete save.json then re-enter → fresh game starts correctly
 5. Chapter / stage progression restored
+6. Boss attack reduces the player's HP bar visibly (validates the cleanup from G0)
+
+---
+
+## Task G0 — Pre-Save Structural Cleanup
+
+**Status:** 🔴 TODO
+**Depends On:** Bundle 3 gate ✅
+
+### 🎯 Goal
+Before designing the save layer, eliminate the structural risks that the reviewer flagged on 2026-05-07. Saving game state while these problems exist would either persist incorrect values or paint a corner the save layer cannot escape.
+
+### Why this is a separate task (not folded into G)
+- **#1 HP unification** changes the meaning of a serialized field. Doing it after G means a `saveVersion` migration is needed.
+- **#2 dead upgrade** would be persisted as a real upgrade level that has no effect — confusing players forever.
+- **#3 player HP bar** is a UX prerequisite for shipping the boss-attack flow that G's `currentHealth` field is supposed to track.
+- **#6 vestigial cleanup** removes serialized scene references that would otherwise leak into prefab/scene snapshots that the save layer is about to lock in.
+
+### ✅ Definition of Done
+- [ ] Unity Console: 0 errors / 0 warnings
+- [ ] All 6 cleanup items below resolved
+- [ ] Bundle 1 / 2 / 3 regression tests still pass (no behavioral regression)
+- [ ] Boss attack reduces the player's visible HP bar in PlayMode
+
+### 📂 Files Changed
+
+#### G0-1. HP system unification — single source of truth in `PlayerStats`
+**Problem (reviewer 2026-05-07):** Two `currentHealth` fields exist — `PlayerWizard.currentHealth: int` (mutated by `TakeBossHit`) and `PlayerStats.currentHealth: float` (mutated by nothing). `Task G` would have serialized the **wrong one**.
+
+**Resolution:** PlayerStats becomes the canonical HP holder. PlayerWizard delegates.
+
+- `Assets/Scripts/Player/PlayerWizard.cs`:
+  - Remove `currentHealth`, `maxHealth`, `CurrentHealth`, `MaxHealth`, and `TakeBossHit` from this class
+  - **Or** keep `TakeBossHit(int amount)` as a thin forwarder: `stats.TakeHealth(amount)` — preferred, since `BossEnemy` already invokes it via the BossAttacked event in GameManager.
+- `Assets/Scripts/Core/GameManager.cs`:
+  - The line `boss.BossAttacked += context.Wizard.TakeBossHit;` continues to compile if the forwarder is kept; if `TakeBossHit` is removed, change the subscription to `boss.BossAttacked += amount => context.Wizard.Stats.TakeHealth(amount);`.
+- Verify nothing outside reads `PlayerWizard.CurrentHealth` / `MaxHealth` (grep first; remove the properties if no readers; otherwise migrate readers to `Stats.CurrentHealth`).
+
+#### G0-2. Remove `manual_speed` upgrade entry — a dead upgrade
+**Problem:** Task B's review fix removed the manual-fire cooldown per user request, which made `ManualAttackInterval` no longer enforced anywhere. Task F nonetheless added a `manual_speed` upgrade that decreases this stat — **the player can spend gold on a stat with zero observable effect.**
+
+**Resolution (default — no Fire-cooldown reintroduction):**
+- `Assets/Scripts/Upgrades/UpgradeSystem.cs`:
+  - In `EnsureDefaults()`, **delete** the `manual_speed` row.
+  - Update `HasCurrentDefaultSet()` to expect 8 entries in the new order (drop `manual_speed`'s id check, renumber the remaining indices).
+- The `UpgradeType.ManualFireRate` enum value, `PlayerStats.ManualAttackInterval` field, and `AddManualFireRate` method **stay in place** for forward compatibility (in case the cooldown is reintroduced later) — only the runtime upgrade entry is removed.
+- `Assets/Scripts/UI/HUDController.cs` and the `upgradeIcons[]` array adjust to whatever the new 8-entry order requires (icons may need a slot removed in the Inspector).
+
+> If the user reverses the decision later and wants the cooldown back, that is a separate task: re-add the entry, re-introduce the `Time.time - lastFireTime < interval` guard in `ClickAttackController.TryFireManual`. Do not preempt that decision here.
+
+#### G0-3. New `PlayerHealthBarView` — restore visible player HP feedback
+**Problem:** Task E disabled the legacy single-monster `HealthBarView` because it conflicted with per-monster `EnemyHealthBarView`. That removed the **player's** HP indicator at the same time. The boss-attack flow exists but is invisible to the player.
+
+**Resolution:**
+- `Assets/Scripts/UI/PlayerHealthBarView.cs` (new): subscribes to `PlayerStats.HealthChanged`, renders a horizontal bar in the HUD top-left (or wherever the prior healthBar lived). Uses `AppleGothic_TMP` for any text (consistent with the rest of the HUD post-Task F).
+  ```csharp
+  public class PlayerHealthBarView : MonoBehaviour
+  {
+      [SerializeField] private RectTransform fill;
+      [SerializeField] private TMP_Text label;        // optional "HP nn / mm"
+      public void Bind(PlayerStats stats);
+      private void Refresh(PlayerStats stats);        // called from HealthChanged + initial Bind
+  }
+  ```
+- `Assets/Scripts/UI/HUDController.cs`:
+  - Remove the legacy `[SerializeField] private HealthBarView healthBar;` field and the corresponding `if (healthBar != null) healthBar.gameObject.SetActive(false);` call (already dead). See G0-6 for the full vestigial sweep.
+  - Add `[SerializeField] private PlayerHealthBarView playerHealthBar;`. In `Initialize`, call `playerHealthBar.Bind(wizard.Stats);`.
+- `MainScene` (Unity Editor):
+  - Build a new HUD widget under the canvas (use the existing canvas hierarchy — do not reposition other HUD widgets).
+  - Wire its reference into HUDController's `playerHealthBar` field.
+
+#### G0-4. (Spec adjustment, no code) — handled in Task I
+Reviewer item #4 (Firestore mapper pattern) is a Task I spec change. **Already applied to the Task I §I-4 section by the planner.** No work for the agent here — this entry exists only to track the cleanup item.
+
+#### G0-5. (Spec adjustment, no code) — handled in Task I
+Reviewer item #5 (`userId="local"` first-login conflict modal) is a Task I scope addition. **Already applied to the Task I reconciliation rules and §I-8 by the planner.** No work for the agent here.
+
+#### G0-6. Vestigial cleanup
+| File | Change |
+|------|--------|
+| `Assets/Scripts/Enemies/EnemySpawner.cs` | Remove the `CurrentEnemy` property (no remaining call sites — verified by reviewer). All targeting now uses `GetNearestEnemy(...)`. |
+| `Assets/Scripts/UI/HUDController.cs` | Remove the `[SerializeField] private HealthBarView healthBar;` field and the `if (healthBar != null) healthBar.gameObject.SetActive(false);` line (subsumed by G0-3 which adds the new field). |
+| `Assets/Scripts/Editor/PrototypeBuilder.cs` | Remove the `SetField(hudParts.Hud, "healthBar", hudParts.HealthBar);` line (line ~136). The HealthBar GameObject creation, if it exists in the builder, may also be retired — but if doing so risks the build helper's other layout, leave the GameObject creation and only delete the SetField call. |
+| `Assets/Scripts/UI/HealthBarView.cs` | If no scripts/scenes/prefabs reference this class after the sweep, delete the file. Otherwise leave it alone. **Verify with `grep -rn "HealthBarView" Assets`** before deletion. |
+
+### 🚫 Do Not Touch
+- `PlayerStats` field set or method signatures introduced in Task A — only remove the previously-unused HP fields **inside `PlayerWizard`**, not anything in `PlayerStats`.
+- `EnemyHealthBarView` (per-monster bar) — left as-is.
+- `StageManager`, `BossStageController`, `EnemySpawner` core flow.
+- The other 8 upgrade entries in `EnsureDefaults` (only `manual_speed` is removed).
+- `Wizard Grower → Build Prototype Scene` menu — do not run.
+
+### 🧪 Validation
+1. Compilation clean.
+2. Boss attack hits player → `PlayerStats.CurrentHealth` decreases → `PlayerHealthBarView` reflects it visibly.
+3. Saving / restoring game state: not tested here (Task G), but the Inspector value of `PlayerStats.currentHealth` is the value mutated by the boss — confirmed by manually inspecting in PlayMode after a boss hit.
+4. Upgrade drawer no longer shows "수동발사속도" entry; remaining 8 entries unchanged in label/cost/effect.
+5. `grep -rn "CurrentEnemy\|healthBar" Assets` shows no game-code references after the cleanup (other than within `EnemySpawner.cs` if `CurrentEnemy` is retained for some reason — should be 0 refs ideally).
+6. Bundle 1/2/3 combined regressions still pass (run them top-to-bottom).
+
+### 📝 Work Log (implementer)
+- (empty)
+
+### 🔍 Review Notes (reviewer)
+- (empty)
 
 ---
 
 ## Task G — SaveData Model + Local Save
 
 **Status:** 🔴 TODO
-**Depends On:** Bundle 3 gate
+**Depends On:** G0 (must be ✅ DONE first)
 
 ### 🎯 Goal
 - Serialize stats, gold, chapter/stage, upgrade levels
 - Save as JSON to `Application.persistentDataPath/save.json`
 - Auto-load on game start; auto-save on key events
 - `saveVersion` + migration hook
+
+> **Architectural role of local save:** After Bundle 5 ships, the **server DB is the canonical store**. The local `save.json` then serves only as (a) a first-launch / pre-login fallback and (b) an offline cache that the cloud sync layer (Task I) reconciles with the server. Implement local save here as a self-sufficient single-source while H/I are pending; the offline-cache role is enforced in Task I.
 
 ### ✅ Definition of Done
 - [ ] Unity Console clean
@@ -1105,9 +1230,27 @@ private void OnApplicationQuit() { context.SaveService.Save(); }
 
 ---
 
-# Bundle 5 — Firebase Auth + Firestore Sync
+# Bundle 5 — Server Login + Server-Canonical User Database
 
-**Goal:** Per-user cloud save. Cross-device synchronization.
+**Goal:** Each user logs into the server via Google / Apple / anonymous, gets a unique identity registered, and has their game state persisted in a **server-side DB as the source of truth**. The local `save.json` (Task G) becomes only an offline cache. Two devices sharing the same account share the same progress.
+
+**Architecture (canonical model):**
+```
+   Game state change
+         │
+         ▼
+   ┌───────────────┐  push (debounced)   ┌──────────────────┐
+   │  Local cache  │ ───────────────────▶│  Firestore       │  ← canonical
+   │  save.json    │                     │  users/{uid}     │
+   │  (offline OK) │ ◀───────────────── │  + profile doc    │
+   └───────────────┘    pull / restore   └──────────────────┘
+                              │
+                              ▼
+                    Other device with same UID
+                    → restored automatically on login
+```
+
+**Storage choice:** Firebase Auth + Cloud Firestore. Firestore is the de-facto standard for indie idle/clicker games — generous free tier, built-in offline persistence, server-side security rules per document. Alternatives (PlayFab, Supabase, custom backend) are out of scope unless the user changes the decision before Task H starts.
 
 ### ⚠️ User Prework Required Before Starting Bundle 5
 
@@ -1137,78 +1280,135 @@ service cloud.firestore {
 > **Do not start H/I until all prework above is complete and the user explicitly says "proceed with Bundle 5".**
 
 ### Bundle 5 Combined Regression Tests
-1. First launch → anonymous login, UID issued, Firestore document auto-created
-2. Google login → UID linked, existing progress retained
-3. Delete save.json → re-login with same account → restored from Firestore
-4. PlayMode while offline → game runs normally → online recovery → auto-sync
-5. Two devices progressing → the later-saved one wins
+1. First launch → anonymous login → UID issued → `users/{uid}` profile doc + state doc auto-created in Firestore
+2. Google login → UID linked → existing anonymous progress migrated to the linked account
+3. Delete `save.json` → re-login with same account → state restored from Firestore (server is canonical)
+4. PlayMode while offline → game runs normally on local cache → online recovery → automatic push to server
+5. Two devices progressing simultaneously → the later-saved write wins (newer-wins by `updatedAtUnixMs`)
+6. New user nickname registration on first link to Google/Apple → reflected in Firestore profile doc
 
 ---
 
-## Task H — Firebase Auth (Anonymous / Google / Apple Login)
+## Task H — Server Login + User Identity Registration
 
 **Status:** 🔴 TODO
 **Depends On:** Bundle 4 gate + Bundle 5 user prework complete
 
 ### 🎯 Goal
 - Integrate Firebase Unity SDK (Auth module)
-- Auto anonymous login on game start
-- Allow linking with Google / Apple
-- On login success, write the UID into SaveData.userId
+- Auto anonymous login on game start so that every player has a server identity from frame 1
+- Allow upgrading the anonymous account to a permanent Google / Apple account via "linking"
+- On the first server contact, create a **user profile document** at `users/{uid}/profile` (separate from the game state document) — this is where unique user info such as nickname, account type, and registration timestamp lives
+- On link to Google/Apple, prompt the user once for a display nickname (or autofill from the OAuth profile) and write it to the profile document
+
+### Server-side data layout
+```
+users/{uid}                    ← top-level document (game state, see Task I)
+users/{uid}/profile/main       ← subcollection document for user identity (this task)
+    displayName: string
+    accountType: "anonymous" | "google" | "apple"
+    createdAtUnixMs: number
+    lastLoginAtUnixMs: number
+    locale: string             (optional)
+```
+
+> Storing the profile in a subcollection (rather than top-level fields on `users/{uid}`) keeps identity metadata logically separated from rapidly-mutating game state, simplifies Firestore security rules, and lets profile reads/writes happen on different cadences than save sync.
 
 ### ✅ Definition of Done
 - [ ] Unity Console clean
-- [ ] First launch issues anonymous UID and logs to console
-- [ ] Click Google login → account picker → UID linked
-- [ ] Click Apple login → account picker → UID linked (iOS only)
-- [ ] 4 regression tests pass (device or simulator required)
+- [ ] First launch → anonymous UID issued, `users/{uid}/profile/main` document auto-created with `accountType="anonymous"`
+- [ ] Click Google login → account picker → UID linked, profile document updated to `accountType="google"`, `displayName` populated
+- [ ] Click Apple login → account picker → UID linked, profile updated to `accountType="apple"` (iOS only)
+- [ ] Nickname registration UI appears on first link to a real provider (or first launch if user opts out of anonymous)
+- [ ] `lastLoginAtUnixMs` updated on every successful login
+- [ ] 5 regression tests pass (device or simulator required)
 
 ### 📂 Files Changed
 
 #### H-1. Package adoption
-- Firebase Unity SDK 12.x or higher (Auth module)
-- Apple Sign In Unity Plugin
-- Google Sign In Unity Plugin
+- Firebase Unity SDK 12.x or higher (Auth module + Firestore module)
+- Apple Sign In Unity Plugin (iOS)
+- Google Sign In Unity Plugin (iOS / Android)
 
-> Exact package names/versions follow the Firebase Console's Unity guide.
+> Exact package names / versions follow the Firebase Console's Unity guide. The Firestore module is needed in Task H because we write the profile document immediately after login.
 
 #### H-2. `Assets/Scripts/Auth/AuthService.cs` (new)
 ```csharp
 public class AuthService : MonoBehaviour
 {
     public string CurrentUid { get; private set; }
-    public event Action<string> UserChanged;
+    public AccountType CurrentAccountType { get; private set; }    // Anonymous / Google / Apple
+    public event Action<string, AccountType> UserChanged;
 
     public Task<string> SignInAnonymouslyAsync();
-    public Task<bool> LinkWithGoogleAsync();
-    public Task<bool> LinkWithAppleAsync();
-    public Task SignOutAsync();
+    public Task<bool>   LinkWithGoogleAsync();
+    public Task<bool>   LinkWithAppleAsync();
+    public Task         SignOutAsync();
+}
+
+public enum AccountType { Anonymous, Google, Apple }
+```
+
+#### H-3. `Assets/Scripts/Auth/UserProfile.cs` (new)
+Plain serializable model for the profile document.
+```csharp
+[FirestoreData]
+public class UserProfile
+{
+    [FirestoreProperty] public string displayName;
+    [FirestoreProperty] public string accountType;
+    [FirestoreProperty] public long   createdAtUnixMs;
+    [FirestoreProperty] public long   lastLoginAtUnixMs;
+    [FirestoreProperty] public string locale;
 }
 ```
 
-#### H-3. `Assets/Scripts/UI/LoginPanel.cs` (new)
-- Invoked from an options screen or main screen
-- Buttons: Google, Apple (iOS only), Skip
-- Reflect AuthService results in the UI
+#### H-4. `Assets/Scripts/Auth/UserProfileService.cs` (new)
+**Responsibility:** read / write the `users/{uid}/profile/main` document on Firestore.
+```csharp
+public class UserProfileService
+{
+    public Task<UserProfile> GetOrCreateAsync(string uid, AccountType type);
+    public Task UpdateDisplayNameAsync(string uid, string displayName);
+    public Task UpdateAccountTypeAsync(string uid, AccountType type);
+    public Task TouchLastLoginAsync(string uid);
+}
+```
 
-#### H-4. `Assets/Scripts/Core/GameManager.cs` (modify)
-- In `Awake()`: initialize Firebase → `AuthService.SignInAnonymouslyAsync()` → forward UID to SaveBinder
+`GetOrCreateAsync` creates the document if missing (first contact) and updates `lastLoginAtUnixMs` if present.
 
-#### H-5. `Assets/Scripts/Core/GameContext.cs` (modify)
-- Add field: `AuthService`
+#### H-5. `Assets/Scripts/UI/LoginPanel.cs` (new)
+- Shown on the main screen or via an Account option
+- Buttons: **Google login**, **Apple login** (iOS only), **Skip / Continue as guest**
+- Reflects login result and any error from AuthService
+- After a successful link to Google/Apple, if `displayName` is empty, prompts a nickname-input field once and forwards to `UserProfileService.UpdateDisplayNameAsync`
 
-#### H-6. `MainScene` setup
-- Add LoginPanel UI (optional)
+#### H-6. `Assets/Scripts/UI/NicknameRegistrationPanel.cs` (new)
+- Modal panel triggered after the first real-account link
+- One TMP_InputField + Submit button
+- Trims, validates length 1~20, forbids whitespace-only, then calls `UserProfileService.UpdateDisplayNameAsync`
+
+#### H-7. `Assets/Scripts/Core/GameManager.cs` (modify)
+- In `Awake()`: init Firebase → `AuthService.SignInAnonymouslyAsync()` → `UserProfileService.GetOrCreateAsync(uid, Anonymous)` → forward UID to SaveBinder
+- Subscribe to `AuthService.UserChanged` to call `UserProfileService.UpdateAccountTypeAsync` when the account type changes
+
+#### H-8. `Assets/Scripts/Core/GameContext.cs` (modify)
+- Add fields: `AuthService`, `UserProfileService`
+
+#### H-9. `MainScene` setup
+- Add LoginPanel + NicknameRegistrationPanel canvases (initially inactive; activated by the auth flow)
 
 ### 🚫 Do Not Touch
 - Combat, stage logic
-- Other UI widgets
+- Other HUD widgets (StageLabel, BossEntryButton, UpgradeDrawer, etc.)
+- `SaveService` core (Task G is canonical; this task only writes the **profile** doc, not the game state doc)
 
 ### 🧪 Validation
-1. Compilation clean (after Firebase SDK package import)
-2. First launch → anonymous UID logged
-3. Google login → Google credential linked to UID
-4. Apple login (iOS build) → same flow
+1. Compilation clean (after Firebase SDK packages imported and config files placed)
+2. First launch → anonymous UID printed to Console; Firebase Console shows a new document at `users/{uid}/profile/main` with `accountType="anonymous"` and `createdAtUnixMs` populated
+3. Click Google login → account picker → on success, profile doc updates to `accountType="google"`; nickname prompt appears if displayName was empty; submitted nickname is reflected in Firestore
+4. Click Apple login (iOS build) → same flow with `accountType="apple"`
+5. Quit and re-launch → same UID, profile doc's `lastLoginAtUnixMs` increments
 
 ### 📝 Work Log (implementer)
 - (empty)
@@ -1218,28 +1418,46 @@ public class AuthService : MonoBehaviour
 
 ---
 
-## Task I — Firestore Cloud Sync
+## Task I — Server-Canonical Game State on Firestore
 
 **Status:** 🔴 TODO
 **Depends On:** H
 
 ### 🎯 Goal
-- Sync local SaveData to a Firestore document at `users/{uid}`
-- Offline-first (local is truth, sync in background)
-- Conflict resolution: compare `updatedAtUnixMs` → newer wins
-- On network failure, keep operating locally
+- Persist game state to Firestore at `users/{uid}` as the **canonical source of truth**
+- Local `save.json` (Task G) is demoted to an **offline cache**
+- On login → pull server doc; if it exists, server wins and overwrites local. If it does not exist, the local cache is pushed up to seed the server (first-time-on-device scenario).
+- Every meaningful state change (gold, upgrade purchase, stage advance, app pause/quit) is pushed to Firestore with debounce
+- Conflict resolution between two simultaneously-online devices: **newer-wins by `updatedAtUnixMs`**
+- Network failure tolerance: local cache continues to serve gameplay; queued writes flush on reconnect
+
+### Server-canonical reconciliation rules
+1. **On login (every launch):** pull `users/{uid}` document.
+   - **If remote exists and `remote.updatedAtUnixMs > local.updatedAtUnixMs`** → overwrite local cache + emit "RestoredFromServer" feedback
+   - **If remote exists and `remote.updatedAtUnixMs <= local.updatedAtUnixMs`** → push local up (this means the device played offline more recently than the server saw)
+   - **If remote does not exist** → push local up (first-time bootstrap)
+2. **During play:** every state-change trigger pushes to Firestore (debounced 5s). Firestore offline persistence handles brief disconnects transparently.
+3. **On app pause / quit:** force-flush pending writes immediately.
+4. **On account link (anonymous → Google/Apple):** Firebase Auth's `LinkWithCredentialAsync` preserves the UID, so the doc location does not change. No data migration needed.
+5. **First-login conflict (`userId="local"` cache vs existing remote doc on a different UID):**
+   - Scenario: user played offline first (local cache has `userId="local"` and meaningful progress), then logs into Google/Apple for the first time. The new UID may already have a remote doc from another device.
+   - **If the new UID has no remote doc** → seed the server with the local cache (rewriting `local.userId = newUid` first), same as bootstrap.
+   - **If the new UID has a remote doc** → present a one-time **Conflict Resolution Modal** (`Assets/Scripts/UI/SaveConflictPanel.cs`, defined in this task) showing both sides' summary (gold, current chapter/stage, last play time). User chooses one of: **Use Local**, **Use Remote**, **Cancel Login** (revert to anonymous, keep local). The chosen side becomes the new canonical state; the other is discarded. Never auto-merge — risk of cheating / silent loss.
+   - The conflict modal is invoked exactly once per first-link event, never on subsequent logins (subsequent logins fall back to the standard newer-wins rule).
 
 ### ✅ Definition of Done
 - [ ] Unity Console clean
-- [ ] Earning gold in PlayMode → Firestore updated within 5 seconds
-- [ ] After deleting save.json, re-login → restore from Firestore
-- [ ] Offline mode operates normally
-- [ ] 5 regression tests pass
+- [ ] Earning gold in PlayMode → `users/{uid}` document on Firestore Console updated within 5 seconds
+- [ ] Delete local `save.json` → next launch pulls full state from Firestore
+- [ ] Force-quit during a write → next launch retains the last successfully pushed state
+- [ ] Wi-Fi OFF → game runs normally; Wi-Fi ON → queued writes flush automatically
+- [ ] Two devices logged into the same Google account → newer save wins on next sync
+- [ ] 6 regression tests pass
 
 ### 📂 Files Changed
 
 #### I-1. Package addition
-- Firebase Firestore Unity module
+- Firebase Firestore Unity module (already added in Task H if Firestore was needed for the profile doc; otherwise add here)
 
 #### I-2. `Assets/Scripts/Save/CloudSyncService.cs` (new)
 ```csharp
@@ -1247,41 +1465,92 @@ public class CloudSyncService
 {
     private FirebaseFirestore db;
 
-    public Task PushAsync(SaveData data);
-    public Task<SaveData> PullAsync(string uid);
-    public Task ResolveAndApply(SaveService localService, string uid);
+    public Task              PushAsync(SaveData data);
+    public Task<SaveData>    PullAsync(string uid);
+    public Task              ResolveAndApply(SaveService localService, string uid);
+    public Task              FlushPendingAsync();   // force-flush queued writes
 }
 ```
 
-`ResolveAndApply` behavior:
-- Pull remote from Firestore
-- If no remote → push local
-- If remote is newer (updatedAtUnixMs) → overwrite local + save
-- Otherwise → push local
+`ResolveAndApply` implements the reconciliation rules above. Server is the canonical store; local is overwritten when the server is newer.
 
 #### I-3. `Assets/Scripts/Save/SyncCoordinator.cs` (new)
 **Triggers:**
-- AuthService.UserChanged → run `ResolveAndApply()` once
-- On SaveData change, debounce 5s then push
-- `OnApplicationPause(true)` → push immediately
-- Queue while offline; flush on online recovery
+- `AuthService.UserChanged` → `ResolveAndApply()` exactly once
+- `wallet.GoldChanged` / `upgradeSystem.UpgradePurchased` / `stageManager.StateChanged` → debounce 5s → `PushAsync(local)`
+- `OnApplicationPause(true)` → `FlushPendingAsync()`
+- `OnApplicationQuit` → `FlushPendingAsync()` (best-effort, may not complete on hard kill)
+- Network online recovery → flush queued pushes
+- Implementer: use Firebase Firestore's built-in offline persistence (`FirestoreSettings.PersistenceEnabled = true`) so disconnected writes are queued by the SDK itself. The SyncCoordinator only adds debounce + flush on lifecycle events.
 
-#### I-4. `Assets/Scripts/Save/SaveData.cs` (Firestore compatibility)
-- Add `[FirestoreData]`, `[FirestoreProperty]` attributes (per field)
+#### I-4. `Assets/Scripts/Save/SaveDataDocument.cs` + `Assets/Scripts/Save/SaveDataMapper.cs` (new — mapper pattern)
+**Do not** decorate the existing `SaveData` class with `[FirestoreData]`. Mixing JsonUtility's `[Serializable]` (field-based) and Firestore's `[FirestoreData]` (property-based, requires no-arg ctor) on a single class causes silent serialization mismatches.
 
-#### I-5. `Assets/Scripts/Core/GameManager.cs` (modify)
-- Start SyncCoordinator from the AuthService login callback
+Create a separate Firestore POCO and a manual mapper instead:
+
+```csharp
+[FirestoreData]
+public class SaveDataDocument
+{
+    [FirestoreProperty] public int    saveVersion       { get; set; }
+    [FirestoreProperty] public string userId            { get; set; }
+    [FirestoreProperty] public long   updatedAtUnixMs   { get; set; }
+    [FirestoreProperty] public int    gold              { get; set; }
+    [FirestoreProperty] public int    currentChapter    { get; set; }
+    [FirestoreProperty] public int    currentStage      { get; set; }
+    [FirestoreProperty] public PlayerStatsSnapshotDoc stats     { get; set; }
+    [FirestoreProperty] public List<UpgradeLevelEntryDoc> upgrades { get; set; }
+}
+
+[FirestoreData] public class PlayerStatsSnapshotDoc { ... matching auto/manual damage etc. ... }
+[FirestoreData] public class UpgradeLevelEntryDoc   { [FirestoreProperty] public string id { get; set; } [FirestoreProperty] public int level { get; set; } }
+
+public static class SaveDataMapper
+{
+    public static SaveDataDocument ToDocument(SaveData data);
+    public static SaveData         FromDocument(SaveDataDocument doc);
+}
+```
+
+`CloudSyncService.PushAsync` / `PullAsync` operate on `SaveDataDocument`; `SaveBinder` / `SaveService` keep using `SaveData`. The mapper is the only seam between them.
+
+#### I-5. `Assets/Scripts/Save/SaveService.cs` (modify)
+- After Bundle 5 lands, the local file becomes a **cache**, not a primary store. Add a new method `OverwriteFromServer(SaveData remote)` that the CloudSyncService can call when the server wins reconciliation; it should atomically replace `CurrentData` and persist the new file.
+
+#### I-6. `Assets/Scripts/Core/GameManager.cs` (modify)
+- After `AuthService.SignInAnonymouslyAsync()` succeeds, call `SyncCoordinator.Start(uid)` which kicks off `ResolveAndApply` and registers triggers
+- On `AuthService.UserChanged` (e.g. Google link), call `SyncCoordinator.OnUidChanged(newUid)` — usually the same UID since linking preserves it, but be defensive
+
+#### I-7. `Assets/Scripts/Core/GameContext.cs` (modify)
+- Add fields: `CloudSyncService`, `SyncCoordinator`
+
+#### I-8. `Assets/Scripts/UI/SaveConflictPanel.cs` (new)
+Modal panel triggered by `SyncCoordinator` per reconciliation rule #5 (first-login conflict).
+```csharp
+public class SaveConflictPanel : MonoBehaviour
+{
+    public Task<ConflictChoice> ShowAsync(SaveData local, SaveDataDocument remote);
+}
+public enum ConflictChoice { UseLocal, UseRemote, CancelLogin }
+```
+- Display side-by-side summary: gold, chapter-stage, last-play timestamp.
+- The resolved choice is consumed by `SyncCoordinator`:
+  - `UseLocal` → mutate `local.userId = newUid` → `PushAsync` (overwrites remote)
+  - `UseRemote` → `OverwriteFromServer(SaveDataMapper.FromDocument(remote))`
+  - `CancelLogin` → AuthService.SignOutAsync() and stay anonymous; local cache untouched.
 
 ### 🚫 Do Not Touch
 - Combat, stage, UI logic
-- SaveService core (keep it separate from CloudSyncService)
+- `SaveService` core file IO (only the new `OverwriteFromServer` method is permitted; do not change existing `Save` / `TryLoad` / `Reset` semantics)
+- `UserProfileService` (Task H scope) — keep profile docs separate from game state docs
 
 ### 🧪 Validation
 1. Compilation clean
-2. PlayMode anonymous login → earn gold → confirm `users/{uid}` updated in Firestore Console
-3. Delete save.json → same UID re-login → restored from Firestore
-4. Wi-Fi OFF in PlayMode → operates normally → Wi-Fi ON → auto-sync
-5. Two devices progressing simultaneously → later save wins
+2. PlayMode anonymous login → earn gold → confirm `users/{uid}` updated in Firestore Console within 5s
+3. Delete `save.json` → re-launch → game state restored from Firestore
+4. Wi-Fi OFF in PlayMode → upgrade something → Wi-Fi ON → confirm Firestore reflects the change within 10s
+5. Two devices logged into the same Google account, both modify state → on next sync, the later `updatedAtUnixMs` wins
+6. Force-quit Unity during a write → re-launch → no data loss for the last successfully pushed state
 
 ### 📝 Work Log (implementer)
 - (empty)
@@ -1329,3 +1598,7 @@ Once cleared, the reviewer reports "Bundle X gate passed" to the user and procee
 | 2026-05-06 | Planner | Introduced Bundle 1~5 structure, full specs ported for B~I, added bundle-gate / auto-progression / git-commit rules to §0 |
 | 2026-05-06 | Planner | Reviewed and marked Task B/C/D/E ✅ DONE. Bundle 1 & 2 gates passed. User-requested additions (cooldown removal, multi-monster field, map expansion + camera follow, Korean fonts, per-monster health bars) recorded in work logs and approved. New components (`EnemyWanderController`, `EnemyHealthBarView`, `MobileCameraFitter` follow) added. |
 | 2026-05-06 | Planner | Translated document to English to reduce token usage. Korean retained only for in-game display strings (chapter name "음산한 숲", button label "보스 입장", upgrade `displayName` values, drawer labels "강화 열기/닫기"). Korean backup preserved at `Tasks_kr.md`. |
+| 2026-05-06 | Planner | Reviewed and marked Task F ✅ DONE. Bundle 3 gate passed. User-requested visual polish (sprite regeneration, Wizard animation, AppleGothic_TMP font reassignment, larger damage text, responsive grid fitter) all logged and approved. New components: `UpgradeDrawerView`, `UpgradeDrawerGridFitter`, `WizardAnimationController`, `Editor/VisualAssetUpdater`. |
+| 2026-05-06 | Planner | Bundle 5 reframed: server DB (Firestore) is now the **canonical store**; local `save.json` is demoted to an offline cache once Bundle 5 ships. Task H expanded to include explicit user identity registration: separate `users/{uid}/profile/main` document with `displayName` / `accountType` / `createdAtUnixMs` / `lastLoginAtUnixMs`, plus a one-time nickname registration UI on first link to Google/Apple. Task I rewritten with server-canonical reconciliation rules (server wins on login if newer; local seeds server on first contact; newer-wins between online devices). User prework checklist (Firebase Console, Apple Developer, Google Cloud Console, Firestore rules) remains the gating prerequisite. |
+| 2026-05-07 | Planner | Pre-Task-G structural review. Six risks flagged: (1) duplicate HP fields in `PlayerWizard` vs `PlayerStats`; (2) `manual_speed` upgrade is a sham (no effect after Task B's cooldown removal); (3) no visible player HP bar after Task E's `healthBar` deactivation; (4) Firestore + JsonUtility serialization conflict on a single class; (5) `userId="local"` → real-UID first-login conflict resolution undefined; (6) vestigial refs (`EnemySpawner.CurrentEnemy`, HUDController `healthBar`, PrototypeBuilder L136). Items #1 / #2 / #3 / #6 became **new Task G0** (pre-save cleanup, must be ✅ DONE before Task G). Items #4 / #5 applied directly to Task I spec — `SaveDataDocument` mapper pattern (§I-4) and `SaveConflictPanel` (§I-8) added; reconciliation rules grew rule #5 for first-login conflict. Removed an accidentally-duplicated old Task I body left over from the Bundle 5 reframe. |
+| 2026-05-07 | Planner | Cleaned up duplicate Task I body that remained after the Bundle 5 reframe (the old offline-first version was still present after the new server-canonical version). |
