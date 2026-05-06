@@ -59,7 +59,6 @@ namespace WizardGrower.UI
             stageManager.StateChanged += OnStateChanged;
             stageManager.BossEntryAvailabilityChanged += OnBossEntryAvailabilityChanged;
             stageManager.Feedback += ShowFeedback;
-            spawner.EnemySpawned += healthBar.Bind;
             spawner.EnemyDamaged += OnEnemyDamaged;
             bossStageController.TimerChanged += bossTimer.Refresh;
             upgradeSystem.UpgradePurchased += (_, _, _) => RefreshUpgradeButtons();
@@ -76,6 +75,8 @@ namespace WizardGrower.UI
             RefreshAttack(wizard);
             goldLabel.text = $"Gold {wallet.Gold}";
             manaBar.Refresh(mana.Current, mana.Max);
+            if (healthBar != null)
+                healthBar.gameObject.SetActive(false);
             RefreshAutoToggle(movementController.AutoModeEnabled);
         }
 
