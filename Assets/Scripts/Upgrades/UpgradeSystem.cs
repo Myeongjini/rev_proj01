@@ -29,12 +29,19 @@ namespace WizardGrower.Upgrades
 
         public void EnsureDefaults()
         {
-            if (upgrades.Count > 0)
+            if (HasCurrentDefaultSet())
                 return;
 
-            upgrades.Add(new UpgradeDefinition { id = "attack", displayName = "Attack", type = UpgradeType.Attack, baseCost = 20, value = 5f });
-            upgrades.Add(new UpgradeDefinition { id = "mana", displayName = "Mana", type = UpgradeType.Mana, baseCost = 25, value = 15f });
-            upgrades.Add(new UpgradeDefinition { id = "critical", displayName = "Critical", type = UpgradeType.Critical, baseCost = 35, value = 0.03f });
+            upgrades.Clear();
+            upgrades.Add(new UpgradeDefinition { id = "auto_dmg", displayName = "자동공격력", type = UpgradeType.AutoDamage, baseCost = 20, value = 5f });
+            upgrades.Add(new UpgradeDefinition { id = "manual_dmg", displayName = "수동공격력", type = UpgradeType.ManualDamage, baseCost = 30, value = 8f });
+            upgrades.Add(new UpgradeDefinition { id = "auto_speed", displayName = "자동발사속도", type = UpgradeType.AutoFireRate, baseCost = 40, value = 0.05f });
+            upgrades.Add(new UpgradeDefinition { id = "manual_speed", displayName = "수동발사속도", type = UpgradeType.ManualFireRate, baseCost = 40, value = 0.02f });
+            upgrades.Add(new UpgradeDefinition { id = "crit_chance", displayName = "크리확률", type = UpgradeType.CriticalChance, baseCost = 35, value = 0.03f });
+            upgrades.Add(new UpgradeDefinition { id = "crit_mult", displayName = "크리데미지", type = UpgradeType.CriticalMultiplier, baseCost = 50, value = 0.1f });
+            upgrades.Add(new UpgradeDefinition { id = "armor_pen", displayName = "방어관통", type = UpgradeType.ArmorPenetration, baseCost = 45, value = 1f });
+            upgrades.Add(new UpgradeDefinition { id = "max_hp", displayName = "최대체력", type = UpgradeType.MaxHealth, baseCost = 25, value = 20f });
+            upgrades.Add(new UpgradeDefinition { id = "mana", displayName = "마나", type = UpgradeType.Mana, baseCost = 25, value = 15f });
         }
 
         public int GetLevel(UpgradeDefinition definition)
@@ -68,18 +75,52 @@ namespace WizardGrower.Upgrades
         {
             switch (definition.type)
             {
-                case UpgradeType.Attack:
+                case UpgradeType.AutoDamage:
                     wizard.Stats.AddAutoDamage(definition.value);
                     break;
-                case UpgradeType.Mana:
-                    mana.IncreaseMax(definition.value);
-                    mana.IncreaseRegeneration(1f);
+                case UpgradeType.ManualDamage:
+                    wizard.Stats.AddManualDamage(definition.value);
                     break;
-                case UpgradeType.Critical:
+                case UpgradeType.AutoFireRate:
+                    wizard.Stats.AddAutoFireRate(definition.value);
+                    break;
+                case UpgradeType.ManualFireRate:
+                    wizard.Stats.AddManualFireRate(definition.value);
+                    break;
+                case UpgradeType.CriticalChance:
                     wizard.Stats.AddCriticalChance(definition.value);
-                    wizard.Stats.AddCriticalMultiplier(0.05f);
+                    break;
+                case UpgradeType.CriticalMultiplier:
+                    wizard.Stats.AddCriticalMultiplier(definition.value);
+                    break;
+                case UpgradeType.ArmorPenetration:
+                    wizard.Stats.AddArmorPenetration(definition.value);
+                    break;
+                case UpgradeType.MaxHealth:
+                    wizard.Stats.AddMaxHealth(definition.value);
+                    break;
+                case UpgradeType.Mana:
+                    if (mana != null)
+                    {
+                        mana.IncreaseMax(definition.value);
+                        mana.IncreaseRegeneration(1f);
+                    }
                     break;
             }
+        }
+
+        private bool HasCurrentDefaultSet()
+        {
+            return upgrades.Count == 9
+                && upgrades[0].id == "auto_dmg"
+                && upgrades[1].id == "manual_dmg"
+                && upgrades[2].id == "auto_speed"
+                && upgrades[3].id == "manual_speed"
+                && upgrades[4].id == "crit_chance"
+                && upgrades[5].id == "crit_mult"
+                && upgrades[6].id == "armor_pen"
+                && upgrades[7].id == "max_hp"
+                && upgrades[8].id == "mana";
         }
     }
 }

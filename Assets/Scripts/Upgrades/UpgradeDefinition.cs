@@ -4,9 +4,15 @@ namespace WizardGrower.Upgrades
 {
     public enum UpgradeType
     {
-        Attack,
+        AutoDamage,
+        ManualDamage,
+        AutoFireRate,
+        ManualFireRate,
+        CriticalChance,
+        CriticalMultiplier,
+        ArmorPenetration,
+        MaxHealth,
         Mana,
-        Critical
     }
 
     [Serializable]

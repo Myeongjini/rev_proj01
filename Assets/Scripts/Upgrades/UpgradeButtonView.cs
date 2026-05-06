@@ -13,14 +13,23 @@ namespace WizardGrower.Upgrades
         private UpgradeSystem system;
         private UpgradeDefinition definition;
 
+        private void Awake()
+        {
+            if (button == null)
+                button = GetComponent<Button>();
+        }
+
         public void Bind(UpgradeSystem system, UpgradeDefinition definition, Sprite iconSprite)
         {
+            if (button != null)
+                button.onClick.RemoveAllListeners();
+
             this.system = system;
             this.definition = definition;
             if (icon != null)
                 icon.sprite = iconSprite;
             if (button != null)
-                button.onClick.AddListener(Buy);
+                button.onClick.AddListener(() => Buy());
             Refresh();
         }
 

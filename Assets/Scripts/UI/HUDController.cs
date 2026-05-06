@@ -29,12 +29,15 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text autoToggleButtonLabel;
         [SerializeField] private Button bossEntryButton;
         [SerializeField] private TMP_Text bossEntryButtonLabel;
-        [SerializeField] private UpgradeButtonView[] upgradeButtons;
+        [SerializeField] private UpgradeDrawerView upgradeDrawer;
+        [SerializeField] private Transform upgradeButtonContainer;
+        [SerializeField] private UpgradeButtonView upgradeButtonPrefab;
         [SerializeField] private Sprite[] upgradeIcons;
 
         private ActiveSkillController skillController;
         private ClickAttackController manualAttackController;
         private PlayerMovementController movementController;
+        private readonly System.Collections.Generic.List<UpgradeButtonView> upgradeButtonViews = new System.Collections.Generic.List<UpgradeButtonView>();
         private float feedbackTimer;
 
         public void Initialize(
@@ -133,16 +136,25 @@ namespace WizardGrower.UI
 
         private void BindUpgradeButtons(UpgradeSystem system)
         {
-            for (int i = 0; i < upgradeButtons.Length && i < system.Upgrades.Count; i++)
+            upgradeButtonViews.Clear();
+            if (upgradeButtonContainer == null || upgradeButtonPrefab == null)
+                return;
+
+            for (int i = upgradeButtonContainer.childCount - 1; i >= 0; i--)
+                Destroy(upgradeButtonContainer.GetChild(i).gameObject);
+
+            for (int i = 0; i < system.Upgrades.Count; i++)
             {
                 Sprite icon = i < upgradeIcons.Length ? upgradeIcons[i] : null;
-                upgradeButtons[i].Bind(system, system.Upgrades[i], icon);
+                UpgradeButtonView view = Instantiate(upgradeButtonPrefab, upgradeButtonContainer);
+                view.Bind(system, system.Upgrades[i], icon);
+                upgradeButtonViews.Add(view);
             }
         }
 
         private void RefreshUpgradeButtons()
         {
-            foreach (UpgradeButtonView view in upgradeButtons)
+            foreach (UpgradeButtonView view in upgradeButtonViews)
                 view.Refresh();
         }
 
