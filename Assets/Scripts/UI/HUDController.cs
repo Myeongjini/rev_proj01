@@ -27,6 +27,8 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text manualAttackButtonLabel;
         [SerializeField] private Button autoToggleButton;
         [SerializeField] private TMP_Text autoToggleButtonLabel;
+        [SerializeField] private Button bossEntryButton;
+        [SerializeField] private TMP_Text bossEntryButtonLabel;
         [SerializeField] private UpgradeButtonView[] upgradeButtons;
         [SerializeField] private Sprite[] upgradeIcons;
 
@@ -54,6 +56,8 @@ namespace WizardGrower.UI
             wallet.GoldChanged += gold => goldLabel.text = $"Gold {gold}";
             wizard.Stats.Changed += () => RefreshAttack(wizard);
             mana.Changed += manaBar.Refresh;
+            stageManager.StateChanged += OnStateChanged;
+            stageManager.BossEntryAvailabilityChanged += OnBossEntryAvailabilityChanged;
             stageManager.Feedback += ShowFeedback;
             spawner.EnemySpawned += healthBar.Bind;
             spawner.EnemyDamaged += OnEnemyDamaged;
@@ -62,6 +66,8 @@ namespace WizardGrower.UI
             skillButton.onClick.AddListener(() => skillController.TryCast());
             manualAttackButton.onClick.AddListener(() => manualAttackController.TryFireManual());
             autoToggleButton.onClick.AddListener(() => movementController.ToggleAutoMode());
+            if (bossEntryButton != null)
+                bossEntryButton.onClick.AddListener(() => stageManager.EnterBossRoom());
             movementController.AutoModeChanged += RefreshAutoToggle;
             if (joystickIndicator != null)
                 movementController.JoystickChanged += joystickIndicator.Refresh;
@@ -94,6 +100,24 @@ namespace WizardGrower.UI
         {
             if (autoToggleButtonLabel != null)
                 autoToggleButtonLabel.text = enabled ? "Auto On" : "Auto Off";
+        }
+
+        private void OnStateChanged(ChapterDefinition chapter, StageDefinition stage, StageMode mode)
+        {
+            if (stageLabel == null || chapter == null || stage == null)
+                return;
+
+            string suffix = mode == StageMode.BossRoom ? " BOSS" : "";
+            stageLabel.text = $"{chapter.displayName} {chapter.chapterNumber}-{stage.stageNumber}{suffix}";
+        }
+
+        private void OnBossEntryAvailabilityChanged(bool available)
+        {
+            if (bossEntryButton != null)
+                bossEntryButton.interactable = available;
+
+            if (bossEntryButtonLabel != null)
+                bossEntryButtonLabel.text = "보스 입장";
         }
 
         private void OnEnemyDamaged(EnemyBase enemy, DamageInfo info)

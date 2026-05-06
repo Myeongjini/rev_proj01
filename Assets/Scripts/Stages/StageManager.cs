@@ -61,12 +61,6 @@ namespace WizardGrower.Stages
             return true;
         }
 
-        [ContextMenu("Debug Enter Boss")]
-        private void DebugEnterBoss()
-        {
-            EnterBossRoom();
-        }
-
         private void OnEnemyKilled(EnemyBase enemy)
         {
             wallet.AddGold(enemy.RewardGold);

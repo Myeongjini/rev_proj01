@@ -70,7 +70,7 @@
 | 1 | B | 전투 정합성 + 발사속도 stat 반영 + 버그 수정 | 🟡 IN REVIEW | A |
 | 2 | C | ChapterDefinition / StageDefinition 데이터 모델 | 🟡 IN REVIEW | Bundle 1 게이트 |
 | 2 | D | StageManager 흐름 리팩터 (필드 ↔ 보스방) | 🟡 IN REVIEW | C |
-| 2 | E | 보스 입장 버튼 + HUD 챕터/스테이지 표시 | 🔴 TODO | D |
+| 2 | E | 보스 입장 버튼 + HUD 챕터/스테이지 표시 | 🟡 IN REVIEW | D |
 | 3 | F | 업그레이드 드로어 UI (하단 토글, 2열 스크롤) | 🔴 TODO | Bundle 2 게이트 |
 | 4 | G | SaveData 모델 + 로컬 저장 | 🔴 TODO | Bundle 3 게이트 |
 | 5 | H | Firebase Auth (익명/Google/Apple) | 🔴 TODO | Bundle 4 게이트 + 사용자 사전작업 |
@@ -621,7 +621,7 @@ context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, c
 
 ## Task E — 보스 입장 버튼 + HUD 챕터/스테이지 표시
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **선행:** D
 
 ### 🎯 목표
@@ -687,7 +687,8 @@ private void OnBossEntryAvailabilityChanged(bool available)
 4. 보스 처치 → 라벨 "음산한 숲 1-2" 갱신, 버튼 재활성
 
 ### 📝 작업 로그 (구현자 기록)
-- (비어있음)
+- 2026-05-06 시작: Bundle 2 Task E 착수. HUDController에 StageManager.StateChanged/BossEntryAvailabilityChanged 연결, 보스 입장 버튼 생성/할당, Task D 디버그 보스 진입 메뉴 제거 예정.
+- 2026-05-06 종료: HUDController에 bossEntryButton/bossEntryButtonLabel 필드 및 새 StateChanged/BossEntryAvailabilityChanged 핸들러 추가, BossEntryButton 씬 생성 및 필드 할당, StageManager의 Debug Enter Boss ContextMenu 제거 완료. 한글 HUD 표시 경고 방지를 위해 macOS 기본 AppleGothic 기반 TMP 폰트 에셋을 Assets/Fonts에 생성하고 StageLabel/BossEntryButton Label에 할당. PlayMode 검증: "음산한 숲 1-1" 라벨 + 보스 입장 버튼 활성, 클릭 시 "음산한 숲 1-1 BOSS" + 버튼 비활성 + BossEnemy, 보스 처치 후 "음산한 숲 1-2" + 버튼 재활성 통과. Bundle 2 종합 흐름: 필드 처치 stage 유지, 보스 실패 stage 유지 Field 복귀, 1-8 보스 클리어 후 마지막 챕터 All Cleared 경로 통과. Console 게임 코드 에러/경고 없음.
 
 ### 🔍 검토 노트 (검토자 기록)
 - (비어있음)
