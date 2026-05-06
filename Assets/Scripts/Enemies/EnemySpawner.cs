@@ -32,7 +32,7 @@ namespace WizardGrower.Enemies
                 Destroy(CurrentEnemy.gameObject);
 
             CurrentEnemy = Instantiate(prefab, spawnPoint.position, Quaternion.identity, transform);
-            CurrentEnemy.Initialize(health, reward);
+            CurrentEnemy.Initialize(health, reward, 0f);
             CurrentEnemy.Damaged += OnEnemyDamaged;
             CurrentEnemy.Killed += OnEnemyKilled;
             EnemySpawned?.Invoke(CurrentEnemy);

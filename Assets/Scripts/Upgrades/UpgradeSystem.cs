@@ -69,7 +69,7 @@ namespace WizardGrower.Upgrades
             switch (definition.type)
             {
                 case UpgradeType.Attack:
-                    wizard.Stats.AddAttack(definition.value);
+                    wizard.Stats.AddAutoDamage(definition.value);
                     break;
                 case UpgradeType.Mana:
                     mana.IncreaseMax(definition.value);

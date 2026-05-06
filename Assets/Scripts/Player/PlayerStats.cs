@@ -6,25 +6,52 @@ namespace WizardGrower.Player
     [Serializable]
     public class PlayerStats
     {
-        [SerializeField] private float attackDamage = 10f;
+        [SerializeField] private float autoAttackDamage = 10f;
+        [SerializeField] private float manualAttackDamage = 20f;
         [SerializeField] private float autoAttackInterval = 1f;
-        [SerializeField] private float manualAttackMultiplier = 2f;
+        [SerializeField] private float manualAttackInterval = 0.3f;
         [SerializeField, Range(0f, 1f)] private float criticalChance = 0.1f;
         [SerializeField] private float criticalMultiplier = 2f;
+        [SerializeField] private float armorPenetration = 0f;
+        [SerializeField] private float maxHealth = 100f;
+        [SerializeField] private float currentHealth = 100f;
         [SerializeField] private float combatPower = 10f;
 
         public event Action Changed;
+        public event Action HealthChanged;
 
-        public float AttackDamage => attackDamage;
+        public float AutoAttackDamage => autoAttackDamage;
+        public float ManualAttackDamage => manualAttackDamage;
         public float AutoAttackInterval => autoAttackInterval;
-        public float ManualAttackMultiplier => manualAttackMultiplier;
+        public float ManualAttackInterval => manualAttackInterval;
         public float CriticalChance => criticalChance;
         public float CriticalMultiplier => criticalMultiplier;
+        public float ArmorPenetration => armorPenetration;
+        public float MaxHealth => maxHealth;
+        public float CurrentHealth => currentHealth;
         public float CombatPower => combatPower;
 
-        public void AddAttack(float amount)
+        public void AddAutoDamage(float amount)
         {
-            attackDamage += amount;
+            autoAttackDamage += amount;
+            RecalculateCombatPower();
+        }
+
+        public void AddManualDamage(float amount)
+        {
+            manualAttackDamage += amount;
+            RecalculateCombatPower();
+        }
+
+        public void AddAutoFireRate(float amount)
+        {
+            autoAttackInterval = Mathf.Max(0.05f, autoAttackInterval - amount);
+            RecalculateCombatPower();
+        }
+
+        public void AddManualFireRate(float amount)
+        {
+            manualAttackInterval = Mathf.Max(0.05f, manualAttackInterval - amount);
             RecalculateCombatPower();
         }
 
@@ -40,9 +67,37 @@ namespace WizardGrower.Player
             RecalculateCombatPower();
         }
 
+        public void AddArmorPenetration(float amount)
+        {
+            armorPenetration += amount;
+            RecalculateCombatPower();
+        }
+
+        public void AddMaxHealth(float amount)
+        {
+            maxHealth = Mathf.Max(1f, maxHealth + amount);
+            currentHealth = Mathf.Clamp(currentHealth + amount, 0f, maxHealth);
+            HealthChanged?.Invoke();
+            RecalculateCombatPower();
+        }
+
+        public void Heal(float amount)
+        {
+            currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+            HealthChanged?.Invoke();
+            Changed?.Invoke();
+        }
+
+        public void TakeHealth(float amount)
+        {
+            currentHealth = Mathf.Max(0f, currentHealth - amount);
+            HealthChanged?.Invoke();
+            Changed?.Invoke();
+        }
+
         private void RecalculateCombatPower()
         {
-            combatPower = attackDamage * (1f + criticalChance * (criticalMultiplier - 1f));
+            combatPower = autoAttackDamage * (1f + criticalChance * (criticalMultiplier - 1f));
             Changed?.Invoke();
         }
     }

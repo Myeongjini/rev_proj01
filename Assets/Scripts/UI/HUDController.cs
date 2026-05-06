@@ -109,7 +109,7 @@ namespace WizardGrower.UI
 
         private void RefreshAttack(PlayerWizard wizard)
         {
-            attackLabel.text = $"ATK {wizard.Stats.AttackDamage:0}  CP {wizard.Stats.CombatPower:0}";
+            attackLabel.text = $"ATK {wizard.Stats.AutoAttackDamage:0}  CP {wizard.Stats.CombatPower:0}";
         }
 
         private void BindUpgradeButtons(UpgradeSystem system)
