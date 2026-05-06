@@ -53,6 +53,8 @@ MonoBehaviour:
   label: {fileID: 7479260276467031316}
   lifetime: 0.75
   riseSpeed: 80
+  normalFontSize: 34
+  criticalFontSize: 46
 --- !u!222 &2686856488725251346
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -108,8 +110,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 26
-  m_fontSizeBase: 26
+  m_fontSize: 38
+  m_fontSizeBase: 38
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18

@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: 571323873659817246}
   - component: {fileID: 9072297665787396914}
   - component: {fileID: 8527339460333325317}
+  - component: {fileID: 853775600918863283}
+  - component: {fileID: -1801342990416386544}
   m_Layer: 0
   m_Name: PlayerWizard
   m_TagString: Untagged
@@ -31,7 +33,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_LocalScale: {x: 1.35, y: 1.35, z: 1.35}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2672543323291517373}
@@ -86,12 +88,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1457491203435894738, guid: f3c669df557df487cb007769bf80d309, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f3c669df557df487cb007769bf80d309, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1.015625, y: 0.96875}
+  m_Size: {x: 2, y: 2}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -109,11 +111,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Player.PlayerWizard
   stats:
-    attackDamage: 10
+    autoAttackDamage: 10
+    manualAttackDamage: 20
     autoAttackInterval: 1
-    manualAttackMultiplier: 2
+    manualAttackInterval: 0.3
     criticalChance: 0.1
     criticalMultiplier: 2
+    armorPenetration: 0
+    maxHealth: 100
+    currentHealth: 100
     combatPower: 10
   castPoint: {fileID: 2672543323291517373}
   maxHealth: 100
@@ -167,6 +173,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Player.PlayerProgression
   highestStageReached: 1
   bestCombatPower: 0
+--- !u!95 &853775600918863283
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6311144468184446484}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 5f2b0448b706d4554a9b1715b1af4683, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &-1801342990416386544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6311144468184446484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcac7949dd13f4825834450598625280, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Player.WizardAnimationController
+  animator: {fileID: 0}
+  movingParameter: Moving
+  movingThreshold: 0.0025
 --- !u!1 &8341544063683414008
 GameObject:
   m_ObjectHideFlags: 0

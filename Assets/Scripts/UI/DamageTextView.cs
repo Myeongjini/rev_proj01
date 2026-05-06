@@ -8,6 +8,8 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text label;
         [SerializeField] private float lifetime = 0.75f;
         [SerializeField] private float riseSpeed = 80f;
+        [SerializeField] private float normalFontSize = 34f;
+        [SerializeField] private float criticalFontSize = 46f;
 
         private float timer;
 
@@ -18,7 +20,7 @@ namespace WizardGrower.UI
             {
                 label.text = critical ? $"CRIT {Mathf.CeilToInt(amount)}" : Mathf.CeilToInt(amount).ToString();
                 label.color = critical ? new Color(1f, 0.72f, 0.12f) : Color.white;
-                label.fontSize = critical ? 34f : 24f;
+                label.fontSize = critical ? criticalFontSize : normalFontSize;
             }
         }
 
