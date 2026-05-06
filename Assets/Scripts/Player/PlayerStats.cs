@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using WizardGrower.Save;
 
 namespace WizardGrower.Player
 {
@@ -93,6 +94,40 @@ namespace WizardGrower.Player
             currentHealth = Mathf.Max(0f, currentHealth - amount);
             HealthChanged?.Invoke();
             Changed?.Invoke();
+        }
+
+        public void ApplySnapshot(PlayerStatsSnapshot snapshot)
+        {
+            if (snapshot == null)
+                return;
+
+            autoAttackDamage = snapshot.autoAttackDamage;
+            manualAttackDamage = snapshot.manualAttackDamage;
+            autoAttackInterval = Mathf.Max(0.05f, snapshot.autoAttackInterval);
+            manualAttackInterval = Mathf.Max(0.05f, snapshot.manualAttackInterval);
+            criticalChance = Mathf.Clamp01(snapshot.criticalChance);
+            criticalMultiplier = Mathf.Max(1f, snapshot.criticalMultiplier);
+            armorPenetration = Mathf.Max(0f, snapshot.armorPenetration);
+            maxHealth = Mathf.Max(1f, snapshot.maxHealth);
+            currentHealth = Mathf.Clamp(snapshot.currentHealth <= 0f ? maxHealth : snapshot.currentHealth, 0f, maxHealth);
+            RecalculateCombatPower();
+            HealthChanged?.Invoke();
+        }
+
+        public PlayerStatsSnapshot CaptureSnapshot()
+        {
+            return new PlayerStatsSnapshot
+            {
+                autoAttackDamage = autoAttackDamage,
+                manualAttackDamage = manualAttackDamage,
+                autoAttackInterval = autoAttackInterval,
+                manualAttackInterval = manualAttackInterval,
+                criticalChance = criticalChance,
+                criticalMultiplier = criticalMultiplier,
+                armorPenetration = armorPenetration,
+                maxHealth = maxHealth,
+                currentHealth = currentHealth
+            };
         }
 
         private void RecalculateCombatPower()

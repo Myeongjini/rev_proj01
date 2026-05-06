@@ -13,6 +13,7 @@ using WizardGrower.Core;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
 using WizardGrower.Player;
+using WizardGrower.Save;
 using WizardGrower.Stages;
 using WizardGrower.UI;
 using WizardGrower.Upgrades;
@@ -78,6 +79,8 @@ namespace WizardGrower.EditorTools
             BossStageController bossStage = roots.AddComponent<BossStageController>();
             StageManager stage = roots.AddComponent<StageManager>();
             UpgradeSystem upgrades = roots.AddComponent<UpgradeSystem>();
+            SaveService saveService = roots.AddComponent<SaveService>();
+            SaveBinder saveBinder = roots.AddComponent<SaveBinder>();
             AutoAttackController autoAttack = roots.AddComponent<AutoAttackController>();
             ClickAttackController clickAttack = roots.AddComponent<ClickAttackController>();
             ActiveSkillController activeSkill = roots.AddComponent<ActiveSkillController>();
@@ -124,6 +127,8 @@ namespace WizardGrower.EditorTools
             SetField(context, "StageManager", stage);
             SetField(context, "BossStage", bossStage);
             SetField(context, "UpgradeSystem", upgrades);
+            SetField(context, "SaveService", saveService);
+            SetField(context, "SaveBinder", saveBinder);
             SetField(context, "HUD", hudParts.Hud);
             SetField(context, "FloatingText", floating);
             SetField(manager, "context", context);

@@ -15,6 +15,7 @@ namespace WizardGrower.Core
             if (context == null)
                 context = GetComponent<GameContext>();
 
+            context.SaveService.TryLoad();
             calculator = new CombatCalculator(context.Wizard.Stats);
 
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
@@ -24,10 +25,24 @@ namespace WizardGrower.Core
             context.ActiveSkill.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
             context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
+            context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
+            context.SaveBinder.RegisterAutoSaveTriggers(context, context.SaveService);
 
             context.EnemySpawner.EnemyDamaged += OnEnemyDamaged;
             context.EnemySpawner.EnemySpawned += OnEnemySpawned;
             context.Wizard.Stats.Changed += () => context.Progression.RecordCombatPower(context.Wizard.Stats.CombatPower);
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused && context != null)
+                context.SaveBinder.SaveNow(context, context.SaveService);
+        }
+
+        private void OnApplicationQuit()
+        {
+            if (context != null)
+                context.SaveBinder.SaveNow(context, context.SaveService);
         }
 
         private void OnEnemySpawned(EnemyBase enemy)

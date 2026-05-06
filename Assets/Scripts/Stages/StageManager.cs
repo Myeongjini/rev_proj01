@@ -64,6 +64,33 @@ namespace WizardGrower.Stages
             return true;
         }
 
+        public void LoadProgress(int chapter, int stage)
+        {
+            StopAllCoroutines();
+            fieldSpawnVersion++;
+            mode = StageMode.Field;
+            currentChapter = Mathf.Max(1, chapter);
+            currentStageNumber = Mathf.Max(1, stage);
+            ResolveCurrentStage();
+
+            if (CurrentChapter == null)
+            {
+                currentChapter = 1;
+                currentStageNumber = 1;
+                ResolveCurrentStage();
+            }
+
+            if (CurrentChapter != null && CurrentChapter.stages != null && CurrentChapter.stages.Length > 0)
+            {
+                currentStageNumber = Mathf.Clamp(currentStageNumber, 1, CurrentChapter.stages.Length);
+                ResolveCurrentStage();
+            }
+
+            SpawnFieldEnemies();
+            progression.RecordStage(currentStageNumber);
+            RaiseStateChanged();
+        }
+
         private void OnEnemyKilled(EnemyBase enemy)
         {
             wallet.AddGold(enemy.RewardGold);

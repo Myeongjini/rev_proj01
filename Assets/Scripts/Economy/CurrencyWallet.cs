@@ -25,5 +25,11 @@ namespace WizardGrower.Economy
             GoldChanged?.Invoke(gold);
             return true;
         }
+
+        public void SetGold(int amount)
+        {
+            gold = Mathf.Max(0, amount);
+            GoldChanged?.Invoke(gold);
+        }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using WizardGrower.Economy;
 using WizardGrower.Player;
+using WizardGrower.Save;
 
 namespace WizardGrower.Upgrades
 {
@@ -52,6 +53,37 @@ namespace WizardGrower.Upgrades
         {
             int level = GetLevel(definition);
             return Mathf.RoundToInt(definition.baseCost * Mathf.Pow(definition.costScale, level));
+        }
+
+        public List<UpgradeLevelEntry> CaptureLevels()
+        {
+            List<UpgradeLevelEntry> entries = new List<UpgradeLevelEntry>();
+            foreach (UpgradeDefinition definition in upgrades)
+            {
+                int level = GetLevel(definition);
+                if (level <= 0)
+                    continue;
+
+                entries.Add(new UpgradeLevelEntry { id = definition.id, level = level });
+            }
+            return entries;
+        }
+
+        public void LoadLevels(List<UpgradeLevelEntry> entries)
+        {
+            levels.Clear();
+            if (entries != null)
+            {
+                foreach (UpgradeLevelEntry entry in entries)
+                {
+                    if (entry == null || string.IsNullOrEmpty(entry.id) || !ContainsUpgrade(entry.id))
+                        continue;
+
+                    levels[entry.id] = Mathf.Max(0, entry.level);
+                }
+            }
+
+            UpgradePurchased?.Invoke(null, 0, 0);
         }
 
         public bool TryPurchase(UpgradeDefinition definition)
@@ -119,6 +151,16 @@ namespace WizardGrower.Upgrades
                 && upgrades[5].id == "armor_pen"
                 && upgrades[6].id == "max_hp"
                 && upgrades[7].id == "mana";
+        }
+
+        private bool ContainsUpgrade(string id)
+        {
+            foreach (UpgradeDefinition definition in upgrades)
+            {
+                if (definition.id == id)
+                    return true;
+            }
+            return false;
         }
     }
 }

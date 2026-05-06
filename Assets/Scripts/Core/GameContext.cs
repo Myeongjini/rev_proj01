@@ -3,6 +3,7 @@ using WizardGrower.Combat;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
 using WizardGrower.Player;
+using WizardGrower.Save;
 using WizardGrower.Stages;
 using WizardGrower.Upgrades;
 using WizardGrower.UI;
@@ -25,6 +26,8 @@ namespace WizardGrower.Core
         [field: SerializeField] public StageManager StageManager { get; private set; }
         [field: SerializeField] public BossStageController BossStage { get; private set; }
         [field: SerializeField] public UpgradeSystem UpgradeSystem { get; private set; }
+        [field: SerializeField] public SaveService SaveService { get; private set; }
+        [field: SerializeField] public SaveBinder SaveBinder { get; private set; }
         [field: SerializeField] public HUDController HUD { get; private set; }
         [field: SerializeField] public FloatingTextSpawner FloatingText { get; private set; }
     }
