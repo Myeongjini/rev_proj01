@@ -8,27 +8,30 @@ namespace WizardGrower.Stages
 {
     public class StageManager : MonoBehaviour
     {
-        [SerializeField] private LegacyStageBalance definition = new LegacyStageBalance();
+        [SerializeField] private ChapterDatabase chapterDatabase;
         [SerializeField] private EnemySpawner spawner;
         [SerializeField] private CurrencyWallet wallet;
         [SerializeField] private BossStageController bossStageController;
         [SerializeField] private PlayerProgression progression;
 
-        private readonly EnemyScalingService scaling = new EnemyScalingService();
-        private int currentStage = 1;
-        private int killsInStage;
-        private bool bossStage;
+        private int currentChapter = 1;
+        private int currentStageNumber = 1;
+        private StageMode mode = StageMode.Field;
 
-        public event Action<int, bool, int, int> StageChanged;
+        public event Action<ChapterDefinition, StageDefinition, StageMode> StateChanged;
         public event Action<string> Feedback;
+        public event Action<bool> BossEntryAvailabilityChanged;
 
-        public int CurrentStage => currentStage;
-        public bool IsBossStage => bossStage;
-        public int KillsInStage => killsInStage;
-        public int KillsRequired => definition.killsPerStage;
+        public ChapterDefinition CurrentChapter { get; private set; }
+        public StageDefinition CurrentStage { get; private set; }
+        public StageMode Mode => mode;
+        public int CurrentChapterNumber => currentChapter;
+        public int CurrentStageNumber => currentStageNumber;
+        public bool CanEnterBoss => mode == StageMode.Field && CurrentStage != null;
 
-        public void Initialize(EnemySpawner spawner, CurrencyWallet wallet, BossStageController bossStageController, PlayerProgression progression)
+        public void Initialize(ChapterDatabase db, EnemySpawner spawner, CurrencyWallet wallet, BossStageController bossStageController, PlayerProgression progression)
         {
+            chapterDatabase = db != null ? db : chapterDatabase;
             this.spawner = spawner;
             this.wallet = wallet;
             this.bossStageController = bossStageController;
@@ -36,60 +39,128 @@ namespace WizardGrower.Stages
 
             spawner.EnemyKilled += OnEnemyKilled;
             bossStageController.Failed += OnBossFailed;
-            SpawnForCurrentStage();
+
+            currentChapter = 1;
+            currentStageNumber = 1;
+            mode = StageMode.Field;
+            ResolveCurrentStage();
+            SpawnFieldEnemy();
+            RaiseStateChanged();
+        }
+
+        public bool EnterBossRoom()
+        {
+            if (!CanEnterBoss)
+                return false;
+
+            CancelInvoke(nameof(SpawnFieldEnemy));
+            mode = StageMode.BossRoom;
+            SpawnBossEnemy();
+            bossStageController.StartTimer(CurrentStage.bossTimeLimit);
+            RaiseStateChanged();
+            return true;
+        }
+
+        [ContextMenu("Debug Enter Boss")]
+        private void DebugEnterBoss()
+        {
+            EnterBossRoom();
         }
 
         private void OnEnemyKilled(EnemyBase enemy)
         {
             wallet.AddGold(enemy.RewardGold);
 
-            if (bossStage)
+            if (mode == StageMode.BossRoom)
             {
                 bossStageController.StopTimer();
-                bossStage = false;
-                currentStage++;
-                killsInStage = 0;
                 Feedback?.Invoke("Boss Cleared!");
-            }
-            else
-            {
-                killsInStage++;
-                if (killsInStage >= definition.killsPerStage)
-                {
-                    currentStage++;
-                    killsInStage = 0;
-                }
+                AdvanceToNextStage();
+                return;
             }
 
-            progression.RecordStage(currentStage);
-            SpawnForCurrentStage();
+            Invoke(nameof(SpawnFieldEnemy), CurrentStage != null ? CurrentStage.fieldRespawnDelay : 0.5f);
+            RaiseStateChanged();
         }
 
         private void OnBossFailed()
         {
-            bossStage = false;
-            killsInStage = 0;
+            ReturnToField();
             Feedback?.Invoke("Boss Failed");
-            SpawnForCurrentStage();
         }
 
-        private void SpawnForCurrentStage()
+        private void AdvanceToNextStage()
         {
-            bossStage = currentStage > 0 && currentStage % definition.bossInterval == 0;
-            int reward = scaling.GetReward(currentStage);
-
-            if (bossStage)
+            currentStageNumber++;
+            if (CurrentChapter != null && CurrentChapter.stages != null && currentStageNumber > CurrentChapter.stages.Length)
             {
-                spawner.SpawnBoss(scaling.GetBossHealth(currentStage), reward * 10);
-                bossStageController.StartTimer(definition.bossTimeLimit);
-            }
-            else
-            {
-                bossStageController.StopTimer();
-                spawner.SpawnNormal(scaling.GetNormalHealth(currentStage), reward);
+                currentChapter++;
+                currentStageNumber = 1;
             }
 
-            StageChanged?.Invoke(currentStage, bossStage, killsInStage, definition.killsPerStage);
+            ChapterDefinition nextChapter = chapterDatabase != null ? chapterDatabase.GetChapter(currentChapter) : null;
+            if (nextChapter == null)
+            {
+                currentChapter = CurrentChapter != null ? CurrentChapter.chapterNumber : 1;
+                currentStageNumber = CurrentStage != null ? CurrentStage.stageNumber : 1;
+                mode = StageMode.Field;
+                Feedback?.Invoke("All Cleared");
+                SpawnFieldEnemy();
+                RaiseStateChanged();
+                return;
+            }
+
+            mode = StageMode.Field;
+            ResolveCurrentStage();
+            progression.RecordStage(currentStageNumber);
+            SpawnFieldEnemy();
+            RaiseStateChanged();
+        }
+
+        private void ReturnToField()
+        {
+            bossStageController.StopTimer();
+            mode = StageMode.Field;
+            SpawnFieldEnemy();
+            RaiseStateChanged();
+        }
+
+        private void SpawnFieldEnemy()
+        {
+            ResolveCurrentStage();
+            if (CurrentStage == null)
+                return;
+
+            bossStageController.StopTimer();
+            spawner.SpawnNormal(CurrentStage.fieldMonsterHealth, CurrentStage.fieldMonsterReward, CurrentStage.fieldMonsterArmor);
+        }
+
+        private void SpawnBossEnemy()
+        {
+            ResolveCurrentStage();
+            if (CurrentStage == null)
+                return;
+
+            spawner.SpawnBoss(CurrentStage.bossHealth, CurrentStage.bossReward, CurrentStage.bossArmor);
+        }
+
+        private void ResolveCurrentStage()
+        {
+            CurrentChapter = chapterDatabase != null ? chapterDatabase.GetChapter(currentChapter) : null;
+            if (CurrentChapter == null || CurrentChapter.stages == null || CurrentChapter.stages.Length == 0)
+            {
+                CurrentStage = null;
+                return;
+            }
+
+            int index = Mathf.Clamp(currentStageNumber - 1, 0, CurrentChapter.stages.Length - 1);
+            CurrentStage = CurrentChapter.stages[index];
+        }
+
+        private void RaiseStateChanged()
+        {
+            StateChanged?.Invoke(CurrentChapter, CurrentStage, mode);
+            BossEntryAvailabilityChanged?.Invoke(CanEnterBoss);
         }
     }
 }

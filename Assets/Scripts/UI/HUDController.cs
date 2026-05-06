@@ -54,7 +54,6 @@ namespace WizardGrower.UI
             wallet.GoldChanged += gold => goldLabel.text = $"Gold {gold}";
             wizard.Stats.Changed += () => RefreshAttack(wizard);
             mana.Changed += manaBar.Refresh;
-            stageManager.StageChanged += OnStageChanged;
             stageManager.Feedback += ShowFeedback;
             spawner.EnemySpawned += healthBar.Bind;
             spawner.EnemyDamaged += OnEnemyDamaged;
@@ -95,11 +94,6 @@ namespace WizardGrower.UI
         {
             if (autoToggleButtonLabel != null)
                 autoToggleButtonLabel.text = enabled ? "Auto On" : "Auto Off";
-        }
-
-        private void OnStageChanged(int stage, bool isBoss, int kills, int required)
-        {
-            stageLabel.text = isBoss ? $"Stage {stage} BOSS" : $"Stage {stage}  {kills}/{required}";
         }
 
         private void OnEnemyDamaged(EnemyBase enemy, DamageInfo info)

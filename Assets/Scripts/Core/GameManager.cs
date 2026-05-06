@@ -23,7 +23,7 @@ namespace WizardGrower.Core
             context.ClickAttack.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, calculator);
             context.ActiveSkill.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
             context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement);
-            context.StageManager.Initialize(context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
+            context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
 
             context.EnemySpawner.EnemyDamaged += OnEnemyDamaged;
             context.EnemySpawner.EnemySpawned += OnEnemySpawned;

@@ -16,23 +16,23 @@ namespace WizardGrower.Enemies
 
         public EnemyBase CurrentEnemy { get; private set; }
 
-        public EnemyBase SpawnNormal(float health, int reward)
+        public EnemyBase SpawnNormal(float health, int reward, float armor)
         {
-            return Spawn(normalEnemyPrefab, health, reward);
+            return Spawn(normalEnemyPrefab, health, reward, armor);
         }
 
-        public BossEnemy SpawnBoss(float health, int reward)
+        public BossEnemy SpawnBoss(float health, int reward, float armor)
         {
-            return Spawn(bossEnemyPrefab, health, reward) as BossEnemy;
+            return Spawn(bossEnemyPrefab, health, reward, armor) as BossEnemy;
         }
 
-        private EnemyBase Spawn(EnemyBase prefab, float health, int reward)
+        private EnemyBase Spawn(EnemyBase prefab, float health, int reward, float armor)
         {
             if (CurrentEnemy != null)
                 Destroy(CurrentEnemy.gameObject);
 
             CurrentEnemy = Instantiate(prefab, spawnPoint.position, Quaternion.identity, transform);
-            CurrentEnemy.Initialize(health, reward, 0f);
+            CurrentEnemy.Initialize(health, reward, armor);
             CurrentEnemy.Damaged += OnEnemyDamaged;
             CurrentEnemy.Killed += OnEnemyKilled;
             EnemySpawned?.Invoke(CurrentEnemy);

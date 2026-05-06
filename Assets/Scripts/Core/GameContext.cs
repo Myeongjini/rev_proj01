@@ -21,6 +21,7 @@ namespace WizardGrower.Core
         [field: SerializeField] public AutoAttackController AutoAttack { get; private set; }
         [field: SerializeField] public ClickAttackController ClickAttack { get; private set; }
         [field: SerializeField] public ActiveSkillController ActiveSkill { get; private set; }
+        [field: SerializeField] public ChapterDatabase ChapterDatabase { get; private set; }
         [field: SerializeField] public StageManager StageManager { get; private set; }
         [field: SerializeField] public BossStageController BossStage { get; private set; }
         [field: SerializeField] public UpgradeSystem UpgradeSystem { get; private set; }
