@@ -8,7 +8,7 @@ namespace WizardGrower.Stages
 {
     public class StageManager : MonoBehaviour
     {
-        [SerializeField] private StageDefinition definition = new StageDefinition();
+        [SerializeField] private LegacyStageBalance definition = new LegacyStageBalance();
         [SerializeField] private EnemySpawner spawner;
         [SerializeField] private CurrencyWallet wallet;
         [SerializeField] private BossStageController bossStageController;

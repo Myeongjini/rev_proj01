@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eda77e5ecbc2245a58ce87ec4bec2b77, type: 3}
+  m_Name: Chapter01_GloomyForest
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Stages.ChapterDefinition
+  chapterNumber: 1
+  displayName: "\uC74C\uC0B0\uD55C \uC232"
+  themeDescription: "\uCD08\uBCF4 \uB9C8\uBC95\uC0AC\uAC00 \uCCAB \uC804\uD22C\uB97C
+    \uC2DC\uC791\uD558\uB294 \uC5B4\uB450\uC6B4 \uC232 \uCC55\uD130"
+  stages:
+  - {fileID: 11400000, guid: e21492b9c228f456fafd69e38d3d9879, type: 2}
+  - {fileID: 11400000, guid: df4822425a3094c8a8099df509d025fc, type: 2}
+  - {fileID: 11400000, guid: ed660418eab904eae940dd0b15be9429, type: 2}
+  - {fileID: 11400000, guid: cc4863cb4acdc4e06864c8badb5aa63b, type: 2}
+  - {fileID: 11400000, guid: c992f85153630484cb3a33f9f3e784e4, type: 2}
+  - {fileID: 11400000, guid: 040a06bfe7d5d4be19b88ce7970f9c1d, type: 2}
+  - {fileID: 11400000, guid: 962af3303f9d94d42a2d209e7625502d, type: 2}
+  - {fileID: 11400000, guid: 48358d1c61a824be5812d57b1d0f3359, type: 2}
+  backgroundSprite: {fileID: 0}
+  ambientTint: {r: 1, g: 1, b: 1, a: 1}
