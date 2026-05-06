@@ -30,7 +30,7 @@ namespace WizardGrower.Combat
         private void Update()
         {
             UpdateTicks++;
-            if (movement != null && movement.IsManualMoving)
+            if (movement != null && (!movement.AutoModeEnabled || movement.IsManualMoving))
                 return;
 
             if (wizard == null || projectileFactory == null || calculator == null)
@@ -51,7 +51,7 @@ namespace WizardGrower.Combat
         public bool TryFireNow()
         {
             TryRepairCalculator();
-            if (movement != null && movement.IsManualMoving)
+            if (movement != null && (!movement.AutoModeEnabled || movement.IsManualMoving))
                 return false;
 
             if (wizard == null || projectileFactory == null || calculator == null)
