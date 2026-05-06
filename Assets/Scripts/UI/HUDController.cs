@@ -17,7 +17,7 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text attackLabel;
         [SerializeField] private TMP_Text feedbackLabel;
         [SerializeField] private ManaBarView manaBar;
-        [SerializeField] private HealthBarView healthBar;
+        [SerializeField] private PlayerHealthBarView playerHealthBar;
         [SerializeField] private BossTimerView bossTimer;
         [SerializeField] private DPSView dpsView;
         [SerializeField] private JoystickIndicatorView joystickIndicator;
@@ -78,8 +78,8 @@ namespace WizardGrower.UI
             RefreshAttack(wizard);
             goldLabel.text = $"Gold {wallet.Gold}";
             manaBar.Refresh(mana.Current, mana.Max);
-            if (healthBar != null)
-                healthBar.gameObject.SetActive(false);
+            if (playerHealthBar != null)
+                playerHealthBar.Bind(wizard.Stats);
             RefreshAutoToggle(movementController.AutoModeEnabled);
         }
 

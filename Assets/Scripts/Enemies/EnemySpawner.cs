@@ -22,25 +22,6 @@ namespace WizardGrower.Enemies
 
         private readonly List<EnemyBase> activeEnemies = new List<EnemyBase>();
 
-        public EnemyBase CurrentEnemy
-        {
-            get
-            {
-                for (int i = activeEnemies.Count - 1; i >= 0; i--)
-                {
-                    EnemyBase enemy = activeEnemies[i];
-                    if (enemy == null || !enemy.IsAlive)
-                    {
-                        activeEnemies.RemoveAt(i);
-                        continue;
-                    }
-
-                    return enemy;
-                }
-
-                return null;
-            }
-        }
         public IReadOnlyList<EnemyBase> ActiveEnemies => activeEnemies;
 
         public EnemyBase SpawnNormal(float health, int reward, float armor)

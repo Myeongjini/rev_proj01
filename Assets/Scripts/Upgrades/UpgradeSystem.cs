@@ -36,7 +36,6 @@ namespace WizardGrower.Upgrades
             upgrades.Add(new UpgradeDefinition { id = "auto_dmg", displayName = "자동공격력", type = UpgradeType.AutoDamage, baseCost = 20, value = 5f });
             upgrades.Add(new UpgradeDefinition { id = "manual_dmg", displayName = "수동공격력", type = UpgradeType.ManualDamage, baseCost = 30, value = 8f });
             upgrades.Add(new UpgradeDefinition { id = "auto_speed", displayName = "자동발사속도", type = UpgradeType.AutoFireRate, baseCost = 40, value = 0.05f });
-            upgrades.Add(new UpgradeDefinition { id = "manual_speed", displayName = "수동발사속도", type = UpgradeType.ManualFireRate, baseCost = 40, value = 0.02f });
             upgrades.Add(new UpgradeDefinition { id = "crit_chance", displayName = "크리확률", type = UpgradeType.CriticalChance, baseCost = 35, value = 0.03f });
             upgrades.Add(new UpgradeDefinition { id = "crit_mult", displayName = "크리데미지", type = UpgradeType.CriticalMultiplier, baseCost = 50, value = 0.1f });
             upgrades.Add(new UpgradeDefinition { id = "armor_pen", displayName = "방어관통", type = UpgradeType.ArmorPenetration, baseCost = 45, value = 1f });
@@ -111,16 +110,15 @@ namespace WizardGrower.Upgrades
 
         private bool HasCurrentDefaultSet()
         {
-            return upgrades.Count == 9
+            return upgrades.Count == 8
                 && upgrades[0].id == "auto_dmg"
                 && upgrades[1].id == "manual_dmg"
                 && upgrades[2].id == "auto_speed"
-                && upgrades[3].id == "manual_speed"
-                && upgrades[4].id == "crit_chance"
-                && upgrades[5].id == "crit_mult"
-                && upgrades[6].id == "armor_pen"
-                && upgrades[7].id == "max_hp"
-                && upgrades[8].id == "mana";
+                && upgrades[3].id == "crit_chance"
+                && upgrades[4].id == "crit_mult"
+                && upgrades[5].id == "armor_pen"
+                && upgrades[6].id == "max_hp"
+                && upgrades[7].id == "mana";
         }
     }
 }

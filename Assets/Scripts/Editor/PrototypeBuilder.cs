@@ -133,7 +133,7 @@ namespace WizardGrower.EditorTools
             SetField(hudParts.Hud, "attackLabel", hudParts.Attack);
             SetField(hudParts.Hud, "feedbackLabel", hudParts.Feedback);
             SetField(hudParts.Hud, "manaBar", hudParts.ManaBar);
-            SetField(hudParts.Hud, "healthBar", hudParts.HealthBar);
+            SetField(hudParts.Hud, "playerHealthBar", hudParts.PlayerHealthBar);
             SetField(hudParts.Hud, "bossTimer", hudParts.BossTimer);
             SetField(hudParts.Hud, "dpsView", hudParts.Dps);
             SetField(hudParts.Hud, "joystickIndicator", hudParts.Joystick);
@@ -293,7 +293,7 @@ namespace WizardGrower.EditorTools
             parts.BossTimer.gameObject.SetActive(false);
 
             parts.ManaBar = CreateSliderWithLabel<ManaBarView>(parent, "ManaBar", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0, 188), new Vector2(620, 46), new Color(0.14f, 0.36f, 1f), "Mana 100 / 100");
-            parts.HealthBar = CreateSliderWithLabel<HealthBarView>(parent, "EnemyHealthBar", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(330, 38), new Color(0.88f, 0.15f, 0.15f), "");
+            parts.PlayerHealthBar = CreatePlayerHealthBar(parent);
             parts.Joystick = CreateJoystickIndicator(parent);
 
             parts.Upgrades = new UpgradeButtonView[3];
@@ -386,6 +386,36 @@ namespace WizardGrower.EditorTools
             TMP_Text label = CreateText(root.transform, "Label", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, 22, text);
             T view = root.AddComponent<T>();
             SetField(view, "slider", slider);
+            SetField(view, "label", label);
+            return view;
+        }
+
+        private static PlayerHealthBarView CreatePlayerHealthBar(Transform parent)
+        {
+            GameObject root = new GameObject("PlayerHealthBar", typeof(RectTransform));
+            root.transform.SetParent(parent, false);
+            RectTransform rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.anchoredPosition = new Vector2(210f, -112f);
+            rect.sizeDelta = new Vector2(330f, 34f);
+
+            Image background = root.AddComponent<Image>();
+            background.color = new Color(0f, 0f, 0f, 0.55f);
+
+            GameObject fill = new GameObject("Fill", typeof(RectTransform));
+            fill.transform.SetParent(root.transform, false);
+            RectTransform fillRect = fill.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = new Vector2(4f, 4f);
+            fillRect.offsetMax = new Vector2(-4f, -4f);
+            Image fillImage = fill.AddComponent<Image>();
+            fillImage.color = new Color(0.88f, 0.15f, 0.15f);
+
+            TMP_Text label = CreateText(root.transform, "Label", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, 20f, "HP 100 / 100");
+            PlayerHealthBarView view = root.AddComponent<PlayerHealthBarView>();
+            SetField(view, "fill", fillRect);
             SetField(view, "label", label);
             return view;
         }
@@ -620,7 +650,7 @@ namespace WizardGrower.EditorTools
             public TMP_Text Attack;
             public TMP_Text Feedback;
             public ManaBarView ManaBar;
-            public HealthBarView HealthBar;
+            public PlayerHealthBarView PlayerHealthBar;
             public BossTimerView BossTimer;
             public DPSView Dps;
             public JoystickIndicatorView Joystick;
