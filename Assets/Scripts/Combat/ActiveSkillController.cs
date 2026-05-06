@@ -46,8 +46,11 @@ namespace WizardGrower.Combat
             if (cooldownRemaining > 0f || mana == null)
                 return false;
 
-            IDamageable target = enemySpawner != null ? enemySpawner.CurrentEnemy : null;
-            if (target == null || !target.IsAlive || wizard == null || projectileFactory == null || calculator == null)
+            if (wizard == null || projectileFactory == null || calculator == null)
+                return false;
+
+            IDamageable target = enemySpawner != null ? enemySpawner.GetNearestEnemy(wizard.transform.position) : null;
+            if (target == null || !target.IsAlive)
                 return false;
 
             if (!mana.TrySpend(manaCost))

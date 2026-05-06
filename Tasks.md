@@ -312,6 +312,7 @@ public bool TryFireManual()
 ### 📝 작업 로그 (구현자 기록)
 - 2026-05-06 시작: Bundle 1 Task B 착수. Auto OFF 가드, Fire 버튼 무마나화, manualAttackInterval 쿨다운 적용 예정.
 - 2026-05-06 종료: AutoAttackController에 AutoModeEnabled 가드 추가, ClickAttackController에서 PlayerMana/manualManaCost 제거 및 ManualAttackInterval 쿨다운 적용, GameManager 초기화 시그니처 마이그레이션 완료. 스크립트 검증 에러/경고 0. PlayMode 직접 검증: Auto OFF 발사 false + HP 변화 없음, Auto ON 발사 true, Fire 마나 변화 없음(100→100), 빠른 연타 첫 발만 발사, interval 경과 후 재발사 통과. Console에는 MCP client handler 종료 로그가 Exception 타입으로 남으나 게임 코드 에러/경고는 없음.
+- 2026-05-06 리뷰 수정: 사용자 요청에 따라 Fire 버튼 수동 공격의 ManualAttackInterval 쿨다운 제거. 빠른 3연타 모두 즉시 발사(projectileDelta=3) 확인.
 
 ### 🔍 검토 노트 (검토자 기록)
 - (비어있음)
@@ -613,6 +614,7 @@ context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, c
 ### 📝 작업 로그 (구현자 기록)
 - 2026-05-06 시작: Bundle 2 Task D 착수. StageManager를 ChapterDatabase 기반 Field/BossRoom 모드 흐름으로 전면 교체하고, EnemySpawner armor 인자/ChapterDatabase 주입/GameManager 초기화/HUDController 구독 제거만 수행 예정.
 - 2026-05-06 종료: StageMode 추가, StageManager 필드 무한 리스폰/보스방 진입/클리어/실패 복귀 흐름 구현, EnemySpawner SpawnNormal/SpawnBoss armor 인자 반영, GameContext ChapterDatabase 필드 추가 및 MainScene 할당, GameManager 초기화 시그니처 갱신, HUDController의 기존 StageChanged 구독/핸들러 제거 완료. PlayMode 직접 검증: 초기 필드 1-1 NormalEnemy, 일반 몬스터 5회 처치 후 stage 1 유지 + 골드 획득, EnterBossRoom 보스/20초 타이머 시작, 보스 처치 stage 2 Field 복귀, 보스 실패 stage 2 유지 Field 복귀 통과. Console 게임 코드 에러/경고 없음.
+- 2026-05-06 리뷰 수정: 필드 모드가 단일 몬스터 반복이던 구조를 다중 일반 몬스터 필드로 재구성. EnemySpawner 활성 적 목록/가까운 적 탐색/NormalEnemy 5마리 그룹 스폰 추가, EnemyWanderController로 필드 몬스터 자유 배회 구현, 자동 이동/자동 공격/수동 공격/액티브 스킬 타겟을 가까운 생존 적 기준으로 변경. 보스 입장 시 필드 몬스터 전체 정리 후 BossEnemy 1마리만 유지 확인.
 
 ### 🔍 검토 노트 (검토자 기록)
 - (비어있음)
@@ -689,6 +691,7 @@ private void OnBossEntryAvailabilityChanged(bool available)
 ### 📝 작업 로그 (구현자 기록)
 - 2026-05-06 시작: Bundle 2 Task E 착수. HUDController에 StageManager.StateChanged/BossEntryAvailabilityChanged 연결, 보스 입장 버튼 생성/할당, Task D 디버그 보스 진입 메뉴 제거 예정.
 - 2026-05-06 종료: HUDController에 bossEntryButton/bossEntryButtonLabel 필드 및 새 StateChanged/BossEntryAvailabilityChanged 핸들러 추가, BossEntryButton 씬 생성 및 필드 할당, StageManager의 Debug Enter Boss ContextMenu 제거 완료. 한글 HUD 표시 경고 방지를 위해 macOS 기본 AppleGothic 기반 TMP 폰트 에셋을 Assets/Fonts에 생성하고 StageLabel/BossEntryButton Label에 할당. PlayMode 검증: "음산한 숲 1-1" 라벨 + 보스 입장 버튼 활성, 클릭 시 "음산한 숲 1-1 BOSS" + 버튼 비활성 + BossEnemy, 보스 처치 후 "음산한 숲 1-2" + 버튼 재활성 통과. Bundle 2 종합 흐름: 필드 처치 stage 유지, 보스 실패 stage 유지 Field 복귀, 1-8 보스 클리어 후 마지막 챕터 All Cleared 경로 통과. Console 게임 코드 에러/경고 없음.
+- 2026-05-06 리뷰 수정: BossEntryButton을 하단 우측(anchor 1,0 / pos -24,124 / size 180x54)으로 이동해 ActiveSkillButton과 겹치지 않도록 조정. 버튼 라벨은 "보스 입장" 유지, AppleGothic_TMP 폰트 적용 상태 재확인.
 
 ### 🔍 검토 노트 (검토자 기록)
 - (비어있음)

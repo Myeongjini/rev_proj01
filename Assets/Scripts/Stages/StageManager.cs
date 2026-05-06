@@ -44,7 +44,7 @@ namespace WizardGrower.Stages
             currentStageNumber = 1;
             mode = StageMode.Field;
             ResolveCurrentStage();
-            SpawnFieldEnemy();
+            SpawnFieldEnemies();
             RaiseStateChanged();
         }
 
@@ -53,7 +53,7 @@ namespace WizardGrower.Stages
             if (!CanEnterBoss)
                 return false;
 
-            CancelInvoke(nameof(SpawnFieldEnemy));
+            CancelInvoke(nameof(SpawnFieldEnemies));
             mode = StageMode.BossRoom;
             SpawnBossEnemy();
             bossStageController.StartTimer(CurrentStage.bossTimeLimit);
@@ -73,7 +73,8 @@ namespace WizardGrower.Stages
                 return;
             }
 
-            Invoke(nameof(SpawnFieldEnemy), CurrentStage != null ? CurrentStage.fieldRespawnDelay : 0.5f);
+            if (spawner.CurrentEnemy == null)
+                Invoke(nameof(SpawnFieldEnemies), CurrentStage != null ? CurrentStage.fieldRespawnDelay : 0.5f);
             RaiseStateChanged();
         }
 
@@ -99,7 +100,7 @@ namespace WizardGrower.Stages
                 currentStageNumber = CurrentStage != null ? CurrentStage.stageNumber : 1;
                 mode = StageMode.Field;
                 Feedback?.Invoke("All Cleared");
-                SpawnFieldEnemy();
+                SpawnFieldEnemies();
                 RaiseStateChanged();
                 return;
             }
@@ -107,7 +108,7 @@ namespace WizardGrower.Stages
             mode = StageMode.Field;
             ResolveCurrentStage();
             progression.RecordStage(currentStageNumber);
-            SpawnFieldEnemy();
+            SpawnFieldEnemies();
             RaiseStateChanged();
         }
 
@@ -115,18 +116,18 @@ namespace WizardGrower.Stages
         {
             bossStageController.StopTimer();
             mode = StageMode.Field;
-            SpawnFieldEnemy();
+            SpawnFieldEnemies();
             RaiseStateChanged();
         }
 
-        private void SpawnFieldEnemy()
+        private void SpawnFieldEnemies()
         {
             ResolveCurrentStage();
             if (CurrentStage == null)
                 return;
 
             bossStageController.StopTimer();
-            spawner.SpawnNormal(CurrentStage.fieldMonsterHealth, CurrentStage.fieldMonsterReward, CurrentStage.fieldMonsterArmor);
+            spawner.SpawnNormalGroup(CurrentStage.fieldMonsterHealth, CurrentStage.fieldMonsterReward, CurrentStage.fieldMonsterArmor);
         }
 
         private void SpawnBossEnemy()

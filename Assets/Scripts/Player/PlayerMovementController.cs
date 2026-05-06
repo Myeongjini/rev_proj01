@@ -103,10 +103,14 @@ namespace WizardGrower.Player
 
         private void AutoMove()
         {
-            if (wizard == null || enemySpawner == null || enemySpawner.CurrentEnemy == null)
+            if (wizard == null || enemySpawner == null)
                 return;
 
-            Vector3 enemyPosition = enemySpawner.CurrentEnemy.HitTransform.position;
+            EnemyBase target = enemySpawner.GetNearestEnemy(wizard.transform.position);
+            if (target == null)
+                return;
+
+            Vector3 enemyPosition = target.HitTransform.position;
             Vector3 toEnemy = enemyPosition - wizard.transform.position;
             if (toEnemy.magnitude <= autoStopDistance)
                 return;

@@ -57,7 +57,7 @@ namespace WizardGrower.Combat
             if (wizard == null || projectileFactory == null || calculator == null)
                 return false;
 
-            IDamageable target = enemySpawner != null ? enemySpawner.CurrentEnemy : null;
+            IDamageable target = enemySpawner != null ? enemySpawner.GetNearestEnemy(wizard.transform.position) : null;
             if (target == null || !target.IsAlive)
                 return false;
 
