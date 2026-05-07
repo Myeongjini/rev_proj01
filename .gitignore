@@ -96,6 +96,18 @@ crashlytics-build.properties
 /[Aa]ssets/Editor Default Resources/Firebase/
 /[Aa]ssets/Editor Default Resources/Firebase.meta
 
+# Google Sign-In Unity Plugin — also reinstalled per developer.
+# Bundles legacy polyfills (PlayServicesResolver, Parse SDK with Unity.Tasks /
+# Unity.Compat) that collide with modern Unity's BCL — must be deleted after
+# re-import. Ignoring them here prevents re-pollution if the SDK is ever
+# re-imported and committed by accident.
+/[Aa]ssets/GoogleSignIn/
+/[Aa]ssets/GoogleSignIn.meta
+/[Aa]ssets/Parse/
+/[Aa]ssets/Parse.meta
+/[Aa]ssets/PlayServicesResolver/
+/[Aa]ssets/PlayServicesResolver.meta
+
 # Belt-and-suspenders: large native plugin binaries anywhere under Plugins/
 # (covers the case where Firebase SDK is partially extracted or moved)
 *.bundle

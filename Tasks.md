@@ -57,7 +57,9 @@ Tasks are grouped into 5 **Bundles**. Until the last task of a bundle reaches �
 [Bundle 2] C ✅ → D ✅ → E ✅ ─┤
                           └─→ [Bundle 4] G0 ✅ → G ✅
                                               │
-                  H (after user prework ✅) ───┴─→ [Bundle 5] I
+                  H ✅ (after user prework) ───┴─→ [Bundle 5] I
+                                              │
+                  H-VAL (Android device test) ─┘ (parallel to I; pre-release gate)
 ```
 
 **Order:** Bundle 1 ✅ → Bundle 2 ✅ → Bundle 3 ✅ → Bundle 4 ✅ → Bundle 5 (H, I)
@@ -76,8 +78,9 @@ Tasks are grouped into 5 **Bundles**. Until the last task of a bundle reaches �
 | 3 | F | Upgrade drawer UI (bottom toggle, 2-column scroll) | ✅ DONE | Bundle 2 gate ✅ |
 | 4 | G0 | Pre-save structural cleanup | ✅ DONE | Bundle 3 gate ✅ |
 | 4 | G | SaveData model + local save | ✅ DONE | G0 ✅ |
-| 5 | H | Server login + user identity (Anonymous + Google; Apple skipped) | 🟡 IN REVIEW | Bundle 4 gate ✅ + user prework ✅ |
-| 5 | I | Firestore server-canonical game state | 🔴 TODO | H |
+| 5 | H | Server login + user identity (Anonymous + Google; Apple skipped) | ✅ DONE | Bundle 4 gate ✅ + user prework ✅ |
+| 5 | H-VAL | Google login on-device validation (Android) | 🔴 TODO — pre-release gate, parallel with I | H ✅ + Android build env |
+| 5 | I | Firestore server-canonical game state | 🔴 TODO | H ✅ |
 
 > **Bundle 1, 2, 3 & 4 gates passed (2026-05-07).** Bundle 5 user prework complete (Apple skipped). Task H may begin.
 
@@ -335,23 +338,26 @@ service cloud.firestore {
 > **All prework complete except Apple. Task H may begin.**
 
 ### Bundle 5 Combined Regression Tests
-1. First launch → anonymous login → UID issued → `users/{uid}` profile doc + state doc auto-created in Firestore
-2. Google login → UID linked → existing anonymous progress migrated to the linked account
+1. First launch → anonymous login → UID issued → `users/{uid}` profile doc + state doc auto-created in Firestore  *(verified in Editor by Task H)*
+2. Google login → UID linked → existing anonymous progress migrated to the linked account  *(deferred to Task H-VAL on Android)*
 3. Delete `save.json` → re-login with same account → state restored from Firestore (server is canonical)
 4. PlayMode while offline → game runs normally on local cache → online recovery → automatic push to server
 5. Two devices progressing simultaneously → the later-saved write wins (newer-wins by `updatedAtUnixMs`)
-6. New user nickname registration on first link to Google → reflected in Firestore profile doc
+6. New user nickname registration on first link to Google → reflected in Firestore profile doc  *(deferred to Task H-VAL on Android)*
 
 > Apple login validation is **not in scope** for this iteration (provider skipped). Re-add when Apple Developer membership is acquired.
+
+> **Bundle 5 gate:** requires H ✅, I ✅, **and H-VAL ✅** before shipping. Task I may begin in parallel with H-VAL since the two are independent.
 
 ---
 
 ## Task H — Server Login + User Identity Registration
 
-**Status:** 🟡 IN REVIEW — code complete and editor runtime validation passed for anonymous login + Firestore profile creation. Google Sign-In plugin is installed and detected; account-picker completion still requires Android/iOS player runtime per plugin behavior.
-**Depends On:** Bundle 4 gate + Bundle 5 user prework complete
+**Status:** ✅ DONE (2026-05-07) — Editor-validated portion accepted. The Google account-picker portion of the DoD is **split out** into a separate validation task **H-VAL** (see below) because Unity Editor cannot host the Google Sign-In Plugin's native `currentActivity` flow by design. Task H itself stands as the canonical login + profile-doc implementation; H-VAL gates pre-release shipping.
 
-> **Implementation note (2026-05-07):** `AuthService.LinkWithGoogleAsync` accesses the Google Sign-In API via **reflection** (see `RequestGoogleIdTokenAsync`). Originally introduced to keep the project compilable while the plugin was missing, this pattern is now retained intentionally — it survives a future plugin re-install/cleanup cycle without requiring a code change, and emits a clear runtime error ("Google Sign-In Unity Plugin is not installed") if the plugin disappears. Login is invoked once per session, so reflection overhead is negligible. **Do not** refactor this to direct `using Google;` references unless explicitly requested.
+> **Implementation note (2026-05-07):** `AuthService.LinkWithGoogleAsync` accesses the Google Sign-In API via **reflection** (see `RequestGoogleIdTokenAsync`). Originally introduced to keep the project compilable while the plugin was missing, this pattern is now retained intentionally — it survives a future plugin re-install/cleanup cycle without requiring a code change, and emits a clear runtime error ("Google Sign-In Unity Plugin is not installed") if the plugin disappears. Login is invoked once per session, so reflection overhead is negligible. `SetMember` covers both `PropertyInfo` and `FieldInfo` because the plugin uses field-based config. **Do not** refactor this to direct `using Google;` references unless explicitly requested.
+
+> **Editor guard:** `RequestGoogleIdTokenAsync` short-circuits with a clear error in `Application.isEditor` mode. Anyone hitting that error in PlayMode is reminded that Google login validation is the responsibility of Task H-VAL, not Task H.
 
 ### 🎯 Goal
 - Integrate Firebase Unity SDK (Auth module)
@@ -489,6 +495,76 @@ public class UserProfileService
 5. Confirm `AuthConfig.googleWebClientId` and `AuthConfig.bundleId` are read from the asset, not from any literal in source
 
 > Implementer logs work in Appendix D. Reviewer logs findings in Appendix E.
+
+---
+
+## Task H-VAL — Google Login On-Device Validation (Android)
+
+**Status:** 🔴 TODO
+**Depends On:** Task H ✅ + user-side Android build environment (see prework below)
+
+### 🎯 Goal
+Validate the Google account-picker DoD items that Task H could not exercise inside the Unity Editor. Task H's `AuthService` already short-circuits with `"Google Sign-In account picker requires an Android or iOS player runtime; Unity Editor has no native currentActivity"` when invoked from the Editor — this task confirms the plugin's native path actually delivers the four end-to-end behaviors on a real Android target.
+
+> **No production code changes are expected.** If validation reveals a bug, file the fix as a re-opening of Task H (revert Status to 🔴 TODO). This task only writes findings into Appendix D / E and updates its own Status.
+
+### Why this is split out from Task H
+- The Google Sign-In Unity Plugin needs the Android `currentActivity` (or iOS native identity flow) to render the account picker. The Unity Editor on macOS / Windows cannot provide either.
+- Task H code is verified correct on every other axis (compilation, anonymous login, profile doc creation, plugin-type detection, AuthConfig wiring). Holding all of Bundle 5 hostage to a build-env-dependent test would needlessly delay Task I.
+- Splitting lets Task I proceed in parallel; H-VAL becomes a **pre-release gate** that must pass before Bundle 5 ships, but does not block Task I development.
+
+### ⚠️ User Prework — Android Build Environment
+
+Required (one-time):
+- [ ] **Android Build Support** module installed in Unity Hub for the active Editor version
+- [ ] **Android SDK + NDK + JDK** (Unity Hub installs these alongside the Build Support module by default — verify under `Preferences → External Tools → Android` that all three paths are populated)
+- [ ] **Build target switched** to Android in `File → Build Settings`
+- [ ] **Test surface**: either
+  - an **Android emulator** (Android Studio AVD with **Google Play services** image — required, "Google APIs" image alone is not enough), OR
+  - a **real Android device** with USB debugging enabled and Google Play Services installed
+- [ ] In **Firebase Console → Authentication → Sign-in method**, confirm the SHA-1 fingerprint of the debug keystore (`~/.android/debug.keystore`) is registered under the Android app. Without it, Google sign-in returns error `12500` on device.
+  - Get fingerprint: `keytool -list -v -alias androiddebugkey -keystore ~/.android/debug.keystore -storepass android -keypass android` (look for the `SHA1:` line)
+- [ ] `Assets/google-services.json` is present (already done as Bundle 5 prework — if `.gitignore` removed it, re-download from Firebase Console and place in `Assets/`)
+
+> No Apple Developer membership / iOS toolchain required (Apple is intentionally skipped per Bundle 5 scope).
+
+### ✅ Definition of Done
+- [ ] Android build deploys to emulator/device and reaches the main HUD with anonymous UID intact (re-verifies that the Editor-validated anonymous flow still works in the player runtime)
+- [ ] Click **Google login** → native Google account picker UI appears
+- [ ] Choose an account → Firestore Console shows `users/{uid}/profile/main` updated to `accountType="google"` with `displayName` populated from the Google profile
+- [ ] Nickname registration UI appears once if the OAuth `displayName` was empty; submitted nickname round-trips to Firestore
+- [ ] Quit and re-launch the app → same UID, profile doc's `lastLoginAtUnixMs` increments
+- [ ] Console (`adb logcat -s Unity`) shows no game-code errors during the flow
+
+### 📂 Files Changed
+**None expected.** This task does not introduce new source files. If a defect is found:
+- Stop validation, mark Status `⚠️ BLOCKED`, write the failure mode in Appendix D
+- Re-open Task H to fix the underlying code; once Task H is re-validated, return here
+
+### 🚫 Do Not Touch
+- Any production code (Task H is closed). Use this task purely for validation evidence-gathering.
+- The reflection-based Google login pattern in `AuthService.RequestGoogleIdTokenAsync` (intentional design — see Task H Implementation note).
+
+### 🧪 Validation procedure
+1. Switch platform to Android. Build & Run to emulator/device via `File → Build And Run`.
+2. App launches → AuthService runs anonymous sign-in → check `adb logcat` for the issued UID.
+3. Open the LoginPanel UI → tap **Google login** button.
+4. Native Google account picker appears → choose a real Google account.
+5. Observe Firebase Console: the `users/{uid}/profile/main` document should update fields per DoD.
+6. Submit a nickname when prompted → confirm Firestore write.
+7. Quit the app via the app switcher / `adb shell input keyevent KEYCODE_HOME`. Re-launch. Confirm the same UID returns and `lastLoginAtUnixMs` advances.
+
+### Common failure modes (cheat sheet)
+| Symptom | Likely cause |
+|---------|--------------|
+| Google picker doesn't appear, error `12500` in logcat | Debug keystore SHA-1 not registered in Firebase Console |
+| `IdToken` returns null | Google Sign-In `Configuration.WebClientId` mismatch with Firebase Web Client ID |
+| `Configuration` is null at runtime | `AuthConfig.asset` missing in build (must be under `Assets/Resources/`) |
+| `currentActivity` null reference | Old `UnityPlayer` reference; verify Android Build Support module version matches Editor |
+| Native picker opens but `accountType` stays `anonymous` in Firestore | `LinkWithCredentialAsync` path threw silently; check for `ApiException` in logcat and inspect `LastError` from `AuthService` |
+
+### 📝 Implementer logs / 🔍 reviewer findings
+> Use Appendix D / Appendix E rows tagged `H-VAL`.
 
 ---
 
@@ -677,6 +753,7 @@ Once cleared, the reviewer reports "Bundle X gate passed" to the user and procee
 | 2026-05-07 | Planner | Bundle 5 prework status updated: Anonymous + Google enabled; Apple SKIPPED (no Apple Developer membership). Bundle ID `com.kmj.rev_proj01` and Google Web Client ID recorded under "Configured Values". Firestore rules confirmed (recursive `{document=**}` variant covering subcollections). Task H scope reduced: removed Apple package / `LinkWithAppleAsync` / `accountType="apple"` / Apple regression test. Added `AuthConfig` ScriptableObject (§H-2) so Bundle ID and Web Client ID are configuration data rather than literals. `AccountType.Apple` enum value left commented out for future re-introduction. Task H may begin. |
 | 2026-05-07 | Planner | Compressed completed task bodies (A / B / C / D / E / F / G0 / G) to outcome summaries to reduce token usage. Per-task work-log and review-note sections consolidated into two new appendices (D and E). Active tasks (H, I), bundle headers, regression tests, appendices, and change history are preserved verbatim. §0 updated to point implementers to Appendix D and reviewers to Appendix E. |
 | 2026-05-07 | Planner | Task H environment unblocked. Google Sign-In Unity Plugin installed by the user; reviewer cleaned up polyfill collisions (deleted `Assets/PlayServicesResolver/` and `Assets/Parse/`, ran `xattr -dr com.apple.quarantine` on Firebase native binaries) — Unity now compiles 0/0. `.gitignore` updated to block `GoogleSignIn` / `Parse` / `PlayServicesResolver` and large native plugin binaries. Task H Status moves ⚠️ BLOCKED → 🟢 IN PROGRESS; an "Implementation note" added to the Task H body documents that the reflection-based Google login pattern in `AuthService.RequestGoogleIdTokenAsync` is retained intentionally (defensive against plugin re-uninstall; reflection overhead is negligible for once-per-session login). Runtime validation of the Google login flow is the only step remaining before Task H can be marked ✅ DONE. |
+| 2026-05-07 | Planner | Task H ✅ DONE for the Editor-validated portion (anonymous + profile doc). Per user decision **option C**, the Google account-picker validation (which Unity Editor cannot host because the plugin requires Android `currentActivity`) is split into a new task **Task H-VAL** under Bundle 5. Task H-VAL is a validation-only track with Android build-environment prework (Build Support module + SHA-1 in Firebase Console + Play services emulator/device) and **no expected code changes**. Bundle 5 gate now requires H ✅ + I ✅ + H-VAL ✅ before shipping; **Task I may proceed in parallel with H-VAL** since they are independent. Status board / dependency graph / Bundle 5 regression tests / Task H body / Appendix E updated accordingly. |
 
 ---
 
@@ -730,3 +807,4 @@ Once cleared, the reviewer reports "Bundle X gate passed" to the user and procee
 | 2026-05-06 | F | ✅ DONE. UpgradeType 9-value enum replacement + UpgradeSystem.EnsureDefaults + Apply switch all correct. `HasCurrentDefaultSet` defensive check is a sensible bonus. UpgradeDrawerView (with `RemoveListener` defense for hot reload) and responsive `UpgradeDrawerGridFitter` correct. HUDController dynamic instantiation pattern correct; `UpgradeButton.prefab` present. User-requested visual polish (sprite regen, Wizard animation, AppleGothic_TMP TMP reassignment, larger DamageText) all logged + approved. Bundle 3 gate may pass — F is the only task in the bundle. |
 | 2026-05-07 | G0 | ✅ DONE. (1) HP unification — TakeBossHit forwards to `stats.TakeHealth`; PlayerWizard duplicate fields/properties gone; GameManager line 37 still compiles via forwarder. (2) `manual_speed` removed; 8 entries; `HasCurrentDefaultSet` updated; forward-compat artifacts retained. (3) PlayerHealthBarView subscribes to HealthChanged, renders via anchorMax fill, properly unsubscribes; HUDController binding correct. (4)/(5) confirmed already applied to Task I body. (6) `EnemySpawner.CurrentEnemy`, `HUDController.healthBar`, `HealthBarView.cs` removed; PrototypeBuilder migrated; 0 game-code refs remain. Bundle 4 regression #6 verified by implementer (HP 100 → 76 visible in bar). git: single commit `5aa9654`. |
 | 2026-05-07 | G | ✅ DONE. SaveData three-class layout with sensible defaults. SaveService TryLoad / Save (pretty-printed) / Reset / MigrateIfNeeded defensively guards version, userId, chapter/stage, and null nested objects; `SetCurrentData` / `FilePath` exposed preemptively for Task I. SaveBinder unified 1s debounce on three signals; `Update()` uses `Time.unscaledTime` (works during pause). Adapter methods all present and reasonable; ApplySnapshot defensively clamps every field, with `currentHealth ≤ 0 ? maxHealth` resurrection note. GameManager lifecycle order correct (TryLoad → Initialize → ApplyToGame → RegisterAutoSaveTriggers); pause/quit hooks call SaveNow. GameContext has both fields with `[field: SerializeField]`. DoD 5/5 passed per work-log evidence. git: single commit `f8d4eb5`. Bundle 4 gate passed; Task H may begin pending Bundle 5 prework. |
+| 2026-05-07 | H | ✅ DONE (Editor-validated portion). Code review: AuthService is solid — anonymous login + AuthConfig load + Firebase init + UserProfileService writes verified end-to-end with real UID (`Zz24BNslnTcmtVWBAuJSPA2BgA23`) and Firestore `users/{uid}/profile/main` doc populated correctly. Reflection-based Google plugin access is intentional (defensive against re-uninstall, negligible overhead, plugin uses field-based config which `SetMember` handles). The Editor short-circuit (`Application.isEditor` throw with explicit message) correctly delegates the Google account-picker flow to a separate validation track. Code changes since BLOCKED state are all improvements: `GetBaseException()` for cleaner async error reporting, `SetMember` covering both Property and Field, no regressions. **NanumGothic SDF font addition** is out-of-spec scope-creep but harmless — TMP atlas noise was blocking validation. Acceptance: Google account-picker, `accountType="google"` write, displayName populate, and nickname-registration round-trip all **deferred to Task H-VAL** (per user decision option C). git: single commit `4740bc9` for the validation/code refinement + `a1cbee3` for the font. Task I unblocked. |
