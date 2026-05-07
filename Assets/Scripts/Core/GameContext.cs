@@ -1,4 +1,5 @@
 using UnityEngine;
+using WizardGrower.Auth;
 using WizardGrower.Combat;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
@@ -28,6 +29,9 @@ namespace WizardGrower.Core
         [field: SerializeField] public UpgradeSystem UpgradeSystem { get; private set; }
         [field: SerializeField] public SaveService SaveService { get; private set; }
         [field: SerializeField] public SaveBinder SaveBinder { get; private set; }
+        [field: SerializeField] public AuthService AuthService { get; private set; }
+        [field: SerializeField] public UserProfileService UserProfileService { get; private set; }
+        [field: SerializeField] public AuthConfig AuthConfig { get; private set; }
         [field: SerializeField] public HUDController HUD { get; private set; }
         [field: SerializeField] public FloatingTextSpawner FloatingText { get; private set; }
     }

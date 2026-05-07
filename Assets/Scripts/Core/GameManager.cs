@@ -1,6 +1,8 @@
 using UnityEngine;
+using WizardGrower.Auth;
 using WizardGrower.Combat;
 using WizardGrower.Enemies;
+using WizardGrower.UI;
 
 namespace WizardGrower.Core
 {
@@ -31,6 +33,7 @@ namespace WizardGrower.Core
             context.EnemySpawner.EnemyDamaged += OnEnemyDamaged;
             context.EnemySpawner.EnemySpawned += OnEnemySpawned;
             context.Wizard.Stats.Changed += () => context.Progression.RecordCombatPower(context.Wizard.Stats.CombatPower);
+            InitializeAuthenticationAsync();
         }
 
         private void OnApplicationPause(bool paused)
@@ -56,6 +59,47 @@ namespace WizardGrower.Core
         {
             if (context.FloatingText != null)
                 context.FloatingText.Spawn(enemy.transform.position, info);
+        }
+
+        private async void InitializeAuthenticationAsync()
+        {
+            if (context.AuthService == null || context.UserProfileService == null)
+                return;
+
+            try
+            {
+                await context.AuthService.InitializeAsync(context.AuthConfig);
+                string uid = await context.AuthService.SignInAnonymouslyAsync();
+                context.SaveBinder.SetUserId(uid);
+                await context.UserProfileService.GetOrCreateAsync(uid, context.AuthService.CurrentAccountType);
+                context.AuthService.UserChanged += OnUserChanged;
+                LoginPanel loginPanel = FindAnyObjectByType<LoginPanel>(FindObjectsInactive.Include);
+                if (loginPanel != null)
+                    loginPanel.Bind(context.AuthService, context.UserProfileService);
+                Debug.Log($"Firebase anonymous UID: {uid}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Auth initialization failed: {ex.Message}");
+            }
+        }
+
+        private async void OnUserChanged(string uid, AccountType type)
+        {
+            if (context == null || context.UserProfileService == null || string.IsNullOrEmpty(uid))
+                return;
+
+            try
+            {
+                context.SaveBinder.SetUserId(uid);
+                await context.UserProfileService.GetOrCreateAsync(uid, type);
+                await context.UserProfileService.UpdateAccountTypeAsync(uid, type);
+                await context.UserProfileService.TouchLastLoginAsync(uid);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Profile update failed: {ex.Message}");
+            }
         }
     }
 }

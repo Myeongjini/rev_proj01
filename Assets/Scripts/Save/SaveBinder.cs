@@ -9,6 +9,7 @@ namespace WizardGrower.Save
 
         private GameContext context;
         private SaveService service;
+        private string userId = "local";
         private bool saveQueued;
         private float nextSaveTime;
 
@@ -31,6 +32,7 @@ namespace WizardGrower.Save
             if (ctx == null)
                 return data;
 
+            data.userId = string.IsNullOrEmpty(userId) ? "local" : userId;
             data.gold = ctx.Wallet != null ? ctx.Wallet.Gold : 0;
             data.currentChapter = ctx.StageManager != null ? ctx.StageManager.CurrentChapterNumber : 1;
             data.currentStage = ctx.StageManager != null ? ctx.StageManager.CurrentStageNumber : 1;
@@ -49,6 +51,12 @@ namespace WizardGrower.Save
             context.Wallet.GoldChanged += _ => QueueSave();
             context.UpgradeSystem.UpgradePurchased += (_, _, _) => QueueSave();
             context.StageManager.StateChanged += (_, _, _) => QueueSave();
+        }
+
+        public void SetUserId(string uid)
+        {
+            userId = string.IsNullOrEmpty(uid) ? "local" : uid;
+            QueueSave();
         }
 
         public void SaveNow(GameContext ctx, SaveService service)

@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using WizardGrower.Auth;
 using WizardGrower.Combat;
 using WizardGrower.Core;
 using WizardGrower.Economy;
@@ -81,6 +82,8 @@ namespace WizardGrower.EditorTools
             UpgradeSystem upgrades = roots.AddComponent<UpgradeSystem>();
             SaveService saveService = roots.AddComponent<SaveService>();
             SaveBinder saveBinder = roots.AddComponent<SaveBinder>();
+            AuthService authService = roots.AddComponent<AuthService>();
+            UserProfileService userProfileService = roots.AddComponent<UserProfileService>();
             AutoAttackController autoAttack = roots.AddComponent<AutoAttackController>();
             ClickAttackController clickAttack = roots.AddComponent<ClickAttackController>();
             ActiveSkillController activeSkill = roots.AddComponent<ActiveSkillController>();
@@ -104,6 +107,9 @@ namespace WizardGrower.EditorTools
 
             Canvas canvas = CreateCanvas();
             HUDParts hudParts = CreateHud(canvas, attackIcon, manaIcon, critIcon, skillIcon);
+            LoginPanel loginPanel = CreateLoginPanel(canvas.transform);
+            NicknameRegistrationPanel nicknamePanel = CreateNicknamePanel(canvas.transform);
+            SetField(loginPanel, "nicknamePanel", nicknamePanel);
             FloatingTextSpawner floating = roots.AddComponent<FloatingTextSpawner>();
             SetField(floating, "damageTextPrefab", damageTextPrefab);
             SetField(floating, "canvas", canvas);
@@ -129,6 +135,9 @@ namespace WizardGrower.EditorTools
             SetField(context, "UpgradeSystem", upgrades);
             SetField(context, "SaveService", saveService);
             SetField(context, "SaveBinder", saveBinder);
+            SetField(context, "AuthService", authService);
+            SetField(context, "UserProfileService", userProfileService);
+            SetField(context, "AuthConfig", AssetDatabase.LoadAssetAtPath<AuthConfig>("Assets/Resources/AuthConfig.asset"));
             SetField(context, "HUD", hudParts.Hud);
             SetField(context, "FloatingText", floating);
             SetField(manager, "context", context);
@@ -434,6 +443,82 @@ namespace WizardGrower.EditorTools
             SetField(view, "label", label);
             SetField(view, "icon", go.transform.Find("Icon").GetComponent<Image>());
             return view;
+        }
+
+        private static LoginPanel CreateLoginPanel(Transform parent)
+        {
+            GameObject root = new GameObject("LoginPanel", typeof(RectTransform));
+            root.transform.SetParent(parent, false);
+            RectTransform rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(520f, 260f);
+            Image background = root.AddComponent<Image>();
+            background.color = new Color(0.04f, 0.05f, 0.07f, 0.94f);
+
+            TMP_Text status = CreateText(root.transform, "StatusLabel", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -58f), new Vector2(-48f, 58f), 24f, "Account");
+            TMP_Text googleLabel;
+            Button googleButton = CreateButton(root.transform, "GoogleLoginButton", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(360f, 64f), "Google login", null, out googleLabel).GetComponent<Button>();
+            TMP_Text skipLabel;
+            Button skipButton = CreateButton(root.transform, "SkipButton", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -72f), new Vector2(360f, 56f), "Continue as guest", null, out skipLabel).GetComponent<Button>();
+
+            LoginPanel panel = root.AddComponent<LoginPanel>();
+            SetField(panel, "googleLoginButton", googleButton);
+            SetField(panel, "skipButton", skipButton);
+            SetField(panel, "statusLabel", status);
+            root.SetActive(false);
+            return panel;
+        }
+
+        private static NicknameRegistrationPanel CreateNicknamePanel(Transform parent)
+        {
+            GameObject root = new GameObject("NicknameRegistrationPanel", typeof(RectTransform));
+            root.transform.SetParent(parent, false);
+            RectTransform rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(520f, 250f);
+            Image background = root.AddComponent<Image>();
+            background.color = new Color(0.04f, 0.05f, 0.07f, 0.96f);
+
+            TMP_Text message = CreateText(root.transform, "MessageLabel", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -48f), new Vector2(-48f, 52f), 22f, "닉네임을 입력하세요");
+            TMP_InputField input = CreateInput(root.transform, "NicknameInput", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 8f), new Vector2(-80f, 54f), "Nickname");
+            TMP_Text submitLabel;
+            Button submit = CreateButton(root.transform, "SubmitButton", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 48f), new Vector2(220f, 56f), "Submit", null, out submitLabel).GetComponent<Button>();
+
+            NicknameRegistrationPanel panel = root.AddComponent<NicknameRegistrationPanel>();
+            SetField(panel, "inputField", input);
+            SetField(panel, "messageLabel", message);
+            SetField(panel, "submitButton", submit);
+            root.SetActive(false);
+            return panel;
+        }
+
+        private static TMP_InputField CreateInput(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 position, Vector2 size, string placeholderText)
+        {
+            GameObject root = new GameObject(name, typeof(RectTransform));
+            root.transform.SetParent(parent, false);
+            RectTransform rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            Image background = root.AddComponent<Image>();
+            background.color = Color.white;
+
+            TMP_Text text = CreateText(root.transform, "Text", Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-24f, -12f), 22f, string.Empty);
+            text.color = Color.black;
+            text.alignment = TextAlignmentOptions.MidlineLeft;
+            TMP_Text placeholder = CreateText(root.transform, "Placeholder", Vector2.zero, Vector2.one, Vector2.zero, new Vector2(-24f, -12f), 22f, placeholderText);
+            placeholder.color = new Color(0f, 0f, 0f, 0.45f);
+            placeholder.alignment = TextAlignmentOptions.MidlineLeft;
+
+            TMP_InputField input = root.AddComponent<TMP_InputField>();
+            input.textComponent = text;
+            input.placeholder = placeholder;
+            return input;
         }
 
         private static GameObject CreateButton(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 position, Vector2 size, string text, Sprite icon, out TMP_Text label)
