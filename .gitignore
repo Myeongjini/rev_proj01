@@ -73,3 +73,45 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# ----------------------------------------------------------------------------
+# Firebase Unity SDK
+# Reason: native binaries (e.g. FirebaseCppApp-*.so / .bundle) exceed
+# GitHub's 100MB per-file limit. The whole SDK is reinstalled per developer
+# via the Firebase Unity SDK installer / Package Manager, so it is safe to
+# ignore. Re-import the SDK after a fresh clone before opening the project.
+# ----------------------------------------------------------------------------
+/[Aa]ssets/Firebase/
+/[Aa]ssets/Firebase.meta
+/[Aa]ssets/ExternalDependencyManager/
+/[Aa]ssets/ExternalDependencyManager.meta
+/[Aa]ssets/GeneratedLocalRepo/
+/[Aa]ssets/GeneratedLocalRepo.meta
+/[Aa]ssets/Plugins/Android/FirebaseApp.androidlib/
+/[Aa]ssets/Plugins/Android/FirebaseApp.androidlib.meta
+/[Aa]ssets/Plugins/iOS/Firebase/
+/[Aa]ssets/Plugins/iOS/Firebase.meta
+/[Aa]ssets/Plugins/tvOS/Firebase/
+/[Aa]ssets/Plugins/tvOS/Firebase.meta
+/[Aa]ssets/Editor Default Resources/Firebase/
+/[Aa]ssets/Editor Default Resources/Firebase.meta
+
+# Belt-and-suspenders: large native plugin binaries anywhere under Plugins/
+# (covers the case where Firebase SDK is partially extracted or moved)
+*.bundle
+*.framework
+[Aa]ssets/**/Plugins/x86_64/*.so
+[Aa]ssets/**/Plugins/x86_64/*.dylib
+
+# Firebase config files contain Firebase Project / API keys — keep local-only.
+# (Web Client ID alone is not a secret, but the bundled API key + Project
+# Number should not sit in a public repo. If your repo is private AND
+# collaborators must share the same Firebase project, comment these two out.)
+/[Aa]ssets/google-services.json
+/[Aa]ssets/GoogleService-Info.plist
+
+# ----------------------------------------------------------------------------
+# macOS noise
+# ----------------------------------------------------------------------------
+.DS_Store
+**/.DS_Store
