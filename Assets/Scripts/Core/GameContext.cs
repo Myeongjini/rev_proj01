@@ -29,6 +29,8 @@ namespace WizardGrower.Core
         [field: SerializeField] public UpgradeSystem UpgradeSystem { get; private set; }
         [field: SerializeField] public SaveService SaveService { get; private set; }
         [field: SerializeField] public SaveBinder SaveBinder { get; private set; }
+        [field: SerializeField] public CloudSyncService CloudSyncService { get; private set; }
+        [field: SerializeField] public SyncCoordinator SyncCoordinator { get; private set; }
         [field: SerializeField] public AuthService AuthService { get; private set; }
         [field: SerializeField] public UserProfileService UserProfileService { get; private set; }
         [field: SerializeField] public AuthConfig AuthConfig { get; private set; }

@@ -29,6 +29,17 @@ namespace WizardGrower.Save
             CurrentData = MigrateIfNeeded(data ?? new SaveData());
         }
 
+        public void OverwriteFromServer(SaveData remote)
+        {
+            CurrentData = MigrateIfNeeded(remote ?? new SaveData());
+            string directory = Path.GetDirectoryName(FilePath);
+            if (!string.IsNullOrEmpty(directory))
+                Directory.CreateDirectory(directory);
+
+            string json = JsonUtility.ToJson(CurrentData, true);
+            File.WriteAllText(FilePath, json);
+        }
+
         public void Save()
         {
             CurrentData.updatedAtUnixMs = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

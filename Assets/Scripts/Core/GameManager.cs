@@ -39,13 +39,21 @@ namespace WizardGrower.Core
         private void OnApplicationPause(bool paused)
         {
             if (paused && context != null)
+            {
                 context.SaveBinder.SaveNow(context, context.SaveService);
+                if (context.SyncCoordinator != null)
+                    context.SyncCoordinator.FlushNow();
+            }
         }
 
         private void OnApplicationQuit()
         {
             if (context != null)
+            {
                 context.SaveBinder.SaveNow(context, context.SaveService);
+                if (context.SyncCoordinator != null)
+                    context.SyncCoordinator.FlushNow();
+            }
         }
 
         private void OnEnemySpawned(EnemyBase enemy)
@@ -70,7 +78,10 @@ namespace WizardGrower.Core
             {
                 await context.AuthService.InitializeAsync(context.AuthConfig);
                 string uid = await context.AuthService.SignInAnonymouslyAsync();
-                context.SaveBinder.SetUserId(uid);
+                if (context.SyncCoordinator != null)
+                    await context.SyncCoordinator.StartSyncAsync(uid, context);
+                else
+                    context.SaveBinder.SetUserId(uid);
                 await context.UserProfileService.GetOrCreateAsync(uid, context.AuthService.CurrentAccountType);
                 context.AuthService.UserChanged += OnUserChanged;
                 LoginPanel loginPanel = FindAnyObjectByType<LoginPanel>(FindObjectsInactive.Include);
@@ -91,10 +102,13 @@ namespace WizardGrower.Core
 
             try
             {
-                context.SaveBinder.SetUserId(uid);
                 await context.UserProfileService.GetOrCreateAsync(uid, type);
                 await context.UserProfileService.UpdateAccountTypeAsync(uid, type);
                 await context.UserProfileService.TouchLastLoginAsync(uid);
+                if (context.SyncCoordinator != null)
+                    await context.SyncCoordinator.OnUidChanged(uid);
+                else
+                    context.SaveBinder.SetUserId(uid);
             }
             catch (System.Exception ex)
             {
