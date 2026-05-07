@@ -36,5 +36,14 @@ namespace WizardGrower.Core
         [field: SerializeField] public AuthConfig AuthConfig { get; private set; }
         [field: SerializeField] public HUDController HUD { get; private set; }
         [field: SerializeField] public FloatingTextSpawner FloatingText { get; private set; }
+
+        public void SetAuthenticationServices(AuthService authService, UserProfileService userProfileService, AuthConfig authConfig, CloudSyncService cloudSyncService = null)
+        {
+            AuthService = authService;
+            UserProfileService = userProfileService;
+            AuthConfig = authConfig;
+            if (cloudSyncService != null)
+                CloudSyncService = cloudSyncService;
+        }
     }
 }

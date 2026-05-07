@@ -2,6 +2,7 @@ using UnityEngine;
 using WizardGrower.Auth;
 using WizardGrower.Combat;
 using WizardGrower.Enemies;
+using WizardGrower.Login;
 using WizardGrower.UI;
 
 namespace WizardGrower.Core
@@ -33,7 +34,7 @@ namespace WizardGrower.Core
             context.EnemySpawner.EnemyDamaged += OnEnemyDamaged;
             context.EnemySpawner.EnemySpawned += OnEnemySpawned;
             context.Wizard.Stats.Changed += () => context.Progression.RecordCombatPower(context.Wizard.Stats.CombatPower);
-            InitializeAuthenticationAsync();
+            ConsumeBootstrappedAuthentication();
         }
 
         private void OnApplicationPause(bool paused)
@@ -69,29 +70,36 @@ namespace WizardGrower.Core
                 context.FloatingText.Spawn(enemy.transform.position, info);
         }
 
-        private async void InitializeAuthenticationAsync()
+        private async void ConsumeBootstrappedAuthentication()
         {
-            if (context.AuthService == null || context.UserProfileService == null)
+            AuthBootstrapHolder holder = AuthBootstrapHolder.Instance;
+            if (holder == null || holder.Auth == null || holder.Profile == null)
+            {
+                Debug.LogWarning("MainScene started without AuthBootstrapHolder. Start from LoginScene to enable Firebase auth.");
                 return;
+            }
 
             try
             {
-                await context.AuthService.InitializeAsync(context.AuthConfig);
-                string uid = await context.AuthService.SignInAnonymouslyAsync();
+                context.SetAuthenticationServices(holder.Auth, holder.Profile, holder.Config != null ? holder.Config : context.AuthConfig, holder.CloudSync);
+                string uid = context.AuthService.CurrentUid;
+                if (string.IsNullOrEmpty(uid))
+                {
+                    Debug.LogWarning("Bootstrapped auth has no UID. Cloud sync skipped.");
+                    return;
+                }
+
+                context.AuthService.UserChanged += OnUserChanged;
                 if (context.SyncCoordinator != null)
                     await context.SyncCoordinator.StartSyncAsync(uid, context);
                 else
                     context.SaveBinder.SetUserId(uid);
                 await context.UserProfileService.GetOrCreateAsync(uid, context.AuthService.CurrentAccountType);
-                context.AuthService.UserChanged += OnUserChanged;
-                LoginPanel loginPanel = FindAnyObjectByType<LoginPanel>(FindObjectsInactive.Include);
-                if (loginPanel != null)
-                    loginPanel.Bind(context.AuthService, context.UserProfileService);
-                Debug.Log($"Firebase anonymous UID: {uid}");
+                Debug.Log($"MainScene consumed bootstrapped Firebase UID: {uid}");
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"Auth initialization failed: {ex.Message}");
+                Debug.LogError($"Bootstrapped auth consumption failed: {ex.Message}");
             }
         }
 
