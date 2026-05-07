@@ -82,7 +82,7 @@ namespace WizardGrower.Auth
             }
             catch (Exception ex)
             {
-                LastError = ex.Message;
+                LastError = ex.GetBaseException().Message;
                 ErrorRaised?.Invoke(LastError);
                 Debug.LogError($"Google login failed: {LastError}");
                 return false;
@@ -104,15 +104,18 @@ namespace WizardGrower.Auth
             if (config == null || string.IsNullOrEmpty(config.googleWebClientId))
                 throw new InvalidOperationException("AuthConfig.googleWebClientId is missing.");
 
+            if (Application.isEditor)
+                throw new InvalidOperationException("Google Sign-In account picker requires an Android or iOS player runtime; Unity Editor has no native currentActivity.");
+
             Type configType = FindType("Google.GoogleSignInConfiguration");
             Type signInType = FindType("Google.GoogleSignIn");
             if (configType == null || signInType == null)
                 throw new InvalidOperationException("Google Sign-In Unity Plugin is not installed. Import it to enable Google login.");
 
             object googleConfig = Activator.CreateInstance(configType);
-            SetProperty(configType, googleConfig, "WebClientId", config.googleWebClientId);
-            SetProperty(configType, googleConfig, "RequestIdToken", true);
-            SetProperty(configType, googleConfig, "RequestEmail", true);
+            SetMember(configType, googleConfig, "WebClientId", config.googleWebClientId);
+            SetMember(configType, googleConfig, "RequestIdToken", true);
+            SetMember(configType, googleConfig, "RequestEmail", true);
 
             PropertyInfo configuration = signInType.GetProperty("Configuration", BindingFlags.Public | BindingFlags.Static);
             PropertyInfo defaultInstance = signInType.GetProperty("DefaultInstance", BindingFlags.Public | BindingFlags.Static);
@@ -148,12 +151,23 @@ namespace WizardGrower.Auth
                 throw new InvalidOperationException("AuthService is not initialized.");
         }
 
-        private static void SetProperty(Type type, object target, string propertyName, object value)
+        private static void SetMember(Type type, object target, string memberName, object value)
         {
-            PropertyInfo property = type.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-            if (property == null)
-                throw new InvalidOperationException($"Google Sign-In config property not found: {propertyName}");
-            property.SetValue(target, value);
+            PropertyInfo property = type.GetProperty(memberName, BindingFlags.Public | BindingFlags.Instance);
+            if (property != null)
+            {
+                property.SetValue(target, value);
+                return;
+            }
+
+            FieldInfo field = type.GetField(memberName, BindingFlags.Public | BindingFlags.Instance);
+            if (field != null)
+            {
+                field.SetValue(target, value);
+                return;
+            }
+
+            throw new InvalidOperationException($"Google Sign-In config member not found: {memberName}");
         }
 
         private static Type FindType(string fullName)
