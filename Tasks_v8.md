@@ -79,7 +79,7 @@ AA: Daily attendance (10-day cycle)
 | Bundle | ID | Title | Status | Depends On |
 |---|---|---|---|---|
 | 8 | W | Gacha 30-Pull + 9/10 Visibility Fix + Pricing Update | 🟡 IN REVIEW | v7 baseline |
-| 8 | X | Active Skill System (3 Skills + Cast Pipeline) | 🔴 TODO | v7 baseline |
+| 8 | X | Active Skill System (3 Skills + Cast Pipeline) | 🟡 IN REVIEW | v7 baseline |
 | 8 | Y | Skill Bar HUD + 메인UI01 스킬 탭 + Equip Flow | 🔴 TODO | X ✅ |
 | 8 | Z | Achievements (Daily + Repeat Missions) | 🔴 TODO | v7 baseline |
 | 8 | AA | Daily Attendance (10-Day Cycle) | 🔴 TODO | Z ✅ |
@@ -192,7 +192,7 @@ For Item 1 root cause: most likely `GachaResultPanel` uses a `GridLayoutGroup` w
 
 ## Task X — Active Skill System (3 Skills + Cast Pipeline)
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** v7 baseline
 
 ### 🎯 Goal
@@ -694,6 +694,7 @@ After Task AA reaches `✅ DONE`:
 | Date | Task | Entry |
 |------|------|-------|
 | 2026-05-09 | Task W | Implemented 30-pull gacha pricing (`1회 100`, `10회 1,000`, `30회 3,000`), `GachaService.PullThirty()`, adaptive result-modal layout, and `Standard` cost fields. Item 1 root cause: `GachaResultPanel` had one fixed 5-column result layout (`Cards` 640x370, `cellSize=(112,166)`, spacing 12) and fixed card construction assumptions with no card-count-specific fit policy, plus delayed `Destroy()` could leave stale children during immediate re-show; fixed by using `<=10` layout `5 cols / cell=(112,166) / spacing=(12,12)`, `30` layout `6 cols / cell=(100,66) / spacing=(8,8)`, keeping container `640x370`, forcing layout rebuilds, and detaching old cards before destroy. MCP PlayMode Validation 1~9 PASS; final console had no game-code compile/runtime errors after validation, only MCP transport log noise when queried. Start-state unrelated changes noted: `.DS_Store`, `Assets/.DS_Store`, `Assets/Fonts/NanumGothicBold SDF.asset`, `.codex/`; `Tasks_v8.md` was an untracked planner document before this Task W update. |
+| 2026-05-09 | Task X | Added v4 skill runtime foundation: `SkillDefinition`, `SkillDatabase`, `SkillRuntime`, `SkillCastOrchestrator`, 3 seed skill assets (`메테오`, `콜드빔`, `돌진`), ParticleSystem cast/impact prefabs, GameContext/GameManager wiring, auto-cast tick, and save/cloud round-trip for `ownedSkillIds` + 5 equipped slots. Migration v3→v4 grants all 3 seeds and equips meteor in slot 0. MCP PlayMode validation passed: fresh defaults, seed values/VFX, manual meteor cooldown/mana, cold/charge equip/cast, auto idle cast, charge dash movement, save round-trip, and v3 migration. Final console check after clearing had no game-code errors/warnings; only MCP transport log noise remained. Start-state unrelated dirty files left unstaged: `.DS_Store`, `Assets/.DS_Store`, `Assets/Fonts/NanumGothicBold SDF.asset`, `Tasks_v7.md`, `.codex/`; Unity also touched `Assets/Scripts/.DS_Store`, left unstaged. |
 
 ---
 

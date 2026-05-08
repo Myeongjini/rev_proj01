@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using WizardGrower.Skills;
 using WizardGrower.Weapons;
 
 namespace WizardGrower.Save
@@ -7,7 +8,7 @@ namespace WizardGrower.Save
     [Serializable]
     public class SaveData
     {
-        public int saveVersion = 3;
+        public int saveVersion = 4;
         public string userId = "local";
         public long updatedAtUnixMs;
 
@@ -24,6 +25,8 @@ namespace WizardGrower.Save
         public string equippedWeaponId = "common_beginner_staff";
         public List<OwnedWeaponEntry> ownedWeapons = new List<OwnedWeaponEntry> { new OwnedWeaponEntry("common_beginner_staff", 1) };
         public List<string> ownedWeaponIds = new List<string> { "wand_starter" };
+        public List<string> ownedSkillIds = new List<string>(SkillId.DefaultOwned);
+        public List<string> equippedSkillSlots = new List<string> { SkillId.Meteor, string.Empty, string.Empty, string.Empty, string.Empty };
     }
 
     [Serializable]

@@ -21,6 +21,8 @@ namespace WizardGrower.Save
         [FirestoreProperty("equippedWeaponId")] public string EquippedWeaponId { get; set; }
         [FirestoreProperty("ownedWeapons")] public List<OwnedWeaponEntryDoc> OwnedWeapons { get; set; }
         [FirestoreProperty("ownedWeaponIds")] public List<string> OwnedWeaponIds { get; set; }
+        [FirestoreProperty("ownedSkillIds")] public List<string> OwnedSkillIds { get; set; }
+        [FirestoreProperty("equippedSkillSlots")] public List<string> EquippedSkillSlots { get; set; }
     }
 
     [FirestoreData]

@@ -28,6 +28,11 @@ namespace WizardGrower.Save
             ctx.Wallet.SetGems(data.gems);
             if (ctx.GachaService != null)
                 ctx.GachaService.LoadState(data.summonLevel, data.summonPullsInLevel, data.pityCounter);
+            if (ctx.SkillCastOrchestrator != null)
+            {
+                ctx.SkillCastOrchestrator.LoadOwnedSkills(data.ownedSkillIds);
+                ctx.SkillCastOrchestrator.LoadEquippedSlots(data.equippedSkillSlots);
+            }
             ctx.UpgradeSystem.LoadLevels(data.upgrades);
             ctx.StageManager.LoadProgress(data.currentChapter, data.currentStage);
             ctx.Progression.RecordCombatPower(ctx.Wizard.Stats.CombatPower);
@@ -46,6 +51,11 @@ namespace WizardGrower.Save
             data.pityCounter = ctx.GachaService != null ? ctx.GachaService.CurrentPity : 0;
             data.summonLevel = ctx.GachaService != null ? ctx.GachaService.CurrentSummonLevel : 1;
             data.summonPullsInLevel = ctx.GachaService != null ? ctx.GachaService.SummonPullsInLevel : 0;
+            if (ctx.SkillCastOrchestrator != null)
+            {
+                data.ownedSkillIds = ctx.SkillCastOrchestrator.CaptureOwnedSkillIds();
+                data.equippedSkillSlots = ctx.SkillCastOrchestrator.CaptureEquippedSkillSlots();
+            }
             data.currentChapter = ctx.StageManager != null ? ctx.StageManager.CurrentChapterNumber : 1;
             data.currentStage = ctx.StageManager != null ? ctx.StageManager.CurrentStageNumber : 1;
             data.stats = ctx.Wizard != null ? ctx.Wizard.Stats.CaptureSnapshot() : new PlayerStatsSnapshot();
@@ -79,6 +89,8 @@ namespace WizardGrower.Save
                 context.GachaService.PityChanged += _ => QueueSave();
                 context.GachaService.StateChanged += QueueSave;
             }
+            if (context.SkillCastOrchestrator != null)
+                context.SkillCastOrchestrator.SlotChanged += (_, _) => QueueSave();
         }
 
         public void SetUserId(string uid)

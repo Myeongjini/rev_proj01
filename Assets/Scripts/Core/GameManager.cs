@@ -38,7 +38,10 @@ namespace WizardGrower.Core
             context.UpgradeSystem.Initialize(context.Wallet, context.Wizard, context.Mana);
             context.AutoAttack.Initialize(context.Wizard, context.Movement, context.EnemySpawner, context.ProjectileFactory, calculator);
             context.ClickAttack.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, calculator);
-            context.ActiveSkill.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
+            if (context.ActiveSkill != null)
+                context.ActiveSkill.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
+            if (context.SkillCastOrchestrator != null)
+                context.SkillCastOrchestrator.Initialize(context.SkillDatabase, context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
             context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
@@ -57,6 +60,15 @@ namespace WizardGrower.Core
             context.EnemySpawner.EnemySpawned += OnEnemySpawned;
             combatPower.PowerChanged += power => context.Progression.RecordCombatPower(power);
             ConsumeBootstrappedAuthentication();
+        }
+
+        private void Update()
+        {
+            if (context == null || context.SkillCastOrchestrator == null || context.Movement == null)
+                return;
+
+            if (context.Movement.AutoModeEnabled && !context.Movement.IsManualMoving)
+                context.SkillCastOrchestrator.TickAutoCast(context.Mana);
         }
 
         private void OnApplicationPause(bool paused)

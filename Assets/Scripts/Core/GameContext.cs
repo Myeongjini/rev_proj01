@@ -7,6 +7,7 @@ using WizardGrower.Enemies;
 using WizardGrower.Multiplayer;
 using WizardGrower.Player;
 using WizardGrower.Save;
+using WizardGrower.Skills;
 using WizardGrower.Stages;
 using WizardGrower.Upgrades;
 using WizardGrower.UI;
@@ -48,6 +49,8 @@ namespace WizardGrower.Core
         [field: SerializeField] public WeaponVisualController WeaponVisual { get; private set; }
         [field: SerializeField] public GachaDefinition GachaDefinition { get; private set; }
         [field: SerializeField] public GachaService GachaService { get; private set; }
+        [field: SerializeField] public SkillDatabase SkillDatabase { get; private set; }
+        [field: SerializeField] public SkillCastOrchestrator SkillCastOrchestrator { get; private set; }
         [field: SerializeField] public CombatPowerPopupView CombatPowerPopup { get; private set; }
         public CombatPowerService CombatPower { get; private set; }
         public WeaponFusionService WeaponFusion { get; private set; }

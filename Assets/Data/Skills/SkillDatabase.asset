@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd5a82b3ba8174a769347ff6077c8e07, type: 3}
+  m_Name: SkillDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Skills.SkillDatabase
+  skills:
+  - {fileID: 11400000, guid: 7377abe82e39b414ba0fb5815217c13d, type: 2}
+  - {fileID: 11400000, guid: a63bd71d2444b49ac90bbf111b13b615, type: 2}
+  - {fileID: 11400000, guid: 500fdd61d86774f0abe288e096057de7, type: 2}

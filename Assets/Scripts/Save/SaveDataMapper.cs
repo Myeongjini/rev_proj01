@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using WizardGrower.Skills;
 using WizardGrower.Weapons;
 
 namespace WizardGrower.Save
@@ -26,7 +27,9 @@ namespace WizardGrower.Save
                 Upgrades = ToDocument(data.upgrades),
                 EquippedWeaponId = string.IsNullOrEmpty(data.equippedWeaponId) ? WeaponInventory.StarterWeaponId : data.equippedWeaponId,
                 OwnedWeapons = ToDocument(data.ownedWeapons),
-                OwnedWeaponIds = data.ownedWeaponIds != null ? new List<string>(data.ownedWeaponIds) : new List<string> { "wand_starter" }
+                OwnedWeaponIds = data.ownedWeaponIds != null ? new List<string>(data.ownedWeaponIds) : new List<string> { "wand_starter" },
+                OwnedSkillIds = NormalizeOwnedSkills(data.ownedSkillIds),
+                EquippedSkillSlots = NormalizeEquippedSkills(data.equippedSkillSlots)
             };
         }
 
@@ -51,8 +54,30 @@ namespace WizardGrower.Save
                 upgrades = FromDocument(doc.Upgrades),
                 equippedWeaponId = string.IsNullOrEmpty(doc.EquippedWeaponId) ? WeaponInventory.StarterWeaponId : doc.EquippedWeaponId,
                 ownedWeapons = FromDocument(doc.OwnedWeapons),
-                ownedWeaponIds = doc.OwnedWeaponIds != null ? new List<string>(doc.OwnedWeaponIds) : new List<string> { "wand_starter" }
+                ownedWeaponIds = doc.OwnedWeaponIds != null ? new List<string>(doc.OwnedWeaponIds) : new List<string> { "wand_starter" },
+                ownedSkillIds = NormalizeOwnedSkills(doc.OwnedSkillIds),
+                equippedSkillSlots = NormalizeEquippedSkills(doc.EquippedSkillSlots)
             };
+        }
+
+        public static List<string> NormalizeOwnedSkills(List<string> ownedSkillIds)
+        {
+            List<string> normalized = ownedSkillIds != null ? new List<string>(ownedSkillIds) : new List<string>();
+            if (normalized.Count == 0)
+                normalized.AddRange(SkillId.DefaultOwned);
+            return normalized;
+        }
+
+        public static List<string> NormalizeEquippedSkills(List<string> equippedSkillSlots)
+        {
+            List<string> normalized = equippedSkillSlots != null ? new List<string>(equippedSkillSlots) : new List<string>();
+            while (normalized.Count < SkillCastOrchestrator.SlotCount)
+                normalized.Add(string.Empty);
+            if (normalized.Count > SkillCastOrchestrator.SlotCount)
+                normalized.RemoveRange(SkillCastOrchestrator.SlotCount, normalized.Count - SkillCastOrchestrator.SlotCount);
+            if (normalized.TrueForAll(string.IsNullOrEmpty))
+                normalized[0] = SkillId.Meteor;
+            return normalized;
         }
 
         private static PlayerStatsSnapshotDoc ToDocument(PlayerStatsSnapshot snapshot)

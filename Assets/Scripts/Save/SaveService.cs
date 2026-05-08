@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using WizardGrower.Skills;
 using WizardGrower.Weapons;
 
 namespace WizardGrower.Save
@@ -92,7 +93,10 @@ namespace WizardGrower.Save
             if (data.saveVersion < 3)
                 MigrateWeaponInventoryToV3(data);
 
-            data.saveVersion = Mathf.Max(data.saveVersion, 3);
+            if (data.saveVersion < 4)
+                MigrateSkillsToV4(data);
+
+            data.saveVersion = Mathf.Max(data.saveVersion, 4);
 
             if (data.ownedWeapons.Count == 0)
                 data.ownedWeapons.Add(new OwnedWeaponEntry(WeaponInventory.StarterWeaponId, 1));
@@ -110,8 +114,23 @@ namespace WizardGrower.Save
             data.pityCounter = Mathf.Max(0, data.pityCounter);
             data.summonLevel = Mathf.Max(1, data.summonLevel);
             data.summonPullsInLevel = Mathf.Max(0, data.summonPullsInLevel);
+            data.ownedSkillIds = SaveDataMapper.NormalizeOwnedSkills(data.ownedSkillIds);
+            data.equippedSkillSlots = SaveDataMapper.NormalizeEquippedSkills(data.equippedSkillSlots);
 
             return data;
+        }
+
+        private static void MigrateSkillsToV4(SaveData data)
+        {
+            data.ownedSkillIds = new System.Collections.Generic.List<string>(SkillId.DefaultOwned);
+            data.equippedSkillSlots = new System.Collections.Generic.List<string>
+            {
+                SkillId.Meteor,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty
+            };
         }
 
         private static void MigrateWeaponInventoryToV3(SaveData data)
