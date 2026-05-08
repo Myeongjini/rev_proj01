@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace WizardGrower.Save
 {
@@ -14,6 +15,8 @@ namespace WizardGrower.Save
                 UserId = string.IsNullOrEmpty(data.userId) ? "local" : data.userId,
                 UpdatedAtUnixMs = data.updatedAtUnixMs,
                 Gold = data.gold,
+                Gems = data.gems,
+                PityCounter = data.pityCounter,
                 CurrentChapter = data.currentChapter,
                 CurrentStage = data.currentStage,
                 Stats = ToDocument(data.stats),
@@ -34,6 +37,8 @@ namespace WizardGrower.Save
                 userId = string.IsNullOrEmpty(doc.UserId) ? "local" : doc.UserId,
                 updatedAtUnixMs = doc.UpdatedAtUnixMs,
                 gold = doc.Gold,
+                gems = doc.SaveVersion < 2 && doc.Gems <= 0 ? 300 : doc.Gems,
+                pityCounter = Mathf.Max(0, doc.PityCounter),
                 currentChapter = doc.CurrentChapter,
                 currentStage = doc.CurrentStage,
                 stats = FromDocument(doc.Stats),

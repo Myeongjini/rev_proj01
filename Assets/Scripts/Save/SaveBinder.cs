@@ -25,6 +25,9 @@ namespace WizardGrower.Save
                 ctx.Wizard.Stats.RecomputeWithEquipped(ctx.WeaponInventory.Equipped != null ? ctx.WeaponInventory.Equipped.statBonuses : (WizardGrower.Weapons.WeaponStats?)null);
             }
             ctx.Wallet.SetGold(data.gold);
+            ctx.Wallet.SetGems(data.gems);
+            if (ctx.GachaService != null)
+                ctx.GachaService.LoadPity(data.pityCounter);
             ctx.UpgradeSystem.LoadLevels(data.upgrades);
             ctx.StageManager.LoadProgress(data.currentChapter, data.currentStage);
             ctx.Progression.RecordCombatPower(ctx.Wizard.Stats.CombatPower);
@@ -39,6 +42,8 @@ namespace WizardGrower.Save
 
             data.userId = string.IsNullOrEmpty(userId) ? "local" : userId;
             data.gold = ctx.Wallet != null ? ctx.Wallet.Gold : 0;
+            data.gems = ctx.Wallet != null ? ctx.Wallet.Gems : 300;
+            data.pityCounter = ctx.GachaService != null ? ctx.GachaService.CurrentPity : 0;
             data.currentChapter = ctx.StageManager != null ? ctx.StageManager.CurrentChapterNumber : 1;
             data.currentStage = ctx.StageManager != null ? ctx.StageManager.CurrentStageNumber : 1;
             data.stats = ctx.Wizard != null ? ctx.Wizard.Stats.CaptureSnapshot() : new PlayerStatsSnapshot();
@@ -60,12 +65,18 @@ namespace WizardGrower.Save
                 return;
 
             context.Wallet.GoldChanged += _ => QueueSave();
+            context.Wallet.GemsChanged += _ => QueueSave();
             context.UpgradeSystem.UpgradePurchased += (_, _, _) => QueueSave();
             context.StageManager.StateChanged += (_, _, _) => QueueSave();
             if (context.WeaponInventory != null)
             {
                 context.WeaponInventory.EquippedChanged += _ => QueueSave();
                 context.WeaponInventory.WeaponObtained += _ => QueueSave();
+            }
+            if (context.GachaService != null)
+            {
+                context.GachaService.PityChanged += _ => QueueSave();
+                context.GachaService.StateChanged += QueueSave;
             }
         }
 

@@ -86,7 +86,7 @@ Sub-bundle 6C (Weapons & Gacha — depends on Task I ✅)
 | 6B | M | World + Stage Chat | ✅ DONE | K |
 | 6C | N | Weapon data model + stat composer | 🟡 IN REVIEW | Tasks.md Task G ✅ |
 | 6C | O | Weapon inventory + equip UI + visual swap | 🟡 IN REVIEW | N + Tasks.md Task I ✅ |
-| 6C | P | Gacha service + UI + Gem currency | 🔴 TODO | N, O |
+| 6C | P | Gacha service + UI + Gem currency | 🟡 IN REVIEW | N, O |
 
 Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · ⚠️ BLOCKED
 
@@ -641,7 +641,7 @@ Skipping step 3 results in base stats + zero bonus → confused player.
 
 ## Task P — Gacha Service + UI + Gem Currency
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** N, O ✅
 
 ### 🎯 Goal
@@ -809,6 +809,7 @@ After all three sub-bundles ✅ + Bundle 6 release gate runbook completes → Bu
 | 2026-05-08 | Task M (planner fix) | Removed local `AddMessage(chatService.CreateLocalMessage(text))` from `ChatPanel.SendCurrent` after rules fix exposed self-message duplication. Server `OnChildAdded` echo is now the single render path. PlayMode 0 error / 0 warning; user confirmed messages render once. |
 | 2026-05-08 | Task N | Added weapon data model scripts, documented stat composer, six seeded WeaponDefinition assets, WeaponDatabase asset, and VisualAssetUpdater menu items for weapon glyph/projectile sprite generation. MCP validation confirmed 6 weapons, 2 Rare entries, `arcane_scepter` lookup, and stat recompute (`auto=35`, `manual=60`, crit clamp to `1`, multiplier `2.3`). |
 | 2026-05-08 | Task O | Added WeaponInventory, WeaponVisualController, weapon inventory UI, WeaponSlot prefab, save schema v2 weapon fields, Firestore mapper fields, PlayerStats base/equipped recompute, and auto-projectile sprite override. MCP PlayMode validation passed for starter load, six-slot inventory view, apprentice add/equip, tint/glyph/projectile activation, ATK/manual stat bonus, and save capture/apply round-trip. |
+| 2026-05-08 | Task P | Added Gem currency, Standard gacha definition, weighted rarity + 30-pull pity GachaService, HUD Gem label, Gacha panel/result modal, save/Firestore gem+pity mapping, and MainScene wiring. MCP validation passed for fresh 300 gems, 1x pull cost/result modal, 10x pull cost/result list, insufficient-gem block, Rare+ pity reset from 29/30, and SaveBinder capture of gems/pity. Note: Task O's WeaponInventory stores unique owned IDs and Task P forbids touching its internals, so duplicate pull results are shown but duplicate owned IDs are not persisted; new/unowned weapons are prioritized until the six-weapon seed pool is complete. |
 
 ---
 

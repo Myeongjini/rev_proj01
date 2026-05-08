@@ -35,7 +35,7 @@ namespace WizardGrower.UI
             if (icon != null)
                 icon.sprite = weapon != null ? weapon.icon : null;
             if (frame != null)
-                frame.color = weapon != null ? GetRarityColor(weapon.rarity) : Color.white;
+                frame.color = weapon != null ? RarityVisuals.ColorFor(weapon.rarity) : Color.white;
             Refresh();
         }
 
@@ -63,17 +63,5 @@ namespace WizardGrower.UI
             }
         }
 
-        private static Color GetRarityColor(Rarity rarity)
-        {
-            switch (rarity)
-            {
-                case Rarity.Uncommon: return new Color(0.30f, 0.90f, 0.78f, 1f);
-                case Rarity.Rare: return new Color(0.35f, 0.58f, 1f, 1f);
-                case Rarity.Epic: return new Color(0.72f, 0.35f, 1f, 1f);
-                case Rarity.Legendary: return new Color(1f, 0.58f, 0.18f, 1f);
-                case Rarity.Mythic: return new Color(1f, 0.22f, 0.34f, 1f);
-                default: return new Color(0.80f, 0.82f, 0.86f, 1f);
-            }
-        }
     }
 }

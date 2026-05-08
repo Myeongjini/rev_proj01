@@ -11,6 +11,8 @@ namespace WizardGrower.Save
         public long updatedAtUnixMs;
 
         public int gold;
+        public int gems = 300;
+        public int pityCounter;
         public int currentChapter = 1;
         public int currentStage = 1;
 

@@ -46,6 +46,8 @@ namespace WizardGrower.Core
         [field: SerializeField] public WeaponDatabase WeaponDatabase { get; private set; }
         [field: SerializeField] public WeaponInventory WeaponInventory { get; private set; }
         [field: SerializeField] public WeaponVisualController WeaponVisual { get; private set; }
+        [field: SerializeField] public GachaDefinition GachaDefinition { get; private set; }
+        [field: SerializeField] public GachaService GachaService { get; private set; }
 
         public void SetAuthenticationServices(AuthService authService, UserProfileService userProfileService, AuthConfig authConfig, CloudSyncService cloudSyncService = null)
         {

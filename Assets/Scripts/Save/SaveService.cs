@@ -78,7 +78,8 @@ namespace WizardGrower.Save
             if (data.upgrades == null)
                 data.upgrades = new System.Collections.Generic.List<UpgradeLevelEntry>();
 
-            if (data.saveVersion < 2)
+            bool migratingToVersion2 = data.saveVersion < 2;
+            if (migratingToVersion2)
                 data.saveVersion = 2;
 
             if (data.ownedWeaponIds == null)
@@ -89,6 +90,15 @@ namespace WizardGrower.Save
 
             if (string.IsNullOrEmpty(data.equippedWeaponId) || !data.ownedWeaponIds.Contains(data.equippedWeaponId))
                 data.equippedWeaponId = "wand_starter";
+
+            if (migratingToVersion2)
+            {
+                data.gems = 300;
+                data.pityCounter = 0;
+            }
+
+            data.gems = Mathf.Max(0, data.gems);
+            data.pityCounter = Mathf.Max(0, data.pityCounter);
 
             return data;
         }

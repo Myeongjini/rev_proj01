@@ -16,6 +16,7 @@ namespace WizardGrower.UI
     {
         [SerializeField] private TMP_Text stageLabel;
         [SerializeField] private TMP_Text goldLabel;
+        [SerializeField] private TMP_Text gemLabel;
         [SerializeField] private TMP_Text attackLabel;
         [SerializeField] private TMP_Text feedbackLabel;
         [SerializeField] private ManaBarView manaBar;
@@ -35,6 +36,8 @@ namespace WizardGrower.UI
         [SerializeField] private ChatPanel chatPanel;
         [SerializeField] private Button weaponInventoryToggleButton;
         [SerializeField] private WeaponInventoryPanel weaponInventoryPanel;
+        [SerializeField] private Button gachaToggleButton;
+        [SerializeField] private GachaPanel gachaPanel;
         [SerializeField] private UpgradeDrawerView upgradeDrawer;
         [SerializeField] private Transform upgradeButtonContainer;
         [SerializeField] private UpgradeButtonView upgradeButtonPrefab;
@@ -59,13 +62,17 @@ namespace WizardGrower.UI
             PlayerMovementController movementController,
             ChatService chatService = null,
             WeaponInventory weaponInventory = null,
-            WeaponDatabase weaponDatabase = null)
+            WeaponDatabase weaponDatabase = null,
+            GachaService gachaService = null,
+            GachaDefinition gachaDefinition = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
             this.movementController = movementController;
 
             wallet.GoldChanged += gold => goldLabel.text = $"Gold {gold}";
+            if (gemLabel != null)
+                wallet.GemsChanged += gems => gemLabel.text = $"Gem {gems}";
             wizard.Stats.Changed += () => RefreshAttack(wizard);
             mana.Changed += manaBar.Refresh;
             stageManager.StateChanged += OnStateChanged;
@@ -83,6 +90,8 @@ namespace WizardGrower.UI
                 chatToggleButton.onClick.AddListener(chatPanel.Toggle);
             if (weaponInventoryToggleButton != null && weaponInventoryPanel != null)
                 weaponInventoryToggleButton.onClick.AddListener(weaponInventoryPanel.Toggle);
+            if (gachaToggleButton != null && gachaPanel != null)
+                gachaToggleButton.onClick.AddListener(gachaPanel.Toggle);
             movementController.AutoModeChanged += RefreshAutoToggle;
             if (joystickIndicator != null)
                 movementController.JoystickChanged += joystickIndicator.Refresh;
@@ -90,10 +99,14 @@ namespace WizardGrower.UI
                 chatPanel.Initialize(chatService, stageManager);
             if (weaponInventoryPanel != null)
                 weaponInventoryPanel.Initialize(weaponInventory, weaponDatabase);
+            if (gachaPanel != null)
+                gachaPanel.Initialize(gachaService, gachaDefinition);
 
             BindUpgradeButtons(upgradeSystem);
             RefreshAttack(wizard);
             goldLabel.text = $"Gold {wallet.Gold}";
+            if (gemLabel != null)
+                gemLabel.text = $"Gem {wallet.Gems}";
             manaBar.Refresh(mana.Current, mana.Max);
             if (playerHealthBar != null)
                 playerHealthBar.Bind(wizard.Stats);
