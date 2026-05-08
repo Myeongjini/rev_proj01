@@ -33,9 +33,13 @@ namespace WizardGrower.Weapons
         private SaveService saveService;
         private IRandomSource random = new UnityRandomSource();
         private int currentPity;
+        private readonly SummonLevelState summonState = new SummonLevelState();
 
         public int CurrentPity => currentPity;
+        public int CurrentSummonLevel => Mathf.Max(1, summonState.summonLevel);
+        public int SummonPullsInLevel => Mathf.Max(0, summonState.summonPullsInLevel);
         public GachaDefinition Definition => definition;
+        public SummonLevelDefinition CurrentLevelDefinition => GetCurrentLevelDefinition();
 
         public event Action<int> PityChanged;
         public event Action StateChanged;
@@ -56,18 +60,28 @@ namespace WizardGrower.Weapons
             this.definition = definition;
             saveService = save;
             random = randomSource ?? new UnityRandomSource();
-            currentPity = Mathf.Max(0, saveService != null && saveService.CurrentData != null ? saveService.CurrentData.pityCounter : 0);
+
+            SaveData data = saveService != null ? saveService.CurrentData : null;
+            LoadState(
+                data != null ? data.summonLevel : 1,
+                data != null ? data.summonPullsInLevel : 0,
+                data != null ? data.pityCounter : 0);
 
             if (this.wallet != null)
                 this.wallet.GemsChanged += OnGemsChanged;
-
-            StateChanged?.Invoke();
-            PityChanged?.Invoke(currentPity);
         }
 
         public void LoadPity(int pityCounter)
         {
+            LoadState(CurrentSummonLevel, SummonPullsInLevel, pityCounter);
+        }
+
+        public void LoadState(int summonLevel, int pullsInLevel, int pityCounter)
+        {
+            summonState.summonLevel = Mathf.Max(1, summonLevel);
+            summonState.summonPullsInLevel = Mathf.Max(0, pullsInLevel);
             currentPity = Mathf.Max(0, pityCounter);
+            NormalizeSummonProgress();
             PityChanged?.Invoke(currentPity);
             StateChanged?.Invoke();
         }
@@ -98,40 +112,38 @@ namespace WizardGrower.Weapons
             return TryPull(10, definition != null ? definition.costTen : 0, out pulled);
         }
 
-        public Rarity WeightedRandomRarity(IRandomSource source, Rarity? minimumRarity = null)
+        public WeaponUpperGrade WeightedRandomUpperGrade(IRandomSource source, WeaponUpperGrade? minimumGrade = null)
         {
-            if (definition == null || definition.weights == null || definition.weights.Length == 0)
-                return minimumRarity ?? Rarity.Common;
+            SummonLevelDefinition level = GetCurrentLevelDefinition();
+            if (level == null || level.upperGradeWeights == null || level.upperGradeWeights.Length == 0)
+                return minimumGrade.HasValue ? ClampToCurrentMax(minimumGrade.Value) : WeaponUpperGrade.Common;
 
+            WeaponUpperGrade floor = minimumGrade.HasValue ? ClampToCurrentMax(minimumGrade.Value) : WeaponUpperGrade.Common;
             float total = 0f;
-            for (int i = 0; i < definition.weights.Length; i++)
+            for (int i = 0; i < level.upperGradeWeights.Length; i++)
             {
-                RarityWeight entry = definition.weights[i];
-                if (entry.weight <= 0f)
-                    continue;
-                if (minimumRarity.HasValue && entry.rarity < minimumRarity.Value)
+                WeaponGradeWeight entry = level.upperGradeWeights[i];
+                if (entry.weight <= 0f || entry.upperGrade < floor || entry.upperGrade > level.maxUpperGrade)
                     continue;
                 total += entry.weight;
             }
 
             if (total <= 0f)
-                return minimumRarity ?? Rarity.Common;
+                return floor;
 
             float roll = Mathf.Clamp01(source != null ? source.Value() : UnityEngine.Random.value) * total;
             float cursor = 0f;
-            for (int i = 0; i < definition.weights.Length; i++)
+            for (int i = 0; i < level.upperGradeWeights.Length; i++)
             {
-                RarityWeight entry = definition.weights[i];
-                if (entry.weight <= 0f)
-                    continue;
-                if (minimumRarity.HasValue && entry.rarity < minimumRarity.Value)
+                WeaponGradeWeight entry = level.upperGradeWeights[i];
+                if (entry.weight <= 0f || entry.upperGrade < floor || entry.upperGrade > level.maxUpperGrade)
                     continue;
                 cursor += entry.weight;
                 if (roll <= cursor)
-                    return entry.rarity;
+                    return entry.upperGrade;
             }
 
-            return definition.weights[definition.weights.Length - 1].rarity;
+            return floor;
         }
 
         private bool TryPull(int count, int cost, out List<WeaponDefinition> pulled)
@@ -155,6 +167,7 @@ namespace WizardGrower.Weapons
 
                 inventory.Add(weapon.weaponId);
                 pulled.Add(weapon);
+                AdvanceSummonProgress(1);
             }
 
             StateChanged?.Invoke();
@@ -165,93 +178,85 @@ namespace WizardGrower.Weapons
         {
             currentPity++;
             bool guaranteed = definition.pityThreshold > 0 && currentPity >= definition.pityThreshold;
-            Rarity rarity = WeightedRandomRarity(random, guaranteed ? definition.pityFloor : (Rarity?)null);
-            WeaponDefinition weapon = PickWeapon(rarity);
-
-            if (weapon == null && guaranteed)
-                weapon = PickWeaponAtOrAbove(definition.pityFloor);
+            WeaponUpperGrade floor = guaranteed ? ClampToCurrentMax(definition.pityFloor) : WeaponUpperGrade.Common;
+            WeaponUpperGrade upper = WeightedRandomUpperGrade(random, guaranteed ? floor : (WeaponUpperGrade?)null);
+            WeaponLowerGrade lower = (WeaponLowerGrade)random.Range(0, 4);
+            WeaponDefinition weapon = definition.pool.GetByGrade(upper, lower);
 
             if (weapon == null)
-                weapon = PickAnyWeapon();
+                weapon = PickAnyWeaponAtOrBelowCurrentMax();
 
-            if (weapon != null && weapon.rarity >= definition.pityFloor)
+            if (weapon != null && weapon.upperGrade >= ClampToCurrentMax(definition.pityFloor))
                 currentPity = 0;
 
             PityChanged?.Invoke(currentPity);
             return weapon;
         }
 
-        private WeaponDefinition PickWeapon(Rarity rarity)
+        private void AdvanceSummonProgress(int amount)
         {
-            List<WeaponDefinition> matches = CollectWeapons(rarity, false);
-            if (matches.Count == 0)
-                return null;
-
-            List<WeaponDefinition> unowned = new List<WeaponDefinition>();
-            for (int i = 0; i < matches.Count; i++)
-            {
-                if (inventory == null || !inventory.IsOwned(matches[i].weaponId))
-                    unowned.Add(matches[i]);
-            }
-
-            List<WeaponDefinition> pool = unowned.Count > 0 ? unowned : CollectUnownedWeapons();
-            if (pool.Count == 0)
-                pool = matches;
-            return pool[random.Range(0, pool.Count)];
+            summonState.summonPullsInLevel += Mathf.Max(0, amount);
+            NormalizeSummonProgress();
         }
 
-        private WeaponDefinition PickWeaponAtOrAbove(Rarity floor)
+        private void NormalizeSummonProgress()
         {
-            List<WeaponDefinition> matches = CollectWeapons(floor, true);
-            if (matches.Count == 0)
+            SummonLevelDefinition level = GetCurrentLevelDefinition();
+            while (level != null && level.pullsToNextLevel > 0 && summonState.summonPullsInLevel >= level.pullsToNextLevel)
+            {
+                summonState.summonPullsInLevel -= level.pullsToNextLevel;
+                SummonLevelDefinition next = definition != null ? definition.GetNextLevelDefinition(level.level) : null;
+                if (next == null)
+                {
+                    summonState.summonPullsInLevel = 0;
+                    return;
+                }
+
+                summonState.summonLevel = next.level;
+                level = next;
+            }
+
+            if (level != null && level.pullsToNextLevel <= 0)
+                summonState.summonPullsInLevel = 0;
+        }
+
+        private SummonLevelDefinition GetCurrentLevelDefinition()
+        {
+            if (definition == null)
                 return null;
 
+            SummonLevelDefinition level = definition.GetLevelDefinition(CurrentSummonLevel);
+            if (level != null)
+                summonState.summonLevel = Mathf.Max(1, level.level);
+            return level;
+        }
+
+        private WeaponUpperGrade ClampToCurrentMax(WeaponUpperGrade grade)
+        {
+            SummonLevelDefinition level = GetCurrentLevelDefinition();
+            if (level == null)
+                return grade;
+            return grade > level.maxUpperGrade ? level.maxUpperGrade : grade;
+        }
+
+        private WeaponDefinition PickAnyWeaponAtOrBelowCurrentMax()
+        {
+            WeaponDatabase pool = definition != null ? definition.pool : null;
+            SummonLevelDefinition level = GetCurrentLevelDefinition();
+            if (pool == null || pool.OrderedWeapons == null || pool.OrderedWeapons.Count == 0)
+                return null;
+
+            List<WeaponDefinition> matches = new List<WeaponDefinition>();
+            for (int i = 0; i < pool.OrderedWeapons.Count; i++)
+            {
+                WeaponDefinition weapon = pool.OrderedWeapons[i];
+                if (weapon != null && (level == null || weapon.upperGrade <= level.maxUpperGrade))
+                    matches.Add(weapon);
+            }
+
+            if (matches.Count == 0)
+                return null;
             return matches[random.Range(0, matches.Count)];
-        }
-
-        private WeaponDefinition PickAnyWeapon()
-        {
-            WeaponDatabase pool = definition != null ? definition.pool : null;
-            if (pool == null || pool.weapons == null || pool.weapons.Length == 0)
-                return null;
-
-            return pool.weapons[random.Range(0, pool.weapons.Length)];
-        }
-
-        private List<WeaponDefinition> CollectUnownedWeapons()
-        {
-            List<WeaponDefinition> matches = new List<WeaponDefinition>();
-            WeaponDatabase pool = definition != null ? definition.pool : null;
-            if (pool == null || pool.weapons == null)
-                return matches;
-
-            for (int i = 0; i < pool.weapons.Length; i++)
-            {
-                WeaponDefinition weapon = pool.weapons[i];
-                if (weapon != null && (inventory == null || !inventory.IsOwned(weapon.weaponId)))
-                    matches.Add(weapon);
-            }
-
-            return matches;
-        }
-
-        private List<WeaponDefinition> CollectWeapons(Rarity rarity, bool atOrAbove)
-        {
-            List<WeaponDefinition> matches = new List<WeaponDefinition>();
-            WeaponDatabase pool = definition != null ? definition.pool : null;
-            if (pool == null || pool.weapons == null)
-                return matches;
-
-            for (int i = 0; i < pool.weapons.Length; i++)
-            {
-                WeaponDefinition weapon = pool.weapons[i];
-                if (weapon == null)
-                    continue;
-                if (atOrAbove ? weapon.rarity >= rarity : weapon.rarity == rarity)
-                    matches.Add(weapon);
-            }
-
-            return matches;
         }
 
         private bool CanSpend(int amount)

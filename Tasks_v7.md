@@ -82,7 +82,7 @@ U: Summon level gacha refactor
 | 7 | R | Weapon Grade Model + 20 Seed Weapon Table | 🟡 IN REVIEW | Q ✅ |
 | 7 | S | Counted Weapon Inventory + 4-Column Weapon Window | 🟡 IN REVIEW | R ✅ |
 | 7 | T | Synthesize-All Weapon Fusion | 🟡 IN REVIEW | S ✅ |
-| 7 | U | Summon Level Gacha Refactor | 🔴 TODO | T ✅ |
+| 7 | U | Summon Level Gacha Refactor | 🟡 IN REVIEW | T ✅ |
 
 Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · ⚠️ BLOCKED
 
@@ -628,7 +628,7 @@ If fusion consumes all copies of the equipped weapon:
 
 ## Task U — Summon Level Gacha Refactor
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** T ✅
 
 ### 🎯 Goal
@@ -811,6 +811,7 @@ After Task U reaches `✅ DONE`:
 | 2026-05-08 | Task R | Added upper/lower weapon grade enums and Korean grade labels, converted WeaponStats/WeaponDefinition/WeaponDatabase/WeaponStatComposer to the v7 grade ladder, regenerated weapon glyph/projectile generator support for 20 weapons, replaced the 6 v6 seed WeaponDefinition assets with 20 ladder assets, and wired WeaponDatabase in ladder order. MCP validation passed: `OrderedWeapons.Count=20`, every upper grade has 4 weapons, `GetNext(common_supreme_staff)=normal_beginner_staff`, `GetNext(unique_supreme_staff)=null`, starter attack bonus `0`, attack bonuses strictly increase, and all upper-grade transition jumps exceed lower-grade row steps. |
 | 2026-05-08 | Task S | Added counted weapon ownership (`OwnedWeaponEntry`), bumped save schema to v3 with v2 weapon-id migration, updated Firestore mapper/binder, rebuilt WeaponInventory around counts, added slot count labels, fixed 4-column weapon grid, added bottom `WeaponDetailView`, and moved equip action to the detail panel. MCP PlayMode validation passed for fresh `common_beginner_staff x1`, duplicate add to `x3`, save capture count `3`, v2 migration (`wand_starter`, duplicated `apprentice_staff`, `arcane_scepter`) into counted v3 entries, 20 slots with 4 columns, unowned detail `x0` with equip disabled, owned detail with equip enabled, and `normal_beginner_staff` equip applying Attack 42 exactly once. |
 | 2026-05-08 | Task T | Added `WeaponFusionService`, synthesize-all UI button, lightweight Korean fusion summary popup, batched inventory count mutation, equipped-weapon fallback validation, and MainScene/HUD/GameContext wiring. MCP PlayMode validation passed for `common_beginner_staff x9 → common_upper_staff x1`, `common_supreme_staff x3 → normal_beginner_staff x1`, `unique_supreme_staff x3` remaining unchanged, consumed equipped weapon auto-equipping the highest owned replacement, and save capture preserving synthesized counts. |
+| 2026-05-08 | Task U | Replaced rarity-weight gacha with summon-level upper-grade weights, uniform lower-grade rolls, Normal pity floor, summon progress leveling/carry-over, summon state save fields, gacha UI status text, ladder-index result sorting, and seeded `Standard` summon levels. MCP validation passed for fresh `Lv1/0`, Lv1 cap Advanced, 20-pull Lv2 transition, Lv2 49/50 pity pull yielding Normal+ within Epic cap, 10x cost `270`, save mapper preserving `summonLevel`, `summonPullsInLevel`, `pityCounter`, and MainScene PlayMode initialization without game-code errors. |
 
 ---
 

@@ -12,6 +12,8 @@ namespace WizardGrower.Save
         [FirestoreProperty("gold")] public int Gold { get; set; }
         [FirestoreProperty("gems")] public int Gems { get; set; } = 300;
         [FirestoreProperty("pityCounter")] public int PityCounter { get; set; }
+        [FirestoreProperty("summonLevel")] public int SummonLevel { get; set; } = 1;
+        [FirestoreProperty("summonPullsInLevel")] public int SummonPullsInLevel { get; set; }
         [FirestoreProperty("currentChapter")] public int CurrentChapter { get; set; }
         [FirestoreProperty("currentStage")] public int CurrentStage { get; set; }
         [FirestoreProperty("stats")] public PlayerStatsSnapshotDoc Stats { get; set; }

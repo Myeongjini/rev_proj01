@@ -27,7 +27,7 @@ namespace WizardGrower.Save
             ctx.Wallet.SetGold(data.gold);
             ctx.Wallet.SetGems(data.gems);
             if (ctx.GachaService != null)
-                ctx.GachaService.LoadPity(data.pityCounter);
+                ctx.GachaService.LoadState(data.summonLevel, data.summonPullsInLevel, data.pityCounter);
             ctx.UpgradeSystem.LoadLevels(data.upgrades);
             ctx.StageManager.LoadProgress(data.currentChapter, data.currentStage);
             ctx.Progression.RecordCombatPower(ctx.Wizard.Stats.CombatPower);
@@ -44,6 +44,8 @@ namespace WizardGrower.Save
             data.gold = ctx.Wallet != null ? ctx.Wallet.Gold : 0;
             data.gems = ctx.Wallet != null ? ctx.Wallet.Gems : 300;
             data.pityCounter = ctx.GachaService != null ? ctx.GachaService.CurrentPity : 0;
+            data.summonLevel = ctx.GachaService != null ? ctx.GachaService.CurrentSummonLevel : 1;
+            data.summonPullsInLevel = ctx.GachaService != null ? ctx.GachaService.SummonPullsInLevel : 0;
             data.currentChapter = ctx.StageManager != null ? ctx.StageManager.CurrentChapterNumber : 1;
             data.currentStage = ctx.StageManager != null ? ctx.StageManager.CurrentStageNumber : 1;
             data.stats = ctx.Wizard != null ? ctx.Wizard.Stats.CaptureSnapshot() : new PlayerStatsSnapshot();

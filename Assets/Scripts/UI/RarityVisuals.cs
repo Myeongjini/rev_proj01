@@ -42,5 +42,10 @@ namespace WizardGrower.UI
                 default: return "Common";
             }
         }
+
+        public static string LabelFor(WeaponUpperGrade grade)
+        {
+            return WeaponGradeLabels.UpperKo(grade);
+        }
     }
 }

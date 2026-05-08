@@ -17,16 +17,42 @@ MonoBehaviour:
   costSingle: 30
   costTen: 270
   pool: {fileID: 11400000, guid: f6d725a9de01843209cc6dd9c248454f, type: 2}
-  weights:
-  - rarity: 0
-    weight: 50
-  - rarity: 1
-    weight: 30
-  - rarity: 2
-    weight: 15
-  - rarity: 3
-    weight: 4.5
-  - rarity: 4
-    weight: 0.5
+  summonLevels:
+  - level: 1
+    pullsToNextLevel: 20
+    maxUpperGrade: 2
+    upperGradeWeights:
+    - upperGrade: 0
+      weight: 70
+    - upperGrade: 1
+      weight: 25
+    - upperGrade: 2
+      weight: 5
+  - level: 2
+    pullsToNextLevel: 50
+    maxUpperGrade: 3
+    upperGradeWeights:
+    - upperGrade: 0
+      weight: 55
+    - upperGrade: 1
+      weight: 30
+    - upperGrade: 2
+      weight: 12
+    - upperGrade: 3
+      weight: 3
+  - level: 3
+    pullsToNextLevel: 0
+    maxUpperGrade: 4
+    upperGradeWeights:
+    - upperGrade: 0
+      weight: 40
+    - upperGrade: 1
+      weight: 32
+    - upperGrade: 2
+      weight: 20
+    - upperGrade: 3
+      weight: 7
+    - upperGrade: 4
+      weight: 1
   pityThreshold: 30
-  pityFloor: 2
+  pityFloor: 1

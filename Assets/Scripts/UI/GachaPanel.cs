@@ -154,7 +154,12 @@ namespace WizardGrower.UI
 
             int pity = service != null ? service.CurrentPity : 0;
             int threshold = definition != null ? definition.pityThreshold : 30;
-            pityLabel.text = $"천장 {pity}/{threshold}";
+            SummonLevelDefinition level = service != null ? service.CurrentLevelDefinition : null;
+            int summonLevel = service != null ? service.CurrentSummonLevel : 1;
+            int pulls = service != null ? service.SummonPullsInLevel : 0;
+            string progress = level != null && level.pullsToNextLevel > 0 ? $"{pulls}/{level.pullsToNextLevel}" : "MAX";
+            string maxGrade = level != null ? WeaponGradeLabels.UpperKo(level.maxUpperGrade) : "-";
+            pityLabel.text = $"소환 Lv. {summonLevel}\n성장 {progress}\n최대 {maxGrade}\n천장 {pity}/{threshold}";
         }
 
         private void ShowFeedback(string message)

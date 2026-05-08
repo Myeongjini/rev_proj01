@@ -33,7 +33,12 @@ namespace WizardGrower.UI
             List<WeaponDefinition> sorted = new List<WeaponDefinition>();
             if (weapons != null)
                 sorted.AddRange(weapons);
-            sorted.Sort((a, b) => b.rarity.CompareTo(a.rarity));
+            sorted.Sort((a, b) =>
+            {
+                int aIndex = a != null ? a.ladderIndex : -1;
+                int bIndex = b != null ? b.ladderIndex : -1;
+                return bIndex.CompareTo(aIndex);
+            });
 
             for (int i = 0; i < sorted.Count; i++)
             {
@@ -76,7 +81,7 @@ namespace WizardGrower.UI
             GameObject root = new GameObject("GachaResultCard", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(VerticalLayoutGroup));
             root.transform.SetParent(cardContainer, false);
             Image frame = root.GetComponent<Image>();
-            frame.color = weapon != null ? RarityVisuals.ColorFor(weapon.rarity) : Color.white;
+            frame.color = weapon != null ? RarityVisuals.ColorFor(weapon.upperGrade) : Color.white;
             VerticalLayoutGroup layout = root.GetComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(8, 8, 8, 8);
             layout.spacing = 4f;
@@ -88,7 +93,7 @@ namespace WizardGrower.UI
             Image icon = CreateImage("Icon", root.transform, weapon != null ? weapon.icon : null);
             icon.rectTransform.sizeDelta = new Vector2(88f, 88f);
             TMP_Text name = CreateText("Name", root.transform, weapon != null ? weapon.displayName : "-", 18f, FontStyles.Bold);
-            TMP_Text rarity = CreateText("Rarity", root.transform, weapon != null ? RarityVisuals.LabelFor(weapon.rarity) : "-", 15f, FontStyles.Normal);
+            TMP_Text rarity = CreateText("Rarity", root.transform, weapon != null ? WeaponGradeLabels.Display(weapon.upperGrade, weapon.lowerGrade) : "-", 15f, FontStyles.Normal);
             rarity.color = new Color(0.08f, 0.07f, 0.05f, 1f);
             name.color = Color.black;
             return root;

@@ -108,6 +108,8 @@ namespace WizardGrower.Save
 
             data.gems = Mathf.Max(0, data.gems);
             data.pityCounter = Mathf.Max(0, data.pityCounter);
+            data.summonLevel = Mathf.Max(1, data.summonLevel);
+            data.summonPullsInLevel = Mathf.Max(0, data.summonPullsInLevel);
 
             return data;
         }
