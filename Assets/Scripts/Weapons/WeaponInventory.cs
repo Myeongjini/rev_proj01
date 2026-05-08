@@ -59,6 +59,11 @@ namespace WizardGrower.Weapons
 
         public bool TryConsume(string weaponId, int count)
         {
+            return TryConsume(weaponId, count, false);
+        }
+
+        public bool TryConsume(string weaponId, int count, bool deferEquipValidation)
+        {
             OwnedWeaponEntry entry = FindEntry(weaponId);
             int amount = Mathf.Max(1, count);
             if (entry == null || entry.count < amount)
@@ -70,11 +75,17 @@ namespace WizardGrower.Weapons
             if (entry.count <= 0)
                 ownedWeapons.Remove(entry);
 
-            if (equippedWeaponId == weaponId && GetCount(weaponId) <= 0)
+            if (!deferEquipValidation && equippedWeaponId == weaponId && GetCount(weaponId) <= 0)
                 EquipBestOwnedOrStarter();
 
             InventoryChanged?.Invoke();
             return true;
+        }
+
+        public void EnsureEquippedValid()
+        {
+            if (!Has(equippedWeaponId))
+                EquipBestOwnedOrStarter();
         }
 
         public bool TryEquip(string weaponId)

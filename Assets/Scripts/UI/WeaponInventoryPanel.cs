@@ -11,14 +11,17 @@ namespace WizardGrower.UI
         [SerializeField] private Transform slotContainer;
         [SerializeField] private WeaponSlotView slotPrefab;
         [SerializeField] private WeaponDetailView detailView;
+        [SerializeField] private Button synthesizeAllButton;
+        [SerializeField] private WeaponFusionResultView fusionResultView;
 
         private readonly List<WeaponSlotView> slots = new List<WeaponSlotView>();
         private WeaponInventory inventory;
         private WeaponDatabase database;
+        private WeaponFusionService fusionService;
         private bool visible;
         private WeaponDefinition selectedWeapon;
 
-        public void Initialize(WeaponInventory inventory, WeaponDatabase database)
+        public void Initialize(WeaponInventory inventory, WeaponDatabase database, WeaponFusionService fusionService = null)
         {
             if (this.inventory != null)
             {
@@ -30,6 +33,7 @@ namespace WizardGrower.UI
 
             this.inventory = inventory;
             this.database = database;
+            this.fusionService = fusionService ?? new WeaponFusionService();
             if (canvasGroup == null)
                 canvasGroup = GetComponent<CanvasGroup>();
 
@@ -40,6 +44,11 @@ namespace WizardGrower.UI
             }
             if (detailView != null)
                 detailView.EquipRequested += OnEquipRequested;
+            if (synthesizeAllButton != null)
+            {
+                synthesizeAllButton.onClick.RemoveListener(OnSynthesizeAll);
+                synthesizeAllButton.onClick.AddListener(OnSynthesizeAll);
+            }
             GridLayoutGroup grid = slotContainer != null ? slotContainer.GetComponent<GridLayoutGroup>() : null;
             if (grid != null)
             {
@@ -50,6 +59,7 @@ namespace WizardGrower.UI
             Rebuild();
             if (detailView != null)
                 detailView.Clear();
+            RefreshFusionButton();
             SetVisible(false);
         }
 
@@ -62,6 +72,8 @@ namespace WizardGrower.UI
             }
             if (detailView != null)
                 detailView.EquipRequested -= OnEquipRequested;
+            if (synthesizeAllButton != null)
+                synthesizeAllButton.onClick.RemoveListener(OnSynthesizeAll);
         }
 
         public void Toggle()
@@ -116,6 +128,7 @@ namespace WizardGrower.UI
                 if (slots[i] != null)
                     slots[i].Refresh();
             RefreshDetail();
+            RefreshFusionButton();
         }
 
         private void OnEquippedChanged(WeaponDefinition weapon)
@@ -154,6 +167,23 @@ namespace WizardGrower.UI
         {
             if (inventory != null && weapon != null && inventory.TryEquip(weapon.weaponId))
                 Refresh();
+        }
+
+        private void OnSynthesizeAll()
+        {
+            if (fusionService == null || inventory == null || database == null)
+                return;
+
+            IReadOnlyList<WeaponFusionResult> results = fusionService.SynthesizeAll(inventory, database);
+            if (fusionResultView != null)
+                fusionResultView.Show(results, database);
+            Refresh();
+        }
+
+        private void RefreshFusionButton()
+        {
+            if (synthesizeAllButton != null)
+                synthesizeAllButton.interactable = fusionService != null && fusionService.CanFuseAny(inventory, database);
         }
     }
 }

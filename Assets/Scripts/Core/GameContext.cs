@@ -50,10 +50,16 @@ namespace WizardGrower.Core
         [field: SerializeField] public GachaService GachaService { get; private set; }
         [field: SerializeField] public CombatPowerPopupView CombatPowerPopup { get; private set; }
         public CombatPowerService CombatPower { get; private set; }
+        public WeaponFusionService WeaponFusion { get; private set; }
 
         public void SetCombatPowerService(CombatPowerService combatPower)
         {
             CombatPower = combatPower;
+        }
+
+        public void SetWeaponFusionService(WeaponFusionService weaponFusion)
+        {
+            WeaponFusion = weaponFusion;
         }
 
         public void SetAuthenticationServices(AuthService authService, UserProfileService userProfileService, AuthConfig authConfig, CloudSyncService cloudSyncService = null)

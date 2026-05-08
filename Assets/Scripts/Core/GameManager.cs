@@ -14,6 +14,7 @@ namespace WizardGrower.Core
 
         private CombatCalculator calculator;
         private CombatPowerService combatPower;
+        private WizardGrower.Weapons.WeaponFusionService weaponFusion;
 
         private void Awake()
         {
@@ -24,6 +25,8 @@ namespace WizardGrower.Core
             calculator = new CombatCalculator(context.Wizard.Stats);
             combatPower = new CombatPowerService();
             context.SetCombatPowerService(combatPower);
+            weaponFusion = new WizardGrower.Weapons.WeaponFusionService();
+            context.SetWeaponFusionService(weaponFusion);
 
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
             if (context.WeaponInventory != null)
@@ -36,7 +39,7 @@ namespace WizardGrower.Core
             context.AutoAttack.Initialize(context.Wizard, context.Movement, context.EnemySpawner, context.ProjectileFactory, calculator);
             context.ClickAttack.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, calculator);
             context.ActiveSkill.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
-            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower);
+            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             if (context.WeaponVisual != null)

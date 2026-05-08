@@ -68,7 +68,8 @@ namespace WizardGrower.UI
             WeaponDatabase weaponDatabase = null,
             GachaService gachaService = null,
             GachaDefinition gachaDefinition = null,
-            CombatPowerService combatPowerService = null)
+            CombatPowerService combatPowerService = null,
+            WeaponFusionService weaponFusionService = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
@@ -111,7 +112,7 @@ namespace WizardGrower.UI
             if (chatPanel != null)
                 chatPanel.Initialize(chatService, stageManager);
             if (weaponInventoryPanel != null)
-                weaponInventoryPanel.Initialize(weaponInventory, weaponDatabase);
+                weaponInventoryPanel.Initialize(weaponInventory, weaponDatabase, weaponFusionService);
             if (gachaPanel != null)
                 gachaPanel.Initialize(gachaService, gachaDefinition);
 
