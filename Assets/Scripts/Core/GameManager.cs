@@ -26,7 +26,7 @@ namespace WizardGrower.Core
             context.AutoAttack.Initialize(context.Wizard, context.Movement, context.EnemySpawner, context.ProjectileFactory, calculator);
             context.ClickAttack.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, calculator);
             context.ActiveSkill.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
-            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement);
+            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             context.SaveBinder.RegisterAutoSaveTriggers(context, context.SaveService);
@@ -90,13 +90,16 @@ namespace WizardGrower.Core
                 }
 
                 context.AuthService.UserChanged += OnUserChanged;
+                UserProfile profile = await context.UserProfileService.GetOrCreateAsync(uid, context.AuthService.CurrentAccountType);
+                string displayName = profile != null ? profile.DisplayName : string.Empty;
+                if (context.ChatService != null)
+                    await context.ChatService.InitializeAsync(uid, displayName);
                 if (context.PresenceCoordinator != null)
-                    context.PresenceCoordinator.Begin(context, uid, string.Empty);
+                    context.PresenceCoordinator.Begin(context, uid, displayName);
                 if (context.SyncCoordinator != null)
                     await context.SyncCoordinator.StartSyncAsync(uid, context);
                 else
                     context.SaveBinder.SetUserId(uid);
-                await context.UserProfileService.GetOrCreateAsync(uid, context.AuthService.CurrentAccountType);
                 Debug.Log($"MainScene consumed bootstrapped Firebase UID: {uid}");
             }
             catch (System.Exception ex)

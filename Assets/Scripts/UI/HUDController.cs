@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using WizardGrower.Chat;
 using WizardGrower.Combat;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
@@ -29,6 +30,8 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text autoToggleButtonLabel;
         [SerializeField] private Button bossEntryButton;
         [SerializeField] private TMP_Text bossEntryButtonLabel;
+        [SerializeField] private Button chatToggleButton;
+        [SerializeField] private ChatPanel chatPanel;
         [SerializeField] private UpgradeDrawerView upgradeDrawer;
         [SerializeField] private Transform upgradeButtonContainer;
         [SerializeField] private UpgradeButtonView upgradeButtonPrefab;
@@ -50,7 +53,8 @@ namespace WizardGrower.UI
             UpgradeSystem upgradeSystem,
             ActiveSkillController skillController,
             ClickAttackController manualAttackController,
-            PlayerMovementController movementController)
+            PlayerMovementController movementController,
+            ChatService chatService = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
@@ -70,9 +74,13 @@ namespace WizardGrower.UI
             autoToggleButton.onClick.AddListener(() => movementController.ToggleAutoMode());
             if (bossEntryButton != null)
                 bossEntryButton.onClick.AddListener(() => stageManager.EnterBossRoom());
+            if (chatToggleButton != null && chatPanel != null)
+                chatToggleButton.onClick.AddListener(chatPanel.Toggle);
             movementController.AutoModeChanged += RefreshAutoToggle;
             if (joystickIndicator != null)
                 movementController.JoystickChanged += joystickIndicator.Refresh;
+            if (chatPanel != null)
+                chatPanel.Initialize(chatService, stageManager);
 
             BindUpgradeButtons(upgradeSystem);
             RefreshAttack(wizard);

@@ -1,5 +1,6 @@
 using UnityEngine;
 using WizardGrower.Auth;
+using WizardGrower.Chat;
 using WizardGrower.Combat;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
@@ -35,6 +36,7 @@ namespace WizardGrower.Core
         [field: SerializeField] public PresenceService PresenceService { get; private set; }
         [field: SerializeField] public PresenceCoordinator PresenceCoordinator { get; private set; }
         [field: SerializeField] public RemotePlayerView RemoteWizardPrefab { get; private set; }
+        [field: SerializeField] public ChatService ChatService { get; private set; }
         [field: SerializeField] public AuthService AuthService { get; private set; }
         [field: SerializeField] public UserProfileService UserProfileService { get; private set; }
         [field: SerializeField] public AuthConfig AuthConfig { get; private set; }

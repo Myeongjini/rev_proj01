@@ -83,7 +83,7 @@ Sub-bundle 6C (Weapons & Gacha — depends on Task I ✅)
 | 6A | J | LoginScene + Splash + AuthBootstrapHolder | ✅ DONE | Tasks.md Bundle 5 H ✅ |
 | 6B | K | RTDB integration + PresenceService | ✅ DONE | RTDB user prework ✅ |
 | 6B | L | RemotePlayerView + on-stage rendering | 🟡 IN REVIEW | K |
-| 6B | M | World + Stage Chat | 🔴 TODO | K |
+| 6B | M | World + Stage Chat | 🟡 IN REVIEW | K |
 | 6C | N | Weapon data model + stat composer | 🔴 TODO | Tasks.md Task G ✅ |
 | 6C | O | Weapon inventory + equip UI + visual swap | 🔴 TODO | N + Tasks.md Task I ✅ |
 | 6C | P | Gacha service + UI + Gem currency | 🔴 TODO | N, O |
@@ -357,7 +357,7 @@ For the "two Editor instances" test setup: Unity does not natively support runni
 
 ## Task M — World + Stage Chat
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** K (RTDB SDK already imported)
 
 ### 🎯 Goal
@@ -803,6 +803,7 @@ After all three sub-bundles ✅ + Bundle 6 release gate runbook completes → Bu
 | 2026-05-08 | Task J | Added dedicated LoginScene, splash/login prefabs, AuthBootstrapHolder handoff, MainScene bootstrapped-auth consumption, build scene order, and PlayMode validation for auto-skip/guest-to-MainScene UID/HUD flow. |
 | 2026-05-08 | Task K | Added RTDB presence service/coordinator, 5Hz player position writes, stage/boss-room presence switching, MainScene wiring, and PlayMode validation for FirebaseDatabase import, presence/1_1 UID write loop, WriteOwnAsync immediate return, and boss-room presence clear. |
 | 2026-05-08 | Task L | Added RemotePlayerView, RemoteWizard prefab wiring, PresenceCoordinator remote spawn/change/remove/stale cleanup, and GameContext prefab registration. MCP PlayMode fake-event validation passed for add, 50% alpha/name label, 200ms lerp, removed cleanup, stale cleanup, and boss-room clear. Live RTDB stage subscription currently reports permission denied because the documented rules grant read at `presence/{stage}/{uid}` rather than the subscribed `presence/{stage}` parent path. |
+| 2026-05-08 | Task M | Added ChatService, World/Stage chat channels, ChatPanel, ChatMessageView, ChatMessage prefab, HUD chat toggle wiring, and GameContext/GameManager initialization. MCP validation passed for compile, HUD toggle opening, World/Stage tab flow, send button cooldown gating, and input clearing after async send. Live RTDB tail currently reports permission denied because the documented rules grant read at message-child paths rather than the subscribed `chat/world` / `chat/stage/{stage}` parent paths required by `LimitToLast(50).OnChildAdded`. |
 
 ---
 
