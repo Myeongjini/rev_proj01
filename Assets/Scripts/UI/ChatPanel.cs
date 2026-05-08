@@ -140,7 +140,7 @@ namespace WizardGrower.UI
                 nextSendTime = Time.unscaledTime + sendCooldownSeconds;
                 RefreshSendButton();
                 await chatService.SendAsync(currentChannel, currentStageKey, text);
-                AddMessage(chatService.CreateLocalMessage(text));
+                // 로컬 즉시 추가 제거: 서버 OnChildAdded echo로 단일 경로 출력 (중복 방지).
                 if (inputField != null)
                     inputField.text = string.Empty;
                 RefreshSendButton();

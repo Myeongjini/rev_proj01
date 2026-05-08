@@ -82,8 +82,8 @@ Sub-bundle 6C (Weapons & Gacha — depends on Task I ✅)
 |---|---|---|---|---|
 | 6A | J | LoginScene + Splash + AuthBootstrapHolder | ✅ DONE | Tasks.md Bundle 5 H ✅ |
 | 6B | K | RTDB integration + PresenceService | ✅ DONE | RTDB user prework ✅ |
-| 6B | L | RemotePlayerView + on-stage rendering | 🟡 IN REVIEW | K |
-| 6B | M | World + Stage Chat | 🟡 IN REVIEW | K |
+| 6B | L | RemotePlayerView + on-stage rendering | ✅ DONE | K |
+| 6B | M | World + Stage Chat | ✅ DONE | K |
 | 6C | N | Weapon data model + stat composer | 🔴 TODO | Tasks.md Task G ✅ |
 | 6C | O | Weapon inventory + equip UI + visual swap | 🔴 TODO | N + Tasks.md Task I ✅ |
 | 6C | P | Gacha service + UI + Gem currency | 🔴 TODO | N, O |
@@ -182,23 +182,23 @@ Convert MainScene-embedded login into a dedicated entry scene. MainScene receive
   "rules": {
     "presence": {
       "$stage": {
+        ".read": "auth != null",
         "$uid": {
-          ".read": "auth != null",
           ".write": "auth != null && auth.uid === $uid"
         }
       }
     },
     "chat": {
       "world": {
+        ".read": "auth != null",
         "$msg": {
-          ".read": "auth != null",
           ".write": "auth != null && newData.child('uid').val() === auth.uid && newData.child('text').isString() && newData.child('text').val().length <= 200"
         }
       },
       "stage": {
         "$stage": {
+          ".read": "auth != null",
           "$msg": {
-            ".read": "auth != null",
             ".write": "auth != null && newData.child('uid').val() === auth.uid && newData.child('text').isString() && newData.child('text').val().length <= 200"
           }
         }
@@ -300,7 +300,7 @@ Use the same defensive reflection-based pattern as `AuthService` in case the `Fi
 
 ## Task L — RemotePlayerView + On-Stage Rendering
 
-**Status:** 🟡 IN REVIEW
+**Status:** ✅ DONE (2026-05-08)
 **Depends On:** K ✅
 
 ### 🎯 Goal
@@ -357,7 +357,7 @@ For the "two Editor instances" test setup: Unity does not natively support runni
 
 ## Task M — World + Stage Chat
 
-**Status:** 🟡 IN REVIEW
+**Status:** ✅ DONE (2026-05-08)
 **Depends On:** K (RTDB SDK already imported)
 
 ### 🎯 Goal
@@ -791,6 +791,8 @@ After all three sub-bundles ✅ + Bundle 6 release gate runbook completes → Bu
 | 2026-05-08 | Planner | Document created. Bundle 6 split into 6A (J), 6B (K, L, M), 6C (N, O, P). User decisions resolved: separate LoginScene, Firebase Realtime Database for presence/chat, separate Gem currency, player sprite swap on equip. Initial weapon pool scoped to 6 weapons. RTDB user prework documented for Sub-bundle 6B. Cross-track coordination rules with `Tasks.md` (Bundle 1–5) added in §0.5. |
 | 2026-05-08 | Planner | Task J ✅ DONE. Sub-bundle 6A passes its gate (single-task bundle). LoginScene flow verified end-to-end via implementer's PlayMode evidence + reviewer's code reading. AuthBootstrapHolder extended beyond spec to carry CloudSyncService (necessary for Task I to survive scene boundary — approved). Bundle 6 progress: **6A ✅** / 6B (K/L/M) ready (RTDB prework done) / 6C (N) ready, (O) waits on Tasks.md Task I ✅ (which landed 2026-05-08). |
 | 2026-05-08 | Planner | Task K ✅ DONE. PresenceService (reflection-based, mirrors AuthService pattern) + PresenceCoordinator (5Hz throttle, stage switch, OnDisconnect cleanup) all spec-compliant. **MCP runtime validation passed**: PlayMode session emitted 20+ `Presence write presence/1_1/{uid}` log entries at expected cadence after LoginScene → MainScene transition; 0 game-code errors. Bundle 6 progress: 6A ✅, **6B partial (K ✅; L/M unblocked)**, 6C (N ready, O waits on Tasks.md I ✅ — done). |
+| 2026-05-08 | Planner | **RTDB rules corrected** (§ Sub-bundle 6B → User Prework block). Original rules placed `.read` at `presence/$stage/$uid` and `chat/world/$msg` (child level), causing `Listen at presence/{stage} failed: Permission denied` and same for chat — `OrderByKey().LimitToLast(50).OnChildAdded` requires read at the parent path the query is rooted at. Fix: hoist `.read` one level up to `$stage` (presence) and `world` / `stage/$stage` (chat). User republished rules; runtime confirmed clean. |
+| 2026-05-08 | Planner | **Task L + M ✅ DONE.** L: ghost spawn/lerp/stale cleanup verified after rules fix; runtime listener now succeeds. M: confirmed self-message duplication. Root cause — `ChatPanel.SendCurrent` added local message immediately AND server `OnChildAdded` echoed it back; dedup key `{Uid}|{Ts}|{Text}` failed because `CreateLocalMessage.NowMs()` and payload `NowMs()` were called separately (ms drift). **Fix**: removed local `AddMessage(CreateLocalMessage(...))` line — server echo is now the single render path (correct SSoT pattern for chat). User confirmed single-render behavior. **Bundle 6 progress: 6A ✅, 6B ✅ (K/L/M all done), 6C 🔴 (N ready, O waits on Tasks.md I ✅ — done).** |
 
 ---
 
@@ -804,6 +806,7 @@ After all three sub-bundles ✅ + Bundle 6 release gate runbook completes → Bu
 | 2026-05-08 | Task K | Added RTDB presence service/coordinator, 5Hz player position writes, stage/boss-room presence switching, MainScene wiring, and PlayMode validation for FirebaseDatabase import, presence/1_1 UID write loop, WriteOwnAsync immediate return, and boss-room presence clear. |
 | 2026-05-08 | Task L | Added RemotePlayerView, RemoteWizard prefab wiring, PresenceCoordinator remote spawn/change/remove/stale cleanup, and GameContext prefab registration. MCP PlayMode fake-event validation passed for add, 50% alpha/name label, 200ms lerp, removed cleanup, stale cleanup, and boss-room clear. Live RTDB stage subscription currently reports permission denied because the documented rules grant read at `presence/{stage}/{uid}` rather than the subscribed `presence/{stage}` parent path. |
 | 2026-05-08 | Task M | Added ChatService, World/Stage chat channels, ChatPanel, ChatMessageView, ChatMessage prefab, HUD chat toggle wiring, and GameContext/GameManager initialization. MCP validation passed for compile, HUD toggle opening, World/Stage tab flow, send button cooldown gating, and input clearing after async send. Live RTDB tail currently reports permission denied because the documented rules grant read at message-child paths rather than the subscribed `chat/world` / `chat/stage/{stage}` parent paths required by `LimitToLast(50).OnChildAdded`. |
+| 2026-05-08 | Task M (planner fix) | Removed local `AddMessage(chatService.CreateLocalMessage(text))` from `ChatPanel.SendCurrent` after rules fix exposed self-message duplication. Server `OnChildAdded` echo is now the single render path. PlayMode 0 error / 0 warning; user confirmed messages render once. |
 
 ---
 
@@ -815,3 +818,5 @@ After all three sub-bundles ✅ + Bundle 6 release gate runbook completes → Bu
 |------|------|-------|
 | 2026-05-08 | J | ✅ DONE. Code review of commit `e3342f4`. **All spec items met:** `LoginScene.unity` + `LoginBootstrap.cs` (126 lines: splash ≥ 0.8s, anonymous login + profile creation, `hadExistingUser` skip, retry loop with Korean error messages) + `AuthBootstrapHolder.cs` (DontDestroyOnLoad singleton with `GetOrCreate` factory + idempotent `EnsureServices`) + `SplashView.cs` (100 lines) + `SplashCanvas.prefab` + `LoginCanvas.prefab` + `Splash_Logo.png`. `GameManager.cs` correctly **strips `InitializeAuthenticationAsync`** and consumes `AuthBootstrapHolder.Instance`; defensive fallback warns if MainScene is started without a holder (no crash). `EditorBuildSettings.asset` confirms `[0] LoginScene, [1] MainScene`. **Beyond-spec but reasonable:** `AuthBootstrapHolder` carries `CloudSyncService` in addition to Auth/Profile/Config — necessary for Task I's sync to survive scene boundary; no harm. **Implementer correctly logged Appendix D entry** confirming PlayMode validation (auto-skip for returning users, guest-to-MainScene UID/HUD flow). git: single commit ✅. Sub-bundle 6A is the only task in the bundle, so 6A gate also passes. Bundle 6 progress: 6A ✅, 6B 🔴 (RTDB prework done — agent free), 6C 🔴. |
 | 2026-05-08 | K | ✅ DONE. Code review of commit `4c07b2e` + **MCP runtime validation**. `PresenceService.cs` (377 lines) implements `InitializeAsync` / `WriteOwnAsync` / `RemoveOwnAsync` / `SubscribeStage` per spec. Reflection-based access to `Firebase.Database.*` types — consistent with Task H AuthService pattern; defensive against re-uninstall. `RemotePresenceEvent` struct has all 5 spec fields. `OnDisconnect` registered on every write (auto-cleanup). Self-UID filtered in `ToEvent` (own writes don't trigger remote events). **Bonus**: `ResolveDatabaseUrl` falls back to `google-services-desktop.json` and `google-services.xml` when `DefaultInstance.DatabaseURL` is missing — defensive against config-file races. `PresenceCoordinator.cs` (156 lines) wires position throttling at `Time.unscaledTime + 0.2s` (5Hz spec match), subscribes to `PlayerMovementController.PositionChanged` + `StageManager.StateChanged`, switches presence node on stage change (removes from old, writes to new), clears presence in BossRoom mode (solo). `OnDestroy` unsubscribes + removes own presence — clean teardown. `PlayerMovementController.PositionChanged` event added at line 29, invoked at line 131. `GameContext` adds both fields with `[field: SerializeField]`; `GameManager` calls `Begin(context, uid, "")` after auth at line 94. **Runtime evidence (MCP PlayMode session 2026-05-08):** LoginScene → LoginBootstrap reused Firebase UID `YOafTe9fkIT11MtCJLL2Cthg5TG3`; MainScene consumed bootstrapped UID; **20+ consecutive `Presence write presence/1_1/YOafTe9fkIT11MtCJLL2Cthg5TG3` log entries observed at ~5Hz cadence**, no game-code errors/warnings. Implementer logged Appendix D entry. git: single commit ✅. **Task K passes; Tasks L and M unblocked.** |
+| 2026-05-08 | L | ✅ DONE. Code review of commit `9e47334` + MCP runtime validation. `RemotePlayerView.cs` (72 lines) implements `Initialize` / `SetTarget` (start→target Lerp over 200ms via `Time.time` delta) / `Touch` / `IsStale(threshold default 30000ms)` per spec; null-safe `body` / `nameLabel` resolution. `PresenceCoordinator` extension adds `Dictionary<string, RemotePlayerView> remotes`, `HandleRemotePresenceEvent` (Added=Instantiate, Changed=SetTarget, Removed=Destroy), `CleanupStaleRemotes` driven from per-frame `Update` against `DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()`, `ClearRemotes` on stage switch — all spec-compliant. `RemoteWizard.prefab` registered via `GameContext.RemoteWizardPrefab` `[field: SerializeField]`. **Initial blocker**: implementer's MCP fake-event validation passed but live subscription failed with `Listen at presence/1_2 failed: Permission denied` due to RTDB rules placing `.read` at `$uid` rather than `$stage` parent (where `SubscribeStage` listener is rooted). **Resolved** by planner correcting the rules block in this document and user republishing — re-run confirmed listener succeeds. git: single commit ✅. |
+| 2026-05-08 | M | ✅ DONE. Code review of commit `191a115` + MCP runtime validation. `ChatService.cs` (325 lines) reflection-based mirror of PresenceService pattern: `InitializeAsync` / `SendAsync` (push + setValueAsync with `{uid, displayName, text, ts}`) / `SubscribeChannel` (`OrderByKey().LimitToLast(limit).OnChildAdded` via `ChatSubscription` IDisposable) / `BuildStageKey` static helper / `NormalizeText` strips CR/LF + trims; 200-char rejection. Same `ResolveDatabaseUrl` desktop/android fallback as PresenceService. `ChatPanel.cs` (252 lines) implements World/Stage tabs with `SwitchChannel`, 2s send cooldown via `Time.unscaledTime`, `seenMessages` dedup, `ScrollRect.verticalNormalizedPosition = 0f` auto-scroll, `StageManager.StateChanged` → re-subscribe on stage move, feedback label with timeout. `ChatMessageView` + prefab + `ChatChannel` enum present. HUD wiring: `chatToggleButton.onClick → chatPanel.Toggle`, `Initialize(chatService, stageManager)` after services ready. **Two issues found and resolved**: (1) RTDB rules `.read` at child path → `Permission denied` on subscribe; corrected rules block, user republished. (2) Self-message double-render: `SendCurrent` immediately added a local copy AND received echo via OnChildAdded; dedup key `{Uid}\|{Ts}\|{Text}` failed because two separate `NowMs()` calls drifted by ms. Planner removed the local `AddMessage(CreateLocalMessage(...))` line — server echo is the single render path now (correct chat SSoT pattern). User confirmed in PlayMode that messages render exactly once. git: implementer single commit + planner fix (uncommitted, see Appendix D Task M planner fix row). **Sub-bundle 6B gate ✅ (K + L + M all done).** |
