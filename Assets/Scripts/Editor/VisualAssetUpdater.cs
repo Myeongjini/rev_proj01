@@ -20,6 +20,18 @@ namespace WizardGrower.EditorTools
             Debug.Log(UpdateVisualAssets());
         }
 
+        [MenuItem("Wizard Grower/Generate Weapon Glyphs")]
+        public static void GenerateWeaponGlyphsMenu()
+        {
+            Debug.Log(GenerateWeaponGlyphs());
+        }
+
+        [MenuItem("Wizard Grower/Generate Weapon Projectiles")]
+        public static void GenerateWeaponProjectilesMenu()
+        {
+            Debug.Log(GenerateWeaponProjectiles());
+        }
+
         public static string UpdateVisualAssets()
         {
             Directory.CreateDirectory(ArtPath);
@@ -54,9 +66,44 @@ namespace WizardGrower.EditorTools
             return "Updated Wizard/Slime/Boss/Background visual assets, wizard animator, TMP fonts, and camera/background scale.";
         }
 
+        public static string GenerateWeaponGlyphs()
+        {
+            string folder = ArtPath + "WeaponGlyphs/";
+            Directory.CreateDirectory(folder);
+            SaveSprite(folder, "wand_starter", DrawWeaponGlyph(new Color(0.82f, 0.78f, 0.62f, 1f), 0), 96f);
+            SaveSprite(folder, "apprentice_staff", DrawWeaponGlyph(new Color(0.38f, 0.94f, 1f, 1f), 1), 96f);
+            SaveSprite(folder, "crystal_wand", DrawWeaponGlyph(new Color(0.72f, 0.58f, 1f, 1f), 2), 96f);
+            SaveSprite(folder, "wizards_stave", DrawWeaponGlyph(new Color(1f, 0.73f, 0.18f, 1f), 3), 96f);
+            SaveSprite(folder, "flame_rod", DrawWeaponGlyph(new Color(1f, 0.26f, 0.12f, 1f), 4), 96f);
+            SaveSprite(folder, "arcane_scepter", DrawWeaponGlyph(new Color(0.58f, 0.18f, 1f, 1f), 5), 96f);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return "Generated 6 weapon glyph sprites.";
+        }
+
+        public static string GenerateWeaponProjectiles()
+        {
+            string folder = ArtPath + "WeaponProjectiles/";
+            Directory.CreateDirectory(folder);
+            SaveSprite(folder, "wand_starter", DrawWeaponProjectile(new Color(0.75f, 0.85f, 1f, 1f), 0), 96f);
+            SaveSprite(folder, "apprentice_staff", DrawWeaponProjectile(new Color(0.23f, 0.95f, 1f, 1f), 1), 96f);
+            SaveSprite(folder, "crystal_wand", DrawWeaponProjectile(new Color(0.72f, 0.58f, 1f, 1f), 2), 96f);
+            SaveSprite(folder, "wizards_stave", DrawWeaponProjectile(new Color(1f, 0.78f, 0.18f, 1f), 3), 96f);
+            SaveSprite(folder, "flame_rod", DrawWeaponProjectile(new Color(1f, 0.25f, 0.08f, 1f), 4), 96f);
+            SaveSprite(folder, "arcane_scepter", DrawWeaponProjectile(new Color(0.64f, 0.22f, 1f, 1f), 5), 96f);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return "Generated 6 weapon projectile sprites.";
+        }
+
         private static Sprite SaveSprite(string name, Texture2D texture, float ppu)
         {
-            string path = ArtPath + name + ".png";
+            return SaveSprite(ArtPath, name, texture, ppu);
+        }
+
+        private static Sprite SaveSprite(string folder, string name, Texture2D texture, float ppu)
+        {
+            string path = folder + name + ".png";
             File.WriteAllBytes(path, texture.EncodeToPNG());
             Object.DestroyImmediate(texture);
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
@@ -72,6 +119,50 @@ namespace WizardGrower.EditorTools
             importer.maxTextureSize = 4096;
             importer.SaveAndReimport();
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        private static Texture2D DrawWeaponGlyph(Color main, int variant)
+        {
+            Texture2D t = NewTexture(128, 128, Color.clear);
+            Color ink = new Color(0.04f, 0.03f, 0.02f, 1f);
+            Color glow = new Color(main.r, main.g, main.b, 0.35f);
+            Ellipse(t, 64, 64, 39, 39, glow);
+            Line(t, 64, 20, 64, 108, ink, 4);
+            Line(t, 64, 20, 64, 108, main, 2);
+            int points = 4 + variant % 3;
+            for (int i = 0; i < points; i++)
+            {
+                float angle = i * Mathf.PI * 2f / points + variant * 0.18f;
+                int x = 64 + Mathf.RoundToInt(Mathf.Cos(angle) * 34f);
+                int y = 64 + Mathf.RoundToInt(Mathf.Sin(angle) * 34f);
+                Line(t, 64, 64, x, y, ink, 5);
+                Line(t, 64, 64, x, y, main, 3);
+            }
+            Ellipse(t, 64, 64, 18, 18, ink, true);
+            Ellipse(t, 64, 64, 13, 13, main);
+            Ellipse(t, 69, 71, 5, 4, Color.white);
+            t.Apply();
+            return t;
+        }
+
+        private static Texture2D DrawWeaponProjectile(Color main, int variant)
+        {
+            Texture2D t = NewTexture(128, 128, Color.clear);
+            Color core = Color.Lerp(main, Color.white, 0.45f);
+            Color trail = new Color(main.r, main.g, main.b, 0.45f);
+            for (int i = 0; i < 5; i++)
+                Ellipse(t, 30 + i * 8, 64 - i * 2, 30 - i * 4, 12 - i, trail);
+            Ellipse(t, 76, 64, 25 + variant, 25 + variant / 2, new Color(main.r, main.g, main.b, 0.75f));
+            Ellipse(t, 76, 64, 15, 15, core);
+            if (variant >= 3)
+            {
+                Line(t, 77, 30, 87, 55, Color.white, 2);
+                Line(t, 91, 73, 110, 85, main, 3);
+            }
+            if (variant == 4)
+                Poly(t, new[] { new Vector2(79, 95), new Vector2(95, 70), new Vector2(78, 75), new Vector2(66, 36), new Vector2(54, 76), new Vector2(36, 71) }, new Color(1f, 0.64f, 0.10f, 0.9f));
+            t.Apply();
+            return t;
         }
 
         private static Texture2D NewTexture(int width, int height, Color clear)
