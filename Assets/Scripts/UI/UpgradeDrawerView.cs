@@ -1,4 +1,5 @@
 using System.Collections;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,6 +9,7 @@ namespace WizardGrower.UI
     public class UpgradeDrawerView : MonoBehaviour
     {
         [SerializeField] private Button toggleButton;
+        [SerializeField] private Button closeButton;
         [SerializeField] private TMP_Text toggleLabel;
         [SerializeField] private RectTransform panel;
         [SerializeField] private float openY = 0f;
@@ -15,24 +17,42 @@ namespace WizardGrower.UI
         [SerializeField] private float animDuration = 0.25f;
 
         private bool isOpen;
+        public bool IsOpen => isOpen;
+        public event Action<bool> OpenStateChanged;
 
         private void Awake()
         {
-            if (toggleButton != null)
+            if (closeButton != null)
             {
-                toggleButton.onClick.RemoveListener(Toggle);
-                toggleButton.onClick.AddListener(Toggle);
+                closeButton.onClick.RemoveListener(Close);
+                closeButton.onClick.AddListener(Close);
             }
             ApplyImmediate(false);
         }
 
         public void Toggle()
         {
-            isOpen = !isOpen;
+            SetOpen(!isOpen);
+        }
+
+        public void Open()
+        {
+            SetOpen(true);
+        }
+
+        public void Close()
+        {
+            SetOpen(false);
+        }
+
+        private void SetOpen(bool open)
+        {
+            isOpen = open;
             if (toggleLabel != null)
                 toggleLabel.text = isOpen ? "▼ 강화 닫기" : "▲ 강화 열기";
             StopAllCoroutines();
             StartCoroutine(Animate(isOpen ? openY : closeY));
+            OpenStateChanged?.Invoke(isOpen);
         }
 
         private IEnumerator Animate(float targetY)

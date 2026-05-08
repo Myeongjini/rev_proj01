@@ -42,6 +42,7 @@ namespace WizardGrower.Weapons
         public SummonLevelDefinition CurrentLevelDefinition => GetCurrentLevelDefinition();
 
         public event Action<int> PityChanged;
+        public event Action<int> SummonLevelChanged;
         public event Action StateChanged;
         public event Action<string> PullFailed;
 
@@ -78,10 +79,13 @@ namespace WizardGrower.Weapons
 
         public void LoadState(int summonLevel, int pullsInLevel, int pityCounter)
         {
+            int previousLevel = CurrentSummonLevel;
             summonState.summonLevel = Mathf.Max(1, summonLevel);
             summonState.summonPullsInLevel = Mathf.Max(0, pullsInLevel);
             currentPity = Mathf.Max(0, pityCounter);
             NormalizeSummonProgress();
+            if (previousLevel != CurrentSummonLevel)
+                SummonLevelChanged?.Invoke(CurrentSummonLevel);
             PityChanged?.Invoke(currentPity);
             StateChanged?.Invoke();
         }
@@ -110,6 +114,40 @@ namespace WizardGrower.Weapons
         public bool TryTenPull(out List<WeaponDefinition> pulled)
         {
             return TryPull(10, definition != null ? definition.costTen : 0, out pulled);
+        }
+
+        public IReadOnlyList<WeaponGradeWeight> GetCurrentUpperGradeWeightsNormalized()
+        {
+            List<WeaponGradeWeight> normalized = new List<WeaponGradeWeight>();
+            SummonLevelDefinition level = GetCurrentLevelDefinition();
+            if (level == null || level.upperGradeWeights == null)
+                return normalized;
+
+            float total = 0f;
+            for (int i = 0; i < level.upperGradeWeights.Length; i++)
+            {
+                WeaponGradeWeight entry = level.upperGradeWeights[i];
+                if (entry.weight > 0f && entry.upperGrade <= level.maxUpperGrade)
+                    total += entry.weight;
+            }
+
+            if (total <= 0f)
+                return normalized;
+
+            for (int i = 0; i < level.upperGradeWeights.Length; i++)
+            {
+                WeaponGradeWeight entry = level.upperGradeWeights[i];
+                if (entry.weight <= 0f || entry.upperGrade > level.maxUpperGrade)
+                    continue;
+
+                normalized.Add(new WeaponGradeWeight
+                {
+                    upperGrade = entry.upperGrade,
+                    weight = entry.weight / total
+                });
+            }
+
+            return normalized;
         }
 
         public WeaponUpperGrade WeightedRandomUpperGrade(IRandomSource source, WeaponUpperGrade? minimumGrade = null)
@@ -176,27 +214,23 @@ namespace WizardGrower.Weapons
 
         private WeaponDefinition PullOne()
         {
-            currentPity++;
-            bool guaranteed = definition.pityThreshold > 0 && currentPity >= definition.pityThreshold;
-            WeaponUpperGrade floor = guaranteed ? ClampToCurrentMax(definition.pityFloor) : WeaponUpperGrade.Common;
-            WeaponUpperGrade upper = WeightedRandomUpperGrade(random, guaranteed ? floor : (WeaponUpperGrade?)null);
+            WeaponUpperGrade upper = WeightedRandomUpperGrade(random);
             WeaponLowerGrade lower = (WeaponLowerGrade)random.Range(0, 4);
             WeaponDefinition weapon = definition.pool.GetByGrade(upper, lower);
 
             if (weapon == null)
                 weapon = PickAnyWeaponAtOrBelowCurrentMax();
 
-            if (weapon != null && weapon.upperGrade >= ClampToCurrentMax(definition.pityFloor))
-                currentPity = 0;
-
-            PityChanged?.Invoke(currentPity);
             return weapon;
         }
 
         private void AdvanceSummonProgress(int amount)
         {
+            int previousLevel = CurrentSummonLevel;
             summonState.summonPullsInLevel += Mathf.Max(0, amount);
             NormalizeSummonProgress();
+            if (previousLevel != CurrentSummonLevel)
+                SummonLevelChanged?.Invoke(CurrentSummonLevel);
         }
 
         private void NormalizeSummonProgress()

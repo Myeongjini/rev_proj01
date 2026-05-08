@@ -11,7 +11,9 @@ namespace WizardGrower.Weapons
         public int costTen = 270;
         public WeaponDatabase pool;
         public SummonLevelDefinition[] summonLevels;
+        // Deprecated in Task V — kept for SO asset compat.
         public int pityThreshold = 30;
+        // Deprecated in Task V — kept for SO asset compat.
         public WeaponUpperGrade pityFloor = WeaponUpperGrade.Normal;
 
         public SummonLevelDefinition GetLevelDefinition(int level)

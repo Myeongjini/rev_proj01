@@ -63,13 +63,14 @@ Bundle 7 builds on the current v6 weapon/gacha implementation.
 
 ```
 Bundle 7
-Q → R → S → T → U → Bundle 7 Release Gate
+Q → R → S → T → U → V → Bundle 7 Release Gate
 
 Q: Stat unification + combat power
 R: Weapon upper/lower grade model + 20 seed weapons
 S: Counted inventory + 4-column weapon grid
 T: Synthesize-all fusion
 U: Summon level gacha refactor
+V: MainUI01 navigation + summon policy hotfix
 ```
 
 ---
@@ -83,6 +84,7 @@ U: Summon level gacha refactor
 | 7 | S | Counted Weapon Inventory + 4-Column Weapon Window | 🟡 IN REVIEW | R ✅ |
 | 7 | T | Synthesize-All Weapon Fusion | 🟡 IN REVIEW | S ✅ |
 | 7 | U | Summon Level Gacha Refactor | 🟡 IN REVIEW | T ✅ |
+| 7 | V | MainUI01 Navigation + Summon Policy Hotfix | 🟡 IN REVIEW | U 🟡 |
 
 Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · ⚠️ BLOCKED
 
@@ -743,6 +745,161 @@ Refactor gacha into a summon-level system. Higher summon levels unlock higher up
 
 ---
 
+## Task V — MainUI01 Navigation + Summon Policy Hotfix
+
+**Status:** 🟡 IN REVIEW
+**Depends On:** U 🟡
+
+### 🎯 Goal
+Five user-requested follow-ups after Q~U landed:
+1. Fix `최상급` (Supreme) lower-grade missing in the in-game weapon panel
+2. Add a unified bottom-nav bar `메인UI01` (강화 / 무기 / 소환 / 추가예정4 / 추가예정5) that hosts all sub-panels
+3. Each sub-panel has its own internal close button; same-button-toggle behavior is also kept (close also works by re-clicking the bottom-nav button)
+4. Strip max-grade text + pity from the summon panel (keep `pityCounter` save field; only remove logic & UI)
+5. Add a small probability button beside the summon-level label that opens a per-level upper-grade probability popup
+
+### ✅ Definition of Done
+
+**Item 1 — Supreme rendering fix**
+- [ ] `WeaponInventoryPanel` consistently renders 4 lower grades per row at runtime (5×4 = 20 visible slots)
+- [ ] Root cause documented in Appendix D (most likely: `WeaponInventoryPanel.prefab` `GridLayoutGroup` cell width × 4 + spacing × 3 exceeds container width — code already sets `constraintCount = 4`, so fix is in prefab cellSize/spacing/container width)
+
+**Item 2 — 메인UI01 navigation**
+- [ ] `메인UI01Bar` is anchored at the bottom of `MainScene` HUD with 5 equal-width buttons in order: `강화 / 무기 / 소환 / 추가예정4 / 추가예정5`
+- [ ] `추가예정4` / `추가예정5` buttons are visible but **disabled (grayed out)** with a `준비중` Korean tooltip/label
+- [ ] Clicking `강화` opens the existing slide-up upgrade drawer
+- [ ] Clicking `무기` opens the weapon inventory panel **as a bottom slide-up popup** (same animation/feel as `UpgradeDrawerView`, NOT a screen-blocking modal)
+- [ ] Clicking `소환` opens the gacha panel as a **full-screen overlay** (HUD obscured beneath; OK)
+- [ ] Only one sub-panel may be open at a time; opening any nav button closes the previously open one
+
+**Item 3 — Close behavior**
+- [ ] Each sub-panel (`강화` / `무기` / `소환`) has an internal `X` close button
+- [ ] Re-clicking the same bottom-nav button while its panel is open ALSO closes it (toggle behavior preserved)
+- [ ] Clicking a different bottom-nav button closes the current panel and opens the new one in one step
+
+**Item 4 — Summon UI cleanup + pity removal**
+- [ ] `GachaPanel` no longer displays `최대 고급` (or any other "max upper grade") label
+- [ ] `GachaPanel` no longer displays the pity counter
+- [ ] `GachaService.PullOnce` no longer applies pity floor (just rolls weights; clamp to current `summonLevel.maxUpperGrade` only)
+- [ ] `SaveData.pityCounter` field **REMAINS** on disk for backward compatibility; not read or written by gameplay
+- [ ] `GachaDefinition.pityThreshold` and `pityFloor` are kept on the asset for forward-compat but unused; add a code comment noting deprecation
+
+**Item 5 — Per-level probability popup**
+- [ ] Small button (≤ 80% of summon-level TMP height) sits to the right of the summon-level label
+- [ ] Click → modal popup `GachaProbabilityPopup` overlays the summon panel
+- [ ] Popup lists every upper grade reachable at the current summon level with its **percentage** (normalized from `WeaponGradeWeight[]`, 0.1% precision; e.g. `Common 70.0% / Normal 25.0% / Advanced 5.0%`)
+- [ ] Popup closes via (a) its own X button OR (b) clicking the dimmed area outside the popup
+- [ ] If summon level changes while the popup is open, contents auto-refresh to the new level's table
+
+### 📂 Files to Add
+- `Assets/Scripts/UI/MainUI01Bar.cs` — bottom-nav controller
+  ```csharp
+  public class MainUI01Bar : MonoBehaviour
+  {
+      public enum NavTab { Upgrade, Weapon, Summon, Reserved4, Reserved5 }
+
+      [SerializeField] private Button upgradeButton;
+      [SerializeField] private Button weaponButton;
+      [SerializeField] private Button summonButton;
+      [SerializeField] private Button reserved4Button;   // disabled (grayed)
+      [SerializeField] private Button reserved5Button;   // disabled (grayed)
+
+      public event Action<NavTab> TabRequested;          // emit only on enabled buttons
+      public void SetActiveTab(NavTab? activeTab);       // null = no tab open
+  }
+  ```
+- `Assets/Scripts/UI/MainUI01Coordinator.cs` — drives mutual-exclusion between sub-panels
+  ```csharp
+  public class MainUI01Coordinator : MonoBehaviour
+  {
+      public void Initialize(MainUI01Bar bar, UpgradeDrawerView upgrade,
+                             WeaponInventoryPanel weapon, GachaPanel summon);
+      // Open(tab): closes any other open panel, opens requested.
+      // Re-clicking the active tab closes it.
+  }
+  ```
+- `Assets/Scripts/UI/GachaProbabilityPopup.cs` — per-level probability dialog
+  ```csharp
+  public class GachaProbabilityPopup : MonoBehaviour
+  {
+      [SerializeField] private Transform rowContainer;
+      [SerializeField] private GachaProbabilityRowView rowPrefab;
+      [SerializeField] private Button closeButton;
+      [SerializeField] private Button outsideClickArea;   // full-screen invisible button beneath popup
+
+      public void Bind(GachaService gachaService);
+      public void Show(int summonLevel);
+      public void Hide();
+      // Auto-refresh on GachaService.SummonLevelChanged while visible.
+  }
+  ```
+- `Assets/Scripts/UI/GachaProbabilityRowView.cs` + `Assets/Prefabs/UI/GachaProbabilityRow.prefab`
+  - One row per upper grade: `<gradeKo>: 70.0%`
+- `Assets/Prefabs/UI/MainUI01Bar.prefab`
+- `Assets/Prefabs/UI/GachaProbabilityPopup.prefab`
+
+### 📂 Files to Modify
+- `Assets/Prefabs/UI/WeaponInventoryPanel.prefab` (Item 1) — adjust `GridLayoutGroup` `cellSize.x` and/or container width so 4 columns fit. Verify `Constraint = FixedColumnCount, ConstraintCount = 4` matches the runtime override at `WeaponInventoryPanel.cs:53-58`.
+- `Assets/Scripts/UI/WeaponInventoryPanel.cs` (Items 2 + 3)
+  - Add internal close button (`[SerializeField] private Button closeButton`) wired to `SetVisible(false)`
+  - Convert visual show/hide to slide-up animation matching `UpgradeDrawerView` (same `LeanTween`/coroutine pattern; or factor a shared `BottomDrawerAnimator` helper if simple enough)
+  - Remove direct toggle from old HUD chat-toggle-style listener; subscribe to `MainUI01Coordinator` instead
+- `Assets/Scripts/UI/UpgradeDrawerView.cs` (Items 2 + 3)
+  - Add internal close button if not present
+  - Remove existing HUD button binding (Coordinator owns it now)
+- `Assets/Scripts/UI/GachaPanel.cs` (Items 2, 3, 4, 5)
+  - Convert visual presentation to full-screen overlay (anchor stretched to canvas, opaque background)
+  - Add internal close button
+  - Remove `maxUpperGrade` text and pity counter UI
+  - Add small probability button next to summon-level label, wired to `GachaProbabilityPopup.Show(currentLevel)`
+- `Assets/Scripts/UI/HUDController.cs` (Item 2)
+  - Remove individual upgrade-drawer / weapon-toggle / gacha-toggle button references; replace with single `MainUI01Bar` reference
+  - HUD becomes a thin host that wires `MainUI01Coordinator`
+- `Assets/Scripts/Weapons/GachaService.cs` (Item 4)
+  - Delete pity-trigger branch in `PullOnce`; keep weight rolling + level-cap clamping
+  - Add public `SummonLevelChanged` event (so popup auto-refresh works) if not present
+  - Add `IReadOnlyList<WeaponGradeWeight> GetCurrentUpperGradeWeightsNormalized()` returning percentages summing to 1.0 (for popup)
+- `Assets/Scripts/Weapons/GachaDefinition.cs` (Item 4)
+  - Mark `pityThreshold` / `pityFloor` with `[Obsolete]` summary comment OR add `// Deprecated in Task V — kept for SO asset compat` comment
+- `Assets/Scripts/Save/SaveBinder.cs` + `Assets/Scripts/Save/SaveData.cs` + `Assets/Scripts/Save/SaveDataDocument.cs` + `Assets/Scripts/Save/SaveDataMapper.cs` (Item 4)
+  - **Do NOT remove** `pityCounter` field — keep field present, just unread by gameplay. No saveVersion bump.
+- `Assets/Data/Gacha/Standard.asset` (Item 4)
+  - `pityThreshold = 0` (or leave; field unused)
+- `Assets/Scenes/MainScene.unity` (Item 2)
+  - Add `MainUI01Bar` instance + `MainUI01Coordinator` GameObject
+  - Re-parent `WeaponInventoryPanel` and `GachaPanel` under canvas as appropriate (popup vs full-screen layers)
+  - Wire serialized references on `HUDController` / `MainUI01Coordinator`
+
+### 🚫 Do Not Touch
+- `WeaponDefinition` / `WeaponDatabase` data (Task R) — Item 1 is layout-only
+- `WeaponInventory` count semantics (Task S)
+- `WeaponFusionService` (Task T)
+- Combat coefficients / stat unification (Task Q)
+- Auth / presence / chat / stage flow
+- `pityCounter` save field shape (Item 4 keeps field as-is)
+
+### 🧪 Validation
+1. Compile clean (0 error / 0 warning)
+2. PlayMode → open weapon panel → all 5 rows show **4 visible slots** including Supreme column (Item 1)
+3. Bottom-nav bar visible at MainScene cold start with 5 buttons; `추가예정4`/`5` are grayed out and unclickable (Item 2)
+4. Click `강화` → upgrade drawer slides up; click `강화` again → closes; open `강화` then click `무기` → drawer closes, weapon popup opens (Items 2+3)
+5. Each open panel shows its internal X button; clicking X closes panel and clears bottom-nav active state (Item 3)
+6. `소환` panel covers full screen; opening it does NOT keep weapon panel visible underneath (Item 2-1)
+7. Gacha panel does NOT show `최대 고급` or any pity counter UI (Item 4)
+8. Force 30 consecutive Lv1 pulls with all-Common roll seed → no pity-floor override; results match raw weights (Item 4)
+9. Existing v3 save with `pityCounter > 0` loads cleanly; field still serializes back unchanged (Item 4)
+10. Click probability button → popup shows `Common: 70.0% / Normal: 25.0% / Advanced: 5.0%` for Lv1 (Item 5)
+11. With popup open, force level-up to Lv2 via debug → popup auto-refreshes to Lv2 weights (Item 5)
+12. Probability popup closes by X button AND by clicking the dimmed outside area (Item 5)
+13. (Cross-feature regression) HUD chat toggle / boss-entry / auto-toggle / fire button still work after MainUI01Bar refactor (Item 2 doesn't break sibling HUD widgets)
+
+### Implementation note
+- `BottomDrawerAnimator` shared helper is optional but recommended — both `UpgradeDrawerView` and `WeaponInventoryPanel` use the same slide-up motion now; centralizing it (parametrized by target `RectTransform` and duration) avoids drift.
+- For Item 5 outside-click dismiss: place a transparent stretched `Button` behind the popup content (z-order: backdrop < popup); its `onClick` calls `Hide()`. This is the standard Unity UGUI pattern — no need for raycast tricks.
+- For Item 4 pity-keep-field rule: `SaveDataMapper` continues to copy `pityCounter` to/from `SaveDataDocument`; only the **read sites** (`GachaService.PullOnce`, `GachaPanel` UI) stop touching it. Search-grep for `pityCounter` to confirm cleanup scope.
+
+---
+
 # Bundle 7 Release Gate
 
 When Tasks Q~U are all `✅ DONE`, run one integrated PlayMode session:
@@ -797,6 +954,7 @@ After Task U reaches `✅ DONE`:
 |------|--------|--------|
 | 2026-05-08 | Planner | Document created. Bundle 7 split into Q (stat unification + combat power), R (upper/lower weapon grades + 20 seed weapons), S (counted inventory + 4-column weapon window), T (synthesize-all fusion), and U (summon level gacha). User decisions resolved: new grade names, explicit summon level probability table, synthesize-all UX. |
 | 2026-05-08 | Planner | Added user requests #6~7. Task R now requires attack bonuses on every weapon, monotonic attack growth, and larger attack jumps on upper-grade transitions than lower-grade steps. Task S now requires weapon-slot selection to populate a fixed bottom detail area, with equip action enabled from that detail area only when valid. |
+| 2026-05-08 | Planner | **Task V detailed spec rewrite.** Replaced 11-line stub with full 5-item development plan after user reported new follow-up issues (Supreme column missing, MainUI01 navigation, internal close buttons, pity removal, per-level probability popup). Resolved ambiguities via AskUserQuestion: (1) `추가예정4/5` → disabled-grayed buttons with `준비중` label; (2) same-tab re-click → close allowed alongside internal X button (toggle preserved); (3) pity → keep `pityCounter` save field, remove only logic & UI (no saveVersion bump); (4) probability popup → percent format + X button + outside-area click dismiss + auto-refresh on summon level change. Added `MainUI01Bar`, `MainUI01Coordinator`, `GachaProbabilityPopup`, `GachaProbabilityRowView` to Files-to-Add. Item 1 root cause hypothesized as `WeaponInventoryPanel.prefab` GridLayoutGroup cell overflow (code already enforces `constraintCount = 4` at runtime) — implementer must verify and adjust prefab. |
 | 2026-05-08 | Planner | **Review pass 1 of Tasks_v7.md.** Verified user-added req #6 (cross-upper Δ > within-upper Δ) is satisfied by current Stat Seed Rule: Common Supreme→Normal Beginner = +14 vs max within-upper step +8. ✓ Verified req #7 covered by `WeaponDetailView` + slot selection event + equip-from-detail flow. ✓ **Edits applied**: (1) §0.5 stale-status row rewritten — v6 N/O/P actually committed (`b011581`/`bdce55e`/`0261300`), Tasks_v6.md status board only had docs lag. (2) Task Q popup format changed `Power: ...` → Korean `전투력: <current> (+<delta>)` (DoD + validation). (3) Task S Files-to-Add: appended `Assets/Scripts/Player/WeaponVisualController.cs` — verified missing in v6 codebase, required for "tint/glyph/projectile apply once" DoD bullet. (4) Task U pity floor `Advanced` → `Normal` (Lv1 cap was Advanced making pity a no-op; new floor makes Lv1 pity meaningful). (5) Bundle 7 Release Gate appended items 12 (presence 5Hz regression), 13 (chat single-echo regression), 14 (CloudSync round-trip after v3 migration). No new tasks. |
 
 ---
@@ -812,6 +970,7 @@ After Task U reaches `✅ DONE`:
 | 2026-05-08 | Task S | Added counted weapon ownership (`OwnedWeaponEntry`), bumped save schema to v3 with v2 weapon-id migration, updated Firestore mapper/binder, rebuilt WeaponInventory around counts, added slot count labels, fixed 4-column weapon grid, added bottom `WeaponDetailView`, and moved equip action to the detail panel. MCP PlayMode validation passed for fresh `common_beginner_staff x1`, duplicate add to `x3`, save capture count `3`, v2 migration (`wand_starter`, duplicated `apprentice_staff`, `arcane_scepter`) into counted v3 entries, 20 slots with 4 columns, unowned detail `x0` with equip disabled, owned detail with equip enabled, and `normal_beginner_staff` equip applying Attack 42 exactly once. |
 | 2026-05-08 | Task T | Added `WeaponFusionService`, synthesize-all UI button, lightweight Korean fusion summary popup, batched inventory count mutation, equipped-weapon fallback validation, and MainScene/HUD/GameContext wiring. MCP PlayMode validation passed for `common_beginner_staff x9 → common_upper_staff x1`, `common_supreme_staff x3 → normal_beginner_staff x1`, `unique_supreme_staff x3` remaining unchanged, consumed equipped weapon auto-equipping the highest owned replacement, and save capture preserving synthesized counts. |
 | 2026-05-08 | Task U | Replaced rarity-weight gacha with summon-level upper-grade weights, uniform lower-grade rolls, Normal pity floor, summon progress leveling/carry-over, summon state save fields, gacha UI status text, ladder-index result sorting, and seeded `Standard` summon levels. MCP validation passed for fresh `Lv1/0`, Lv1 cap Advanced, 20-pull Lv2 transition, Lv2 49/50 pity pull yielding Normal+ within Epic cap, 10x cost `270`, save mapper preserving `summonLevel`, `summonPullsInLevel`, `pityCounter`, and MainScene PlayMode initialization without game-code errors. |
+| 2026-05-08 | Task V | Added `메인UI01` bottom navigation, coordinator-managed mutual exclusion, internal close buttons, bottom-drawer weapon/upgrade presentation, full-screen summon overlay, probability popup/popup rows, and removed active pity UI/logic while preserving `pityCounter` save round-trip. Item 1 root cause was layout overflow: weapon grid was forced to 4 columns in code, but the panel/prefab layout could clip the Supreme column; fixed by widening the drawer and setting WeaponInventoryPanel grid to `cellSize=(150,136)`, `spacing=(10,10)`, `constraintCount=4`. MCP checks passed through the functional paths; user manually confirmed the runtime UI looked correct and approved skipping further verification to finish. |
 
 ---
 

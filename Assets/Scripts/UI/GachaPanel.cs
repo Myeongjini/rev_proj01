@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,10 +18,16 @@ namespace WizardGrower.UI
         [SerializeField] private Button tenPullButton;
         [SerializeField] private TMP_Text tenPullLabel;
         [SerializeField] private GachaResultPanel resultPanel;
+        [SerializeField] private Button closeButton;
+        [SerializeField] private Button probabilityButton;
+        [SerializeField] private GachaProbabilityPopup probabilityPopup;
 
         private GachaService service;
         private GachaDefinition definition;
         private float feedbackTimer;
+        private bool isOpen;
+        public bool IsOpen => isOpen;
+        public event Action<bool> OpenStateChanged;
 
         private void Awake()
         {
@@ -32,8 +39,8 @@ namespace WizardGrower.UI
         {
             if (this.service != null)
             {
-                this.service.PityChanged -= OnPityChanged;
                 this.service.StateChanged -= Refresh;
+                this.service.SummonLevelChanged -= OnSummonLevelChanged;
                 this.service.PullFailed -= ShowFeedback;
             }
 
@@ -50,15 +57,29 @@ namespace WizardGrower.UI
                 tenPullButton.onClick.RemoveListener(PullTen);
                 tenPullButton.onClick.AddListener(PullTen);
             }
+            if (closeButton != null)
+            {
+                closeButton.onClick.RemoveListener(Close);
+                closeButton.onClick.AddListener(Close);
+            }
+            if (probabilityButton != null)
+            {
+                probabilityButton.onClick.RemoveListener(ShowProbabilityPopup);
+                probabilityButton.onClick.AddListener(ShowProbabilityPopup);
+            }
 
             if (this.service != null)
             {
-                this.service.PityChanged += OnPityChanged;
                 this.service.StateChanged += Refresh;
+                this.service.SummonLevelChanged += OnSummonLevelChanged;
                 this.service.PullFailed += ShowFeedback;
             }
+            if (probabilityPopup != null)
+                probabilityPopup.Bind(this.service);
 
             Refresh();
+            if (probabilityPopup != null)
+                probabilityPopup.Hide();
         }
 
         public void Toggle()
@@ -71,6 +92,7 @@ namespace WizardGrower.UI
 
         public void Open()
         {
+            isOpen = true;
             if (group != null)
             {
                 group.alpha = 1f;
@@ -79,17 +101,22 @@ namespace WizardGrower.UI
             }
             gameObject.SetActive(true);
             Refresh();
+            OpenStateChanged?.Invoke(true);
         }
 
         public void Close()
         {
+            isOpen = false;
             if (group != null)
             {
                 group.alpha = 0f;
                 group.blocksRaycasts = false;
                 group.interactable = false;
             }
+            if (probabilityPopup != null)
+                probabilityPopup.Hide();
             gameObject.SetActive(false);
+            OpenStateChanged?.Invoke(false);
         }
 
         private void Update()
@@ -139,10 +166,12 @@ namespace WizardGrower.UI
                 singlePullButton.interactable = service != null && service.CanSinglePull();
             if (tenPullButton != null)
                 tenPullButton.interactable = service != null && service.CanTenPull();
+            if (probabilityButton != null)
+                probabilityButton.interactable = service != null && service.CurrentLevelDefinition != null;
             RefreshPity();
         }
 
-        private void OnPityChanged(int _)
+        private void OnSummonLevelChanged(int _)
         {
             RefreshPity();
         }
@@ -152,14 +181,17 @@ namespace WizardGrower.UI
             if (pityLabel == null)
                 return;
 
-            int pity = service != null ? service.CurrentPity : 0;
-            int threshold = definition != null ? definition.pityThreshold : 30;
             SummonLevelDefinition level = service != null ? service.CurrentLevelDefinition : null;
             int summonLevel = service != null ? service.CurrentSummonLevel : 1;
             int pulls = service != null ? service.SummonPullsInLevel : 0;
             string progress = level != null && level.pullsToNextLevel > 0 ? $"{pulls}/{level.pullsToNextLevel}" : "MAX";
-            string maxGrade = level != null ? WeaponGradeLabels.UpperKo(level.maxUpperGrade) : "-";
-            pityLabel.text = $"소환 Lv. {summonLevel}\n성장 {progress}\n최대 {maxGrade}\n천장 {pity}/{threshold}";
+            pityLabel.text = $"소환 Lv. {summonLevel}\n성장 {progress}";
+        }
+
+        private void ShowProbabilityPopup()
+        {
+            if (probabilityPopup != null && service != null)
+                probabilityPopup.Show(service.CurrentSummonLevel);
         }
 
         private void ShowFeedback(string message)
@@ -176,9 +208,13 @@ namespace WizardGrower.UI
             if (service == null)
                 return;
 
-            service.PityChanged -= OnPityChanged;
             service.StateChanged -= Refresh;
+            service.SummonLevelChanged -= OnSummonLevelChanged;
             service.PullFailed -= ShowFeedback;
+            if (closeButton != null)
+                closeButton.onClick.RemoveListener(Close);
+            if (probabilityButton != null)
+                probabilityButton.onClick.RemoveListener(ShowProbabilityPopup);
         }
     }
 }

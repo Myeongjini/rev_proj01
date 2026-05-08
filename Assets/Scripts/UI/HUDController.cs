@@ -34,10 +34,10 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text bossEntryButtonLabel;
         [SerializeField] private Button chatToggleButton;
         [SerializeField] private ChatPanel chatPanel;
-        [SerializeField] private Button weaponInventoryToggleButton;
         [SerializeField] private WeaponInventoryPanel weaponInventoryPanel;
-        [SerializeField] private Button gachaToggleButton;
         [SerializeField] private GachaPanel gachaPanel;
+        [SerializeField] private MainUI01Bar mainUI01Bar;
+        [SerializeField] private MainUI01Coordinator mainUI01Coordinator;
         [SerializeField] private CombatPowerPopupView combatPowerPopup;
         [SerializeField] private UpgradeDrawerView upgradeDrawer;
         [SerializeField] private Transform upgradeButtonContainer;
@@ -102,10 +102,6 @@ namespace WizardGrower.UI
                 bossEntryButton.onClick.AddListener(() => stageManager.EnterBossRoom());
             if (chatToggleButton != null && chatPanel != null)
                 chatToggleButton.onClick.AddListener(chatPanel.Toggle);
-            if (weaponInventoryToggleButton != null && weaponInventoryPanel != null)
-                weaponInventoryToggleButton.onClick.AddListener(weaponInventoryPanel.Toggle);
-            if (gachaToggleButton != null && gachaPanel != null)
-                gachaToggleButton.onClick.AddListener(gachaPanel.Toggle);
             movementController.AutoModeChanged += RefreshAutoToggle;
             if (joystickIndicator != null)
                 movementController.JoystickChanged += joystickIndicator.Refresh;
@@ -115,6 +111,8 @@ namespace WizardGrower.UI
                 weaponInventoryPanel.Initialize(weaponInventory, weaponDatabase, weaponFusionService);
             if (gachaPanel != null)
                 gachaPanel.Initialize(gachaService, gachaDefinition);
+            if (mainUI01Coordinator != null)
+                mainUI01Coordinator.Initialize(mainUI01Bar, upgradeDrawer, weaponInventoryPanel, gachaPanel);
 
             BindUpgradeButtons(upgradeSystem);
             RefreshAttack(wizard);
