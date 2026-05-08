@@ -1,4 +1,5 @@
 using TMPro;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using WizardGrower.Weapons;
@@ -12,9 +13,12 @@ namespace WizardGrower.UI
         [SerializeField] private Image icon;
         [SerializeField] private TMP_Text label;
         [SerializeField] private TMP_Text equippedLabel;
+        [SerializeField] private TMP_Text countLabel;
 
         private WeaponInventory inventory;
         private WeaponDefinition weapon;
+
+        public event Action<WeaponDefinition> Selected;
 
         private void Awake()
         {
@@ -29,13 +33,13 @@ namespace WizardGrower.UI
             if (button != null)
             {
                 button.onClick.RemoveAllListeners();
-                button.interactable = owned;
-                button.onClick.AddListener(Equip);
+                button.interactable = true;
+                button.onClick.AddListener(Select);
             }
             if (icon != null)
                 icon.sprite = weapon != null ? weapon.icon : null;
             if (frame != null)
-                frame.color = weapon != null ? RarityVisuals.ColorFor(weapon.rarity) : Color.white;
+                frame.color = weapon != null ? RarityVisuals.ColorFor(weapon.upperGrade) : Color.white;
             Refresh();
         }
 
@@ -44,23 +48,25 @@ namespace WizardGrower.UI
             if (weapon == null)
                 return;
 
-            bool owned = inventory != null && inventory.IsOwned(weapon.weaponId);
+            int count = inventory != null ? inventory.GetCount(weapon.weaponId) : 0;
+            bool owned = count > 0;
             bool equipped = inventory != null && inventory.EquippedWeaponId == weapon.weaponId;
             if (label != null)
-                label.text = owned ? weapon.displayName : weapon.displayName + "\n미보유";
+                label.text = $"{WeaponGradeLabels.LowerKo(weapon.lowerGrade)}\n{weapon.displayName}";
             if (equippedLabel != null)
                 equippedLabel.text = equipped ? "장착중" : string.Empty;
+            if (countLabel != null)
+                countLabel.text = $"x{count}";
+            if (icon != null)
+                icon.color = owned ? Color.white : new Color(0.35f, 0.35f, 0.35f, 0.75f);
             if (button != null)
-                button.interactable = owned;
+                button.interactable = true;
         }
 
-        private void Equip()
+        private void Select()
         {
-            if (inventory != null && weapon != null)
-            {
-                inventory.TryEquip(weapon.weaponId);
-                Refresh();
-            }
+            if (weapon != null)
+                Selected?.Invoke(weapon);
         }
 
     }

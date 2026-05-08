@@ -40,7 +40,9 @@ namespace WizardGrower.Core
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             if (context.WeaponVisual != null)
-                context.WeaponVisual.Bind(context.WeaponInventory);
+                context.WeaponVisual.Bind(context.Wizard, context.WeaponInventory, context.ProjectileFactory);
+            if (context.WeaponInventory != null)
+                context.WeaponInventory.EquippedChanged += OnWeaponEquipped;
             combatPower.Initialize(context.Wizard.Stats, context.Mana);
             if (context.CombatPowerPopup != null)
                 context.CombatPowerPopup.Bind(combatPower);
@@ -85,6 +87,16 @@ namespace WizardGrower.Core
         {
             if (context.FloatingText != null)
                 context.FloatingText.Spawn(enemy.transform.position, info);
+        }
+
+        private void OnWeaponEquipped(WizardGrower.Weapons.WeaponDefinition weapon)
+        {
+            if (context == null || context.Wizard == null)
+                return;
+
+            context.Wizard.Stats.RecomputeWithEquipped(weapon != null ? weapon.statBonuses : (WizardGrower.Weapons.WeaponStats?)null);
+            if (context.CombatPower != null)
+                context.CombatPower.Recalculate(true);
         }
 
         private async void ConsumeBootstrappedAuthentication()

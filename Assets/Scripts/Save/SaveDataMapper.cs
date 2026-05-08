@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using WizardGrower.Weapons;
 
 namespace WizardGrower.Save
 {
@@ -21,7 +22,8 @@ namespace WizardGrower.Save
                 CurrentStage = data.currentStage,
                 Stats = ToDocument(data.stats),
                 Upgrades = ToDocument(data.upgrades),
-                EquippedWeaponId = string.IsNullOrEmpty(data.equippedWeaponId) ? "wand_starter" : data.equippedWeaponId,
+                EquippedWeaponId = string.IsNullOrEmpty(data.equippedWeaponId) ? WeaponInventory.StarterWeaponId : data.equippedWeaponId,
+                OwnedWeapons = ToDocument(data.ownedWeapons),
                 OwnedWeaponIds = data.ownedWeaponIds != null ? new List<string>(data.ownedWeaponIds) : new List<string> { "wand_starter" }
             };
         }
@@ -43,7 +45,8 @@ namespace WizardGrower.Save
                 currentStage = doc.CurrentStage,
                 stats = FromDocument(doc.Stats),
                 upgrades = FromDocument(doc.Upgrades),
-                equippedWeaponId = string.IsNullOrEmpty(doc.EquippedWeaponId) ? "wand_starter" : doc.EquippedWeaponId,
+                equippedWeaponId = string.IsNullOrEmpty(doc.EquippedWeaponId) ? WeaponInventory.StarterWeaponId : doc.EquippedWeaponId,
+                ownedWeapons = FromDocument(doc.OwnedWeapons),
                 ownedWeaponIds = doc.OwnedWeaponIds != null ? new List<string>(doc.OwnedWeaponIds) : new List<string> { "wand_starter" }
             };
         }
@@ -122,6 +125,42 @@ namespace WizardGrower.Save
                     id = doc.Id,
                     level = doc.Level
                 });
+            }
+            return entries;
+        }
+
+        private static List<OwnedWeaponEntryDoc> ToDocument(List<OwnedWeaponEntry> entries)
+        {
+            List<OwnedWeaponEntryDoc> docs = new List<OwnedWeaponEntryDoc>();
+            if (entries == null)
+                return docs;
+
+            foreach (OwnedWeaponEntry entry in entries)
+            {
+                if (entry == null || string.IsNullOrEmpty(entry.weaponId) || entry.count <= 0)
+                    continue;
+
+                docs.Add(new OwnedWeaponEntryDoc
+                {
+                    WeaponId = entry.weaponId,
+                    Count = entry.count
+                });
+            }
+            return docs;
+        }
+
+        private static List<OwnedWeaponEntry> FromDocument(List<OwnedWeaponEntryDoc> docs)
+        {
+            List<OwnedWeaponEntry> entries = new List<OwnedWeaponEntry>();
+            if (docs == null)
+                return entries;
+
+            foreach (OwnedWeaponEntryDoc doc in docs)
+            {
+                if (doc == null || string.IsNullOrEmpty(doc.WeaponId) || doc.Count <= 0)
+                    continue;
+
+                entries.Add(new OwnedWeaponEntry(doc.WeaponId, doc.Count));
             }
             return entries;
         }

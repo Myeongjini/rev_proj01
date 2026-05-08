@@ -17,6 +17,7 @@ namespace WizardGrower.Save
         [FirestoreProperty("stats")] public PlayerStatsSnapshotDoc Stats { get; set; }
         [FirestoreProperty("upgrades")] public List<UpgradeLevelEntryDoc> Upgrades { get; set; }
         [FirestoreProperty("equippedWeaponId")] public string EquippedWeaponId { get; set; }
+        [FirestoreProperty("ownedWeapons")] public List<OwnedWeaponEntryDoc> OwnedWeapons { get; set; }
         [FirestoreProperty("ownedWeaponIds")] public List<string> OwnedWeaponIds { get; set; }
     }
 
@@ -40,5 +41,12 @@ namespace WizardGrower.Save
     {
         [FirestoreProperty("id")] public string Id { get; set; }
         [FirestoreProperty("level")] public int Level { get; set; }
+    }
+
+    [FirestoreData]
+    public class OwnedWeaponEntryDoc
+    {
+        [FirestoreProperty("weaponId")] public string WeaponId { get; set; }
+        [FirestoreProperty("count")] public int Count { get; set; }
     }
 }

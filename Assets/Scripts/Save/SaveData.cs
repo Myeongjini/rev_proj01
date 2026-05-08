@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using WizardGrower.Weapons;
 
 namespace WizardGrower.Save
 {
     [Serializable]
     public class SaveData
     {
-        public int saveVersion = 2;
+        public int saveVersion = 3;
         public string userId = "local";
         public long updatedAtUnixMs;
 
@@ -18,7 +19,8 @@ namespace WizardGrower.Save
 
         public PlayerStatsSnapshot stats = new PlayerStatsSnapshot();
         public List<UpgradeLevelEntry> upgrades = new List<UpgradeLevelEntry>();
-        public string equippedWeaponId = "wand_starter";
+        public string equippedWeaponId = "common_beginner_staff";
+        public List<OwnedWeaponEntry> ownedWeapons = new List<OwnedWeaponEntry> { new OwnedWeaponEntry("common_beginner_staff", 1) };
         public List<string> ownedWeaponIds = new List<string> { "wand_starter" };
     }
 

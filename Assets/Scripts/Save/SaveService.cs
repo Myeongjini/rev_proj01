@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using WizardGrower.Weapons;
 
 namespace WizardGrower.Save
 {
@@ -85,12 +86,19 @@ namespace WizardGrower.Save
 
             if (data.ownedWeaponIds == null)
                 data.ownedWeaponIds = new System.Collections.Generic.List<string>();
+            if (data.ownedWeapons == null)
+                data.ownedWeapons = new System.Collections.Generic.List<OwnedWeaponEntry>();
 
-            if (!data.ownedWeaponIds.Contains("wand_starter"))
-                data.ownedWeaponIds.Insert(0, "wand_starter");
+            if (data.saveVersion < 3)
+                MigrateWeaponInventoryToV3(data);
 
-            if (string.IsNullOrEmpty(data.equippedWeaponId) || !data.ownedWeaponIds.Contains(data.equippedWeaponId))
-                data.equippedWeaponId = "wand_starter";
+            data.saveVersion = Mathf.Max(data.saveVersion, 3);
+
+            if (data.ownedWeapons.Count == 0)
+                data.ownedWeapons.Add(new OwnedWeaponEntry(WeaponInventory.StarterWeaponId, 1));
+
+            if (string.IsNullOrEmpty(data.equippedWeaponId))
+                data.equippedWeaponId = WeaponInventory.StarterWeaponId;
 
             if (migratingToVersion2)
             {
@@ -102,6 +110,60 @@ namespace WizardGrower.Save
             data.pityCounter = Mathf.Max(0, data.pityCounter);
 
             return data;
+        }
+
+        private static void MigrateWeaponInventoryToV3(SaveData data)
+        {
+            data.ownedWeapons.Clear();
+            if (data.ownedWeaponIds != null)
+            {
+                for (int i = 0; i < data.ownedWeaponIds.Count; i++)
+                    AddMigratedWeapon(data.ownedWeapons, MapV6WeaponId(data.ownedWeaponIds[i]), 1);
+            }
+
+            if (data.ownedWeapons.Count == 0)
+                data.ownedWeapons.Add(new OwnedWeaponEntry(WeaponInventory.StarterWeaponId, 1));
+
+            data.equippedWeaponId = MapV6WeaponId(data.equippedWeaponId);
+            if (string.IsNullOrEmpty(data.equippedWeaponId))
+                data.equippedWeaponId = WeaponInventory.StarterWeaponId;
+        }
+
+        private static void AddMigratedWeapon(System.Collections.Generic.List<OwnedWeaponEntry> entries, string weaponId, int count)
+        {
+            if (string.IsNullOrEmpty(weaponId) || count <= 0)
+                return;
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (entries[i] != null && entries[i].weaponId == weaponId)
+                {
+                    entries[i].count += count;
+                    return;
+                }
+            }
+
+            entries.Add(new OwnedWeaponEntry(weaponId, count));
+        }
+
+        private static string MapV6WeaponId(string weaponId)
+        {
+            switch (weaponId)
+            {
+                case "wand_starter":
+                case "common_beginner_staff":
+                    return WeaponInventory.StarterWeaponId;
+                case "apprentice_staff":
+                case "crystal_wand":
+                    return "normal_beginner_staff";
+                case "wizards_stave":
+                case "flame_rod":
+                    return "advanced_beginner_staff";
+                case "arcane_scepter":
+                    return "epic_beginner_staff";
+                default:
+                    return weaponId;
+            }
         }
 
         private static void MigrateStatsSnapshot(PlayerStatsSnapshot stats)

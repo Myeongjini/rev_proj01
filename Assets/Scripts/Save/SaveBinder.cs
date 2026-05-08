@@ -21,7 +21,7 @@ namespace WizardGrower.Save
             ctx.Wizard.Stats.ApplySnapshot(data.stats);
             if (ctx.WeaponInventory != null)
             {
-                ctx.WeaponInventory.LoadFromSave(data.ownedWeaponIds, data.equippedWeaponId);
+                ctx.WeaponInventory.LoadFromSave(data.ownedWeapons, data.equippedWeaponId);
                 ctx.Wizard.Stats.RecomputeWithEquipped(ctx.WeaponInventory.Equipped != null ? ctx.WeaponInventory.Equipped.statBonuses : (WizardGrower.Weapons.WeaponStats?)null);
             }
             ctx.Wallet.SetGold(data.gold);
@@ -50,9 +50,8 @@ namespace WizardGrower.Save
             data.upgrades = ctx.UpgradeSystem != null ? ctx.UpgradeSystem.CaptureLevels() : new System.Collections.Generic.List<UpgradeLevelEntry>();
             if (ctx.WeaponInventory != null)
             {
-                var weaponSave = ctx.WeaponInventory.CaptureForSave();
-                data.ownedWeaponIds = weaponSave.owned;
-                data.equippedWeaponId = weaponSave.equipped;
+                data.ownedWeapons = new System.Collections.Generic.List<WizardGrower.Weapons.OwnedWeaponEntry>(ctx.WeaponInventory.CaptureForSave());
+                data.equippedWeaponId = ctx.WeaponInventory.EquippedWeaponId;
             }
             return data;
         }
@@ -71,7 +70,7 @@ namespace WizardGrower.Save
             if (context.WeaponInventory != null)
             {
                 context.WeaponInventory.EquippedChanged += _ => QueueSave();
-                context.WeaponInventory.WeaponObtained += _ => QueueSave();
+                context.WeaponInventory.InventoryChanged += QueueSave;
             }
             if (context.GachaService != null)
             {

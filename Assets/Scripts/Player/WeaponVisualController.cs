@@ -1,4 +1,5 @@
 using UnityEngine;
+using WizardGrower.Combat;
 using WizardGrower.Weapons;
 
 namespace WizardGrower.Player
@@ -10,6 +11,15 @@ namespace WizardGrower.Player
 
         private GameObject glyphChild;
         private WeaponInventory inventory;
+
+        public void Bind(PlayerWizard wizard, WeaponInventory inventory, ProjectileFactory projectileFactory)
+        {
+            if (wizardBody == null && wizard != null)
+                wizardBody = wizard.GetComponent<SpriteRenderer>();
+            if (projectileFactory != null)
+                projectileFactory.BindWeaponInventory(inventory);
+            Bind(inventory);
+        }
 
         public void Bind(WeaponInventory inventory)
         {

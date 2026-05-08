@@ -18,6 +18,18 @@ namespace WizardGrower.UI
             }
         }
 
+        public static Color ColorFor(WeaponUpperGrade grade)
+        {
+            switch (grade)
+            {
+                case WeaponUpperGrade.Normal: return new Color(0.30f, 0.90f, 0.78f, 1f);
+                case WeaponUpperGrade.Advanced: return new Color(0.35f, 0.58f, 1f, 1f);
+                case WeaponUpperGrade.Epic: return new Color(0.72f, 0.35f, 1f, 1f);
+                case WeaponUpperGrade.Unique: return new Color(1f, 0.58f, 0.18f, 1f);
+                default: return new Color(0.80f, 0.82f, 0.86f, 1f);
+            }
+        }
+
         public static string LabelFor(Rarity rarity)
         {
             switch (rarity)
