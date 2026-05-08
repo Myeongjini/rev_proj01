@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96b982c96a0144d5b96568f3077ade10, type: 3}
+  m_Name: Unique_Upper_Staff
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Weapons.WeaponDefinition
+  weaponId: unique_upper_staff
+  displayName: "\uC720\uB2C8\uD06C \uC0C1\uAE09 \uC9C0\uD321\uC774"
+  upperGrade: 4
+  lowerGrade: 2
+  ladderIndex: 18
+  rarity: 4
+  icon: {fileID: 21300000, guid: fd8bbcb32ea3f411e95a036afe26c87e, type: 3}
+  tintColor: {r: 1, g: 0.74, b: 0.35, a: 1}
+  accessoryGlyph: {fileID: 21300000, guid: fd8bbcb32ea3f411e95a036afe26c87e, type: 3}
+  projectileSprite: {fileID: 21300000, guid: 5897cdd0f1c804d3ab48d2aeff269b48, type: 3}
+  statBonuses:
+    attackDamage: 260
+    attackSpeedBonus: 0.089999996
+    criticalChance: 0.06
+    criticalMultiplier: 0.2
+    armorPenetration: 4
+    maxHealth: 54
+    maxMana: 20
+  flavorText: "\uC720\uB2C8\uD06C \uC0C1\uAE09 \uC9C0\uD321\uC774 - \uC131\uC7A5\uD615
+    \uC9C0\uD321\uC774 \uC0AC\uB2E4\uB9AC\uC758 19\uBC88\uC9F8 \uBB34\uAE30."

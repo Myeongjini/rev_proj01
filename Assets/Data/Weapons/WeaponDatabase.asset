@@ -13,9 +13,23 @@ MonoBehaviour:
   m_Name: WeaponDatabase
   m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Weapons.WeaponDatabase
   weapons:
-  - {fileID: 11400000, guid: 2288145e03f664a0188ce0b9eac26513, type: 2}
-  - {fileID: 11400000, guid: 7270a2fd1c3c24bc8b361d2f7c9ee0a3, type: 2}
-  - {fileID: 11400000, guid: 56deb452391ac4d6480ccb4477132f65, type: 2}
-  - {fileID: 11400000, guid: bd1f503e284944b7d969b96ce6563f4f, type: 2}
-  - {fileID: 11400000, guid: b27ab7ba16ce04312a25ebcda7c38b21, type: 2}
-  - {fileID: 11400000, guid: 1f760f7b349284745849ac9c07e47619, type: 2}
+  - {fileID: 11400000, guid: 9510df3a0357947b0aa96b5d2bf2d7fb, type: 2}
+  - {fileID: 11400000, guid: 8befd849bb0d341c3818598f50190133, type: 2}
+  - {fileID: 11400000, guid: ff06e63356cce422591ac7dc71ed2c6c, type: 2}
+  - {fileID: 11400000, guid: 747284c300af6454bbb1d771700ab9d4, type: 2}
+  - {fileID: 11400000, guid: 001bc1cc51ff04acfa2ca7d018d0ec7c, type: 2}
+  - {fileID: 11400000, guid: 38c269fee07b64d30b53477fa5058a80, type: 2}
+  - {fileID: 11400000, guid: 90a408e58ef864061a69f0b87fee4166, type: 2}
+  - {fileID: 11400000, guid: b1fe1129935664f08b10f52ad8c33aa2, type: 2}
+  - {fileID: 11400000, guid: 19e46b52038e2460794c037951f1640d, type: 2}
+  - {fileID: 11400000, guid: 2c1cbffbb756a4383889c719481ae01d, type: 2}
+  - {fileID: 11400000, guid: 1e3d54c93f18444f7bfd15d5f293a444, type: 2}
+  - {fileID: 11400000, guid: 6d0dc7f284bfa4b239cba622f94c8cff, type: 2}
+  - {fileID: 11400000, guid: d5d7e6f563c6b42fb95decf704312921, type: 2}
+  - {fileID: 11400000, guid: eb496f2d79594485f87b34831bde583c, type: 2}
+  - {fileID: 11400000, guid: 45a383570a7c6479f8ef94663b7ce8c8, type: 2}
+  - {fileID: 11400000, guid: 9b2d21b78a9c44b79bd0500c6938a504, type: 2}
+  - {fileID: 11400000, guid: 060241f56dbd34dde87ae1330520d876, type: 2}
+  - {fileID: 11400000, guid: 54c3558940d3c4de992ab5629d94b182, type: 2}
+  - {fileID: 11400000, guid: ad077a78901b94332806822c64a1fa1b, type: 2}
+  - {fileID: 11400000, guid: 542e79d0afcd64e4f9eda87681646a14, type: 2}

@@ -7,6 +7,9 @@ namespace WizardGrower.Weapons
     {
         public string weaponId;
         public string displayName;
+        public WeaponUpperGrade upperGrade;
+        public WeaponLowerGrade lowerGrade;
+        public int ladderIndex;
         public Rarity rarity;
         public Sprite icon;
         public Color tintColor = Color.white;

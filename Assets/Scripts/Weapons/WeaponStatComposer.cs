@@ -10,9 +10,8 @@ namespace WizardGrower.Weapons
         ///
         /// | field                | base op | equipped op                         | clamp |
         /// |----------------------|---------|-------------------------------------|-------|
-        /// | autoAttackDamage     | base.x  | + equipped.autoAttackDamage         | none  |
-        /// | manualAttackDamage   | base.x  | + equipped.manualAttackDamage       | none  |
-        /// | autoAttackInterval   | base.x  | - equipped.autoFireRateBonus        | >=0.05|
+        /// | attackDamage         | base.x  | + equipped.attackDamage             | none  |
+        /// | autoAttackInterval   | base.x  | - equipped.attackSpeedBonus         | >=0.05|
         /// | criticalChance       | base.x  | + equipped.criticalChance           | 0..1  |
         /// | criticalMultiplier   | base.x  | + equipped.criticalMultiplier       | >=1   |
         /// | armorPenetration     | base.x  | + equipped.armorPenetration         | >=0   |
@@ -25,6 +24,7 @@ namespace WizardGrower.Weapons
             PlayerStatsSnapshot source = baseSnapshot ?? new PlayerStatsSnapshot();
             PlayerStatsSnapshot result = new PlayerStatsSnapshot
             {
+                attackDamage = source.attackDamage > 0f ? source.attackDamage : (source.autoAttackDamage > 0f ? source.autoAttackDamage : 10f),
                 autoAttackDamage = source.autoAttackDamage,
                 manualAttackDamage = source.manualAttackDamage,
                 autoAttackInterval = Mathf.Max(0.05f, source.autoAttackInterval),
@@ -39,9 +39,10 @@ namespace WizardGrower.Weapons
             if (equipped.HasValue)
             {
                 WeaponStats bonus = equipped.Value;
-                result.autoAttackDamage += bonus.autoAttackDamage;
-                result.manualAttackDamage += bonus.manualAttackDamage;
-                result.autoAttackInterval = Mathf.Max(0.05f, result.autoAttackInterval - bonus.autoFireRateBonus);
+                result.attackDamage += bonus.attackDamage;
+                result.autoAttackDamage = result.attackDamage;
+                result.manualAttackDamage = result.attackDamage * 2f;
+                result.autoAttackInterval = Mathf.Max(0.05f, result.autoAttackInterval - bonus.attackSpeedBonus);
                 result.criticalChance = Mathf.Clamp01(result.criticalChance + bonus.criticalChance);
                 result.criticalMultiplier = Mathf.Max(1f, result.criticalMultiplier + bonus.criticalMultiplier);
                 result.armorPenetration = Mathf.Max(0f, result.armorPenetration + bonus.armorPenetration);

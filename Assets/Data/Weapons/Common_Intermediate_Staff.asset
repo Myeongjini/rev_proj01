@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96b982c96a0144d5b96568f3077ade10, type: 3}
+  m_Name: Common_Intermediate_Staff
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Weapons.WeaponDefinition
+  weaponId: common_intermediate_staff
+  displayName: "\uC77C\uBC18 \uC911\uAE09 \uC9C0\uD321\uC774"
+  upperGrade: 0
+  lowerGrade: 1
+  ladderIndex: 1
+  rarity: 0
+  icon: {fileID: 21300000, guid: 6f1ba352fe2c74677b12d3558b267ab6, type: 3}
+  tintColor: {r: 1, g: 1, b: 1, a: 1}
+  accessoryGlyph: {fileID: 21300000, guid: 6f1ba352fe2c74677b12d3558b267ab6, type: 3}
+  projectileSprite: {fileID: 21300000, guid: d731bca50f66b497f850c97fed999b15, type: 3}
+  statBonuses:
+    attackDamage: 4
+    attackSpeedBonus: 0.005
+    criticalChance: 0
+    criticalMultiplier: 0
+    armorPenetration: 0
+    maxHealth: 3
+    maxMana: 0
+  flavorText: "\uC77C\uBC18 \uC911\uAE09 \uC9C0\uD321\uC774 - \uC131\uC7A5\uD615
+    \uC9C0\uD321\uC774 \uC0AC\uB2E4\uB9AC\uC758 2\uBC88\uC9F8 \uBB34\uAE30."

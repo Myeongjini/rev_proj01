@@ -126,8 +126,6 @@ namespace WizardGrower.Player
             EnsureBaseSnapshot();
             equippedStats = equipped;
             PlayerStatsSnapshot composed = WeaponStatComposer.Recompute(baseSnapshot, equippedStats);
-            if (equippedStats.HasValue)
-                composed.attackDamage = Mathf.Max(0f, baseSnapshot.attackDamage + equippedStats.Value.autoAttackDamage);
             ApplyRuntimeSnapshot(composed);
             RecalculateCombatPower();
             HealthChanged?.Invoke();

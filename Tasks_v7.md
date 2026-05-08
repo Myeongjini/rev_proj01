@@ -79,7 +79,7 @@ U: Summon level gacha refactor
 | Bundle | ID | Title | Status | Depends On |
 |---|---|---|---|---|
 | 7 | Q | Stat Unification + Combat Power Feedback | 🟡 IN REVIEW | v6 baseline |
-| 7 | R | Weapon Grade Model + 20 Seed Weapon Table | 🔴 TODO | Q ✅ |
+| 7 | R | Weapon Grade Model + 20 Seed Weapon Table | 🟡 IN REVIEW | Q ✅ |
 | 7 | S | Counted Weapon Inventory + 4-Column Weapon Window | 🔴 TODO | R ✅ |
 | 7 | T | Synthesize-All Weapon Fusion | 🔴 TODO | S ✅ |
 | 7 | U | Summon Level Gacha Refactor | 🔴 TODO | T ✅ |
@@ -212,7 +212,7 @@ Round for display only. Keep the raw float for comparison.
 
 ## Task R — Weapon Grade Model + 20 Seed Weapon Table
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** Q ✅
 
 ### 🎯 Goal
@@ -808,6 +808,7 @@ After Task U reaches `✅ DONE`:
 | Date | Task | Entry |
 |------|------|-------|
 | 2026-05-08 | Task Q | Added unified `AttackDamage` runtime stat, legacy snapshot migration from v6 auto/manual damage fields, coefficient-based auto/manual/skill damage, unified Attack/Attack Speed upgrade defaults with legacy upgrade-id migration, `CombatPowerService`, Korean combat-power popup, HUD combat power display, and MainScene popup wiring. MCP PlayMode validation passed for fresh `Attack 10 / CP 26`, auto `10`, manual `20`, skill `80`, Attack upgrade purchase, popup `전투력: 30 (+5)`, legacy save attack migration, and attack snapshot capture. Start-state note: pre-existing uncommitted `.DS_Store`, `.codex/`, and `Assets/Fonts/NanumGothicBold SDF.asset` changes were left untouched. |
+| 2026-05-08 | Task R | Added upper/lower weapon grade enums and Korean grade labels, converted WeaponStats/WeaponDefinition/WeaponDatabase/WeaponStatComposer to the v7 grade ladder, regenerated weapon glyph/projectile generator support for 20 weapons, replaced the 6 v6 seed WeaponDefinition assets with 20 ladder assets, and wired WeaponDatabase in ladder order. MCP validation passed: `OrderedWeapons.Count=20`, every upper grade has 4 weapons, `GetNext(common_supreme_staff)=normal_beginner_staff`, `GetNext(unique_supreme_staff)=null`, starter attack bonus `0`, attack bonuses strictly increase, and all upper-grade transition jumps exceed lower-grade row steps. |
 
 ---
 

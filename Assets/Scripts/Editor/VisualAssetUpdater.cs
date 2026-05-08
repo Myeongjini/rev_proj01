@@ -70,30 +70,45 @@ namespace WizardGrower.EditorTools
         {
             string folder = ArtPath + "WeaponGlyphs/";
             Directory.CreateDirectory(folder);
-            SaveSprite(folder, "wand_starter", DrawWeaponGlyph(new Color(0.82f, 0.78f, 0.62f, 1f), 0), 96f);
-            SaveSprite(folder, "apprentice_staff", DrawWeaponGlyph(new Color(0.38f, 0.94f, 1f, 1f), 1), 96f);
-            SaveSprite(folder, "crystal_wand", DrawWeaponGlyph(new Color(0.72f, 0.58f, 1f, 1f), 2), 96f);
-            SaveSprite(folder, "wizards_stave", DrawWeaponGlyph(new Color(1f, 0.73f, 0.18f, 1f), 3), 96f);
-            SaveSprite(folder, "flame_rod", DrawWeaponGlyph(new Color(1f, 0.26f, 0.12f, 1f), 4), 96f);
-            SaveSprite(folder, "arcane_scepter", DrawWeaponGlyph(new Color(0.58f, 0.18f, 1f, 1f), 5), 96f);
+            for (int i = 0; i < V7WeaponIds.Length; i++)
+                SaveSprite(folder, V7WeaponIds[i], DrawWeaponGlyph(V7WeaponColor(i), i), 96f);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            return "Generated 6 weapon glyph sprites.";
+            return "Generated 20 weapon glyph sprites.";
         }
 
         public static string GenerateWeaponProjectiles()
         {
             string folder = ArtPath + "WeaponProjectiles/";
             Directory.CreateDirectory(folder);
-            SaveSprite(folder, "wand_starter", DrawWeaponProjectile(new Color(0.75f, 0.85f, 1f, 1f), 0), 96f);
-            SaveSprite(folder, "apprentice_staff", DrawWeaponProjectile(new Color(0.23f, 0.95f, 1f, 1f), 1), 96f);
-            SaveSprite(folder, "crystal_wand", DrawWeaponProjectile(new Color(0.72f, 0.58f, 1f, 1f), 2), 96f);
-            SaveSprite(folder, "wizards_stave", DrawWeaponProjectile(new Color(1f, 0.78f, 0.18f, 1f), 3), 96f);
-            SaveSprite(folder, "flame_rod", DrawWeaponProjectile(new Color(1f, 0.25f, 0.08f, 1f), 4), 96f);
-            SaveSprite(folder, "arcane_scepter", DrawWeaponProjectile(new Color(0.64f, 0.22f, 1f, 1f), 5), 96f);
+            for (int i = 0; i < V7WeaponIds.Length; i++)
+                SaveSprite(folder, V7WeaponIds[i], DrawWeaponProjectile(V7WeaponColor(i), i), 96f);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            return "Generated 6 weapon projectile sprites.";
+            return "Generated 20 weapon projectile sprites.";
+        }
+
+        private static readonly string[] V7WeaponIds =
+        {
+            "common_beginner_staff", "common_intermediate_staff", "common_upper_staff", "common_supreme_staff",
+            "normal_beginner_staff", "normal_intermediate_staff", "normal_upper_staff", "normal_supreme_staff",
+            "advanced_beginner_staff", "advanced_intermediate_staff", "advanced_upper_staff", "advanced_supreme_staff",
+            "epic_beginner_staff", "epic_intermediate_staff", "epic_upper_staff", "epic_supreme_staff",
+            "unique_beginner_staff", "unique_intermediate_staff", "unique_upper_staff", "unique_supreme_staff"
+        };
+
+        private static Color V7WeaponColor(int ladderIndex)
+        {
+            Color[] upperColors =
+            {
+                new Color(0.82f, 0.82f, 0.78f, 1f),
+                new Color(0.36f, 0.92f, 1f, 1f),
+                new Color(0.38f, 0.58f, 1f, 1f),
+                new Color(0.74f, 0.32f, 1f, 1f),
+                new Color(1f, 0.58f, 0.16f, 1f)
+            };
+            Color baseColor = upperColors[Mathf.Clamp(ladderIndex / 4, 0, upperColors.Length - 1)];
+            return Color.Lerp(baseColor, Color.white, (ladderIndex % 4) * 0.08f);
         }
 
         private static Sprite SaveSprite(string name, Texture2D texture, float ppu)

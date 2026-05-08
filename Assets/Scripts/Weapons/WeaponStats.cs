@@ -5,12 +5,12 @@ namespace WizardGrower.Weapons
     [Serializable]
     public struct WeaponStats
     {
-        public float autoAttackDamage;
-        public float manualAttackDamage;
-        public float autoFireRateBonus;
+        public float attackDamage;
+        public float attackSpeedBonus;
         public float criticalChance;
         public float criticalMultiplier;
         public float armorPenetration;
         public float maxHealth;
+        public float maxMana;
     }
 }
