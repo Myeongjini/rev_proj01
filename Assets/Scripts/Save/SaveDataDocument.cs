@@ -23,6 +23,7 @@ namespace WizardGrower.Save
     [FirestoreData]
     public class PlayerStatsSnapshotDoc
     {
+        [FirestoreProperty("attackDamage")] public float AttackDamage { get; set; }
         [FirestoreProperty("autoAttackDamage")] public float AutoAttackDamage { get; set; }
         [FirestoreProperty("manualAttackDamage")] public float ManualAttackDamage { get; set; }
         [FirestoreProperty("autoAttackInterval")] public float AutoAttackInterval { get; set; }

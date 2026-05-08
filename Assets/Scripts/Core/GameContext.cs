@@ -48,6 +48,13 @@ namespace WizardGrower.Core
         [field: SerializeField] public WeaponVisualController WeaponVisual { get; private set; }
         [field: SerializeField] public GachaDefinition GachaDefinition { get; private set; }
         [field: SerializeField] public GachaService GachaService { get; private set; }
+        [field: SerializeField] public CombatPowerPopupView CombatPowerPopup { get; private set; }
+        public CombatPowerService CombatPower { get; private set; }
+
+        public void SetCombatPowerService(CombatPowerService combatPower)
+        {
+            CombatPower = combatPower;
+        }
 
         public void SetAuthenticationServices(AuthService authService, UserProfileService userProfileService, AuthConfig authConfig, CloudSyncService cloudSyncService = null)
         {

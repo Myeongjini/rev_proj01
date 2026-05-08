@@ -25,6 +25,7 @@ namespace WizardGrower.Save
     [Serializable]
     public class PlayerStatsSnapshot
     {
+        public float attackDamage = 10f;
         public float autoAttackDamage = 10f;
         public float manualAttackDamage = 20f;
         public float autoAttackInterval = 1f;

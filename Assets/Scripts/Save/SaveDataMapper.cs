@@ -53,6 +53,7 @@ namespace WizardGrower.Save
             snapshot ??= new PlayerStatsSnapshot();
             return new PlayerStatsSnapshotDoc
             {
+                AttackDamage = snapshot.attackDamage,
                 AutoAttackDamage = snapshot.autoAttackDamage,
                 ManualAttackDamage = snapshot.manualAttackDamage,
                 AutoAttackInterval = snapshot.autoAttackInterval,
@@ -72,6 +73,7 @@ namespace WizardGrower.Save
 
             return new PlayerStatsSnapshot
             {
+                attackDamage = doc.AttackDamage > 0f ? doc.AttackDamage : (doc.AutoAttackDamage > 0f ? doc.AutoAttackDamage : 10f),
                 autoAttackDamage = doc.AutoAttackDamage,
                 manualAttackDamage = doc.ManualAttackDamage,
                 autoAttackInterval = doc.AutoAttackInterval,

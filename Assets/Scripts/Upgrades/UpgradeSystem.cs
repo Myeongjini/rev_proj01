@@ -34,14 +34,13 @@ namespace WizardGrower.Upgrades
                 return;
 
             upgrades.Clear();
-            upgrades.Add(new UpgradeDefinition { id = "auto_dmg", displayName = "자동공격력", type = UpgradeType.AutoDamage, baseCost = 20, value = 5f });
-            upgrades.Add(new UpgradeDefinition { id = "manual_dmg", displayName = "수동공격력", type = UpgradeType.ManualDamage, baseCost = 30, value = 8f });
-            upgrades.Add(new UpgradeDefinition { id = "auto_speed", displayName = "자동발사속도", type = UpgradeType.AutoFireRate, baseCost = 40, value = 0.05f });
-            upgrades.Add(new UpgradeDefinition { id = "crit_chance", displayName = "크리확률", type = UpgradeType.CriticalChance, baseCost = 35, value = 0.03f });
-            upgrades.Add(new UpgradeDefinition { id = "crit_mult", displayName = "크리데미지", type = UpgradeType.CriticalMultiplier, baseCost = 50, value = 0.1f });
-            upgrades.Add(new UpgradeDefinition { id = "armor_pen", displayName = "방어관통", type = UpgradeType.ArmorPenetration, baseCost = 45, value = 1f });
-            upgrades.Add(new UpgradeDefinition { id = "max_hp", displayName = "최대체력", type = UpgradeType.MaxHealth, baseCost = 25, value = 20f });
-            upgrades.Add(new UpgradeDefinition { id = "mana", displayName = "마나", type = UpgradeType.Mana, baseCost = 25, value = 15f });
+            upgrades.Add(new UpgradeDefinition { id = "attack", displayName = "Attack", type = UpgradeType.AttackDamage, baseCost = 20, value = 5f });
+            upgrades.Add(new UpgradeDefinition { id = "attack_speed", displayName = "Attack Speed", type = UpgradeType.AttackSpeed, baseCost = 40, value = 0.05f });
+            upgrades.Add(new UpgradeDefinition { id = "crit_chance", displayName = "Critical Chance", type = UpgradeType.CriticalChance, baseCost = 35, value = 0.03f });
+            upgrades.Add(new UpgradeDefinition { id = "crit_mult", displayName = "Critical Damage", type = UpgradeType.CriticalMultiplier, baseCost = 50, value = 0.1f });
+            upgrades.Add(new UpgradeDefinition { id = "armor_pen", displayName = "Armor Pen.", type = UpgradeType.ArmorPenetration, baseCost = 45, value = 1f });
+            upgrades.Add(new UpgradeDefinition { id = "max_hp", displayName = "Max Health", type = UpgradeType.MaxHealth, baseCost = 25, value = 20f });
+            upgrades.Add(new UpgradeDefinition { id = "mana", displayName = "Mana", type = UpgradeType.Mana, baseCost = 25, value = 15f });
         }
 
         public int GetLevel(UpgradeDefinition definition)
@@ -76,10 +75,15 @@ namespace WizardGrower.Upgrades
             {
                 foreach (UpgradeLevelEntry entry in entries)
                 {
-                    if (entry == null || string.IsNullOrEmpty(entry.id) || !ContainsUpgrade(entry.id))
+                    if (entry == null || string.IsNullOrEmpty(entry.id))
                         continue;
 
-                    levels[entry.id] = Mathf.Max(0, entry.level);
+                    string migratedId = MigrateUpgradeId(entry.id);
+                    if (!ContainsUpgrade(migratedId))
+                        continue;
+
+                    int current = levels.TryGetValue(migratedId, out int existing) ? existing : 0;
+                    levels[migratedId] = current + Mathf.Max(0, entry.level);
                 }
             }
 
@@ -106,17 +110,19 @@ namespace WizardGrower.Upgrades
         {
             switch (definition.type)
             {
-                case UpgradeType.AutoDamage:
-                    wizard.Stats.AddAutoDamage(definition.value);
+                case UpgradeType.AttackDamage:
+                    wizard.Stats.AddAttackDamage(definition.value);
                     break;
-                case UpgradeType.ManualDamage:
-                    wizard.Stats.AddManualDamage(definition.value);
-                    break;
-                case UpgradeType.AutoFireRate:
+                case UpgradeType.AttackSpeed:
                     wizard.Stats.AddAutoFireRate(definition.value);
                     break;
+                case UpgradeType.AutoDamage:
+                case UpgradeType.ManualDamage:
+                    wizard.Stats.AddAttackDamage(definition.value);
+                    break;
+                case UpgradeType.AutoFireRate:
                 case UpgradeType.ManualFireRate:
-                    wizard.Stats.AddManualFireRate(definition.value);
+                    wizard.Stats.AddAutoFireRate(definition.value);
                     break;
                 case UpgradeType.CriticalChance:
                     wizard.Stats.AddCriticalChance(definition.value);
@@ -142,15 +148,14 @@ namespace WizardGrower.Upgrades
 
         private bool HasCurrentDefaultSet()
         {
-            return upgrades.Count == 8
-                && upgrades[0].id == "auto_dmg"
-                && upgrades[1].id == "manual_dmg"
-                && upgrades[2].id == "auto_speed"
-                && upgrades[3].id == "crit_chance"
-                && upgrades[4].id == "crit_mult"
-                && upgrades[5].id == "armor_pen"
-                && upgrades[6].id == "max_hp"
-                && upgrades[7].id == "mana";
+            return upgrades.Count == 7
+                && upgrades[0].id == "attack"
+                && upgrades[1].id == "attack_speed"
+                && upgrades[2].id == "crit_chance"
+                && upgrades[3].id == "crit_mult"
+                && upgrades[4].id == "armor_pen"
+                && upgrades[5].id == "max_hp"
+                && upgrades[6].id == "mana";
         }
 
         private bool ContainsUpgrade(string id)
@@ -161,6 +166,21 @@ namespace WizardGrower.Upgrades
                     return true;
             }
             return false;
+        }
+
+        private static string MigrateUpgradeId(string id)
+        {
+            switch (id)
+            {
+                case "auto_dmg":
+                case "manual_dmg":
+                    return "attack";
+                case "auto_speed":
+                case "manual_speed":
+                    return "attack_speed";
+                default:
+                    return id;
+            }
         }
     }
 }

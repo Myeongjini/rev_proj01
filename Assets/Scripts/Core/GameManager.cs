@@ -3,6 +3,7 @@ using WizardGrower.Auth;
 using WizardGrower.Combat;
 using WizardGrower.Enemies;
 using WizardGrower.Login;
+using WizardGrower.Player;
 using WizardGrower.UI;
 
 namespace WizardGrower.Core
@@ -12,6 +13,7 @@ namespace WizardGrower.Core
         [SerializeField] private GameContext context;
 
         private CombatCalculator calculator;
+        private CombatPowerService combatPower;
 
         private void Awake()
         {
@@ -20,6 +22,8 @@ namespace WizardGrower.Core
 
             context.SaveService.TryLoad();
             calculator = new CombatCalculator(context.Wizard.Stats);
+            combatPower = new CombatPowerService();
+            context.SetCombatPowerService(combatPower);
 
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
             if (context.WeaponInventory != null)
@@ -32,16 +36,21 @@ namespace WizardGrower.Core
             context.AutoAttack.Initialize(context.Wizard, context.Movement, context.EnemySpawner, context.ProjectileFactory, calculator);
             context.ClickAttack.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, calculator);
             context.ActiveSkill.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
-            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition);
+            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             if (context.WeaponVisual != null)
                 context.WeaponVisual.Bind(context.WeaponInventory);
+            combatPower.Initialize(context.Wizard.Stats, context.Mana);
+            if (context.CombatPowerPopup != null)
+                context.CombatPowerPopup.Bind(combatPower);
+            context.HUD.BindCombatPower(combatPower);
+            context.Progression.RecordCombatPower(combatPower.CurrentPower);
             context.SaveBinder.RegisterAutoSaveTriggers(context, context.SaveService);
 
             context.EnemySpawner.EnemyDamaged += OnEnemyDamaged;
             context.EnemySpawner.EnemySpawned += OnEnemySpawned;
-            context.Wizard.Stats.Changed += () => context.Progression.RecordCombatPower(context.Wizard.Stats.CombatPower);
+            combatPower.PowerChanged += power => context.Progression.RecordCombatPower(power);
             ConsumeBootstrappedAuthentication();
         }
 

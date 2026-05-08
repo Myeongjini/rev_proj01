@@ -5,6 +5,10 @@ namespace WizardGrower.Combat
 {
     public class CombatCalculator
     {
+        public const float AutoAttackCoefficient = 1f;
+        public const float ManualAttackCoefficient = 2f;
+        public const float SkillAttackCoefficient = 8f;
+
         private readonly PlayerStats stats;
 
         public CombatCalculator(PlayerStats stats)
@@ -14,17 +18,17 @@ namespace WizardGrower.Combat
 
         public DamageInfo Auto(GameObject source)
         {
-            return Build(stats.AutoAttackDamage, DamageType.Auto, source);
+            return Build(stats.AttackDamage * AutoAttackCoefficient, DamageType.Auto, source);
         }
 
         public DamageInfo Manual(GameObject source)
         {
-            return Build(stats.ManualAttackDamage, DamageType.Manual, source);
+            return Build(stats.AttackDamage * ManualAttackCoefficient, DamageType.Manual, source);
         }
 
         public DamageInfo Skill(GameObject source, float multiplier)
         {
-            return Build(stats.AutoAttackDamage * multiplier, DamageType.Skill, source);
+            return Build(stats.AttackDamage * multiplier, DamageType.Skill, source);
         }
 
         private DamageInfo Build(float baseAmount, DamageType type, GameObject source)

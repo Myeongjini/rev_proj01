@@ -8,8 +8,7 @@ namespace WizardGrower.Player
     [Serializable]
     public class PlayerStats
     {
-        [SerializeField] private float autoAttackDamage = 10f;
-        [SerializeField] private float manualAttackDamage = 20f;
+        [SerializeField] private float attackDamage = 10f;
         [SerializeField] private float autoAttackInterval = 1f;
         [SerializeField] private float manualAttackInterval = 0.3f;
         [SerializeField, Range(0f, 1f)] private float criticalChance = 0.1f;
@@ -25,8 +24,7 @@ namespace WizardGrower.Player
         public event Action Changed;
         public event Action HealthChanged;
 
-        public float AutoAttackDamage => autoAttackDamage;
-        public float ManualAttackDamage => manualAttackDamage;
+        public float AttackDamage => attackDamage;
         public float AutoAttackInterval => autoAttackInterval;
         public float ManualAttackInterval => manualAttackInterval;
         public float CriticalChance => criticalChance;
@@ -36,17 +34,10 @@ namespace WizardGrower.Player
         public float CurrentHealth => currentHealth;
         public float CombatPower => combatPower;
 
-        public void AddAutoDamage(float amount)
+        public void AddAttackDamage(float amount)
         {
             EnsureBaseSnapshot();
-            baseSnapshot.autoAttackDamage += amount;
-            RecomputeWithEquipped(equippedStats);
-        }
-
-        public void AddManualDamage(float amount)
-        {
-            EnsureBaseSnapshot();
-            baseSnapshot.manualAttackDamage += amount;
+            baseSnapshot.attackDamage += amount;
             RecomputeWithEquipped(equippedStats);
         }
 
@@ -135,6 +126,8 @@ namespace WizardGrower.Player
             EnsureBaseSnapshot();
             equippedStats = equipped;
             PlayerStatsSnapshot composed = WeaponStatComposer.Recompute(baseSnapshot, equippedStats);
+            if (equippedStats.HasValue)
+                composed.attackDamage = Mathf.Max(0f, baseSnapshot.attackDamage + equippedStats.Value.autoAttackDamage);
             ApplyRuntimeSnapshot(composed);
             RecalculateCombatPower();
             HealthChanged?.Invoke();
@@ -142,7 +135,9 @@ namespace WizardGrower.Player
 
         private void RecalculateCombatPower()
         {
-            combatPower = autoAttackDamage * (1f + criticalChance * (criticalMultiplier - 1f));
+            combatPower = attackDamage * (1f + criticalChance * (criticalMultiplier - 1f)) * (1f / Mathf.Max(0.05f, autoAttackInterval))
+                + armorPenetration * 2f
+                + maxHealth * 0.1f;
             Changed?.Invoke();
         }
 
@@ -153,8 +148,9 @@ namespace WizardGrower.Player
 
             baseSnapshot = NormalizeSnapshot(new PlayerStatsSnapshot
             {
-                autoAttackDamage = autoAttackDamage,
-                manualAttackDamage = manualAttackDamage,
+                attackDamage = attackDamage,
+                autoAttackDamage = attackDamage,
+                manualAttackDamage = attackDamage * 2f,
                 autoAttackInterval = autoAttackInterval,
                 manualAttackInterval = manualAttackInterval,
                 criticalChance = criticalChance,
@@ -168,8 +164,7 @@ namespace WizardGrower.Player
         private void ApplyRuntimeSnapshot(PlayerStatsSnapshot snapshot)
         {
             PlayerStatsSnapshot normalized = NormalizeSnapshot(snapshot);
-            autoAttackDamage = normalized.autoAttackDamage;
-            manualAttackDamage = normalized.manualAttackDamage;
+            attackDamage = normalized.attackDamage;
             autoAttackInterval = normalized.autoAttackInterval;
             manualAttackInterval = normalized.manualAttackInterval;
             criticalChance = normalized.criticalChance;
@@ -183,10 +178,14 @@ namespace WizardGrower.Player
         {
             PlayerStatsSnapshot source = snapshot ?? new PlayerStatsSnapshot();
             float normalizedMaxHealth = Mathf.Max(1f, source.maxHealth);
+            float normalizedAttack = source.attackDamage > 0f
+                ? source.attackDamage
+                : (source.autoAttackDamage > 0f ? source.autoAttackDamage : 10f);
             return new PlayerStatsSnapshot
             {
-                autoAttackDamage = source.autoAttackDamage,
-                manualAttackDamage = source.manualAttackDamage,
+                attackDamage = normalizedAttack,
+                autoAttackDamage = source.autoAttackDamage > 0f ? source.autoAttackDamage : normalizedAttack,
+                manualAttackDamage = source.manualAttackDamage > 0f ? source.manualAttackDamage : normalizedAttack * 2f,
                 autoAttackInterval = Mathf.Max(0.05f, source.autoAttackInterval),
                 manualAttackInterval = Mathf.Max(0.05f, source.manualAttackInterval),
                 criticalChance = Mathf.Clamp01(source.criticalChance),
@@ -201,8 +200,9 @@ namespace WizardGrower.Player
         {
             return new PlayerStatsSnapshot
             {
-                autoAttackDamage = source.autoAttackDamage,
-                manualAttackDamage = source.manualAttackDamage,
+                attackDamage = source.attackDamage,
+                autoAttackDamage = source.attackDamage,
+                manualAttackDamage = source.attackDamage * 2f,
                 autoAttackInterval = source.autoAttackInterval,
                 manualAttackInterval = source.manualAttackInterval,
                 criticalChance = source.criticalChance,
@@ -211,6 +211,11 @@ namespace WizardGrower.Player
                 maxHealth = source.maxHealth,
                 currentHealth = source.currentHealth
             };
+        }
+
+        internal void SetCombatPower(float value)
+        {
+            combatPower = Mathf.Max(0f, value);
         }
     }
 }

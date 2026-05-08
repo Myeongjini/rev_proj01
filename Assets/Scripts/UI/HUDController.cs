@@ -38,6 +38,7 @@ namespace WizardGrower.UI
         [SerializeField] private WeaponInventoryPanel weaponInventoryPanel;
         [SerializeField] private Button gachaToggleButton;
         [SerializeField] private GachaPanel gachaPanel;
+        [SerializeField] private CombatPowerPopupView combatPowerPopup;
         [SerializeField] private UpgradeDrawerView upgradeDrawer;
         [SerializeField] private Transform upgradeButtonContainer;
         [SerializeField] private UpgradeButtonView upgradeButtonPrefab;
@@ -46,6 +47,8 @@ namespace WizardGrower.UI
         private ActiveSkillController skillController;
         private ClickAttackController manualAttackController;
         private PlayerMovementController movementController;
+        private CombatPowerService combatPowerService;
+        private PlayerWizard boundWizard;
         private readonly System.Collections.Generic.List<UpgradeButtonView> upgradeButtonViews = new System.Collections.Generic.List<UpgradeButtonView>();
         private float feedbackTimer;
 
@@ -64,16 +67,26 @@ namespace WizardGrower.UI
             WeaponInventory weaponInventory = null,
             WeaponDatabase weaponDatabase = null,
             GachaService gachaService = null,
-            GachaDefinition gachaDefinition = null)
+            GachaDefinition gachaDefinition = null,
+            CombatPowerService combatPowerService = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
             this.movementController = movementController;
+            this.combatPowerService = combatPowerService;
+            boundWizard = wizard;
 
             wallet.GoldChanged += gold => goldLabel.text = $"Gold {gold}";
             if (gemLabel != null)
                 wallet.GemsChanged += gems => gemLabel.text = $"Gem {gems}";
             wizard.Stats.Changed += () => RefreshAttack(wizard);
+            if (this.combatPowerService != null)
+            {
+                this.combatPowerService.PowerChanged += _ => RefreshAttack(wizard);
+                this.combatPowerService.PowerIncreased += (_, _) => RefreshAttack(wizard);
+            }
+            if (combatPowerPopup != null)
+                combatPowerPopup.Bind(this.combatPowerService);
             mana.Changed += manaBar.Refresh;
             stageManager.StateChanged += OnStateChanged;
             stageManager.BossEntryAvailabilityChanged += OnBossEntryAvailabilityChanged;
@@ -161,7 +174,41 @@ namespace WizardGrower.UI
 
         private void RefreshAttack(PlayerWizard wizard)
         {
-            attackLabel.text = $"ATK {wizard.Stats.AutoAttackDamage:0}  CP {wizard.Stats.CombatPower:0}";
+            float power = combatPowerService != null ? combatPowerService.CurrentPower : wizard.Stats.CombatPower;
+            attackLabel.text = $"Attack {wizard.Stats.AttackDamage:0}  CP {power:0}";
+        }
+
+        public void BindCombatPower(CombatPowerService service)
+        {
+            if (combatPowerService != null)
+            {
+                combatPowerService.PowerChanged -= OnCombatPowerChanged;
+                combatPowerService.PowerIncreased -= OnCombatPowerIncreased;
+            }
+
+            combatPowerService = service;
+            if (combatPowerService != null)
+            {
+                combatPowerService.PowerChanged += OnCombatPowerChanged;
+                combatPowerService.PowerIncreased += OnCombatPowerIncreased;
+            }
+
+            if (combatPowerPopup != null)
+                combatPowerPopup.Bind(combatPowerService);
+            if (boundWizard != null)
+                RefreshAttack(boundWizard);
+        }
+
+        private void OnCombatPowerChanged(float _)
+        {
+            if (boundWizard != null)
+                RefreshAttack(boundWizard);
+        }
+
+        private void OnCombatPowerIncreased(float current, float delta)
+        {
+            if (boundWizard != null)
+                RefreshAttack(boundWizard);
         }
 
         private void BindUpgradeButtons(UpgradeSystem system)

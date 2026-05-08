@@ -74,6 +74,7 @@ namespace WizardGrower.Save
 
             if (data.stats == null)
                 data.stats = new PlayerStatsSnapshot();
+            MigrateStatsSnapshot(data.stats);
 
             if (data.upgrades == null)
                 data.upgrades = new System.Collections.Generic.List<UpgradeLevelEntry>();
@@ -101,6 +102,19 @@ namespace WizardGrower.Save
             data.pityCounter = Mathf.Max(0, data.pityCounter);
 
             return data;
+        }
+
+        private static void MigrateStatsSnapshot(PlayerStatsSnapshot stats)
+        {
+            if (stats == null)
+                return;
+
+            if (stats.attackDamage <= 0f)
+                stats.attackDamage = stats.autoAttackDamage > 0f ? stats.autoAttackDamage : 10f;
+            if (stats.autoAttackDamage <= 0f)
+                stats.autoAttackDamage = stats.attackDamage;
+            if (stats.manualAttackDamage <= 0f)
+                stats.manualAttackDamage = stats.attackDamage * 2f;
         }
     }
 }
