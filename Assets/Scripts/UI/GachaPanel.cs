@@ -17,6 +17,8 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text singlePullLabel;
         [SerializeField] private Button tenPullButton;
         [SerializeField] private TMP_Text tenPullLabel;
+        [SerializeField] private Button thirtyPullButton;
+        [SerializeField] private TMP_Text thirtyPullLabel;
         [SerializeField] private GachaResultPanel resultPanel;
         [SerializeField] private Button closeButton;
         [SerializeField] private Button probabilityButton;
@@ -33,10 +35,15 @@ namespace WizardGrower.UI
         {
             if (group == null)
                 group = GetComponent<CanvasGroup>();
+            EnsureThirtyPullButton();
+            ArrangePullButtons();
         }
 
         public void Initialize(GachaService service, GachaDefinition definition)
         {
+            EnsureThirtyPullButton();
+            ArrangePullButtons();
+
             if (this.service != null)
             {
                 this.service.StateChanged -= Refresh;
@@ -56,6 +63,11 @@ namespace WizardGrower.UI
             {
                 tenPullButton.onClick.RemoveListener(PullTen);
                 tenPullButton.onClick.AddListener(PullTen);
+            }
+            if (thirtyPullButton != null)
+            {
+                thirtyPullButton.onClick.RemoveListener(PullThirty);
+                thirtyPullButton.onClick.AddListener(PullThirty);
             }
             if (closeButton != null)
             {
@@ -151,6 +163,17 @@ namespace WizardGrower.UI
             Refresh();
         }
 
+        private void PullThirty()
+        {
+            if (service == null)
+                return;
+
+            IReadOnlyList<WeaponDefinition> pulled = service.PullThirty();
+            if (pulled.Count > 0 && resultPanel != null)
+                resultPanel.Show(pulled);
+            Refresh();
+        }
+
         private void Refresh()
         {
             if (definition == null && service != null)
@@ -159,15 +182,20 @@ namespace WizardGrower.UI
             if (titleLabel != null)
                 titleLabel.text = definition != null ? definition.displayName : "가챠";
             if (singlePullLabel != null)
-                singlePullLabel.text = definition != null ? $"1회\n{definition.costSingle} Gem" : "1회";
+                singlePullLabel.text = definition != null ? FormatPullLabel(1, definition.costSingle) : "1회";
             if (tenPullLabel != null)
-                tenPullLabel.text = definition != null ? $"10회\n{definition.costTen} Gem" : "10회";
+                tenPullLabel.text = definition != null ? FormatPullLabel(10, definition.costTen) : "10회";
+            if (thirtyPullLabel != null)
+                thirtyPullLabel.text = definition != null ? FormatPullLabel(30, definition.costThirty) : "30회";
             if (singlePullButton != null)
                 singlePullButton.interactable = service != null && service.CanSinglePull();
             if (tenPullButton != null)
                 tenPullButton.interactable = service != null && service.CanTenPull();
+            if (thirtyPullButton != null)
+                thirtyPullButton.interactable = service != null && service.CanThirtyPull();
             if (probabilityButton != null)
                 probabilityButton.interactable = service != null && service.CurrentLevelDefinition != null;
+            RefreshInsufficientFeedback();
             RefreshPity();
         }
 
@@ -203,6 +231,55 @@ namespace WizardGrower.UI
             feedbackLabel.text = message;
         }
 
+        private void EnsureThirtyPullButton()
+        {
+            if (thirtyPullButton != null || tenPullButton == null)
+                return;
+
+            GameObject clone = Instantiate(tenPullButton.gameObject, tenPullButton.transform.parent);
+            clone.name = "ThirtyPullButton";
+            thirtyPullButton = clone.GetComponent<Button>();
+            thirtyPullLabel = clone.GetComponentInChildren<TMP_Text>(true);
+            if (thirtyPullButton != null)
+                thirtyPullButton.onClick.RemoveAllListeners();
+        }
+
+        private void ArrangePullButtons()
+        {
+            SetPullButtonRect(singlePullButton, -224f);
+            SetPullButtonRect(tenPullButton, 0f);
+            SetPullButtonRect(thirtyPullButton, 224f);
+        }
+
+        private static void SetPullButtonRect(Button button, float x)
+        {
+            if (button == null)
+                return;
+
+            RectTransform rect = button.transform as RectTransform;
+            if (rect == null)
+                return;
+
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(x, -36f);
+            rect.sizeDelta = new Vector2(188f, 96f);
+        }
+
+        private static string FormatPullLabel(int count, int cost)
+        {
+            return $"{count}회 {cost:N0}";
+        }
+
+        private void RefreshInsufficientFeedback()
+        {
+            if (!isOpen || feedbackLabel == null || feedbackTimer > 0f || service == null || definition == null)
+                return;
+
+            bool anyDisabled = !service.CanSinglePull() || !service.CanTenPull() || !service.CanThirtyPull();
+            feedbackLabel.text = anyDisabled ? "젬이 부족합니다" : string.Empty;
+        }
+
         private void OnDestroy()
         {
             if (service == null)
@@ -215,6 +292,8 @@ namespace WizardGrower.UI
                 closeButton.onClick.RemoveListener(Close);
             if (probabilityButton != null)
                 probabilityButton.onClick.RemoveListener(ShowProbabilityPopup);
+            if (thirtyPullButton != null)
+                thirtyPullButton.onClick.RemoveListener(PullThirty);
         }
     }
 }

@@ -100,6 +100,11 @@ namespace WizardGrower.Weapons
             return CanSpend(definition != null ? definition.costTen : 0);
         }
 
+        public bool CanThirtyPull()
+        {
+            return CanSpend(definition != null ? definition.costThirty : 0);
+        }
+
         public bool TrySinglePull(out WeaponDefinition pulled)
         {
             pulled = null;
@@ -114,6 +119,17 @@ namespace WizardGrower.Weapons
         public bool TryTenPull(out List<WeaponDefinition> pulled)
         {
             return TryPull(10, definition != null ? definition.costTen : 0, out pulled);
+        }
+
+        public IReadOnlyList<WeaponDefinition> PullThirty()
+        {
+            List<WeaponDefinition> pulled;
+            return TryThirtyPull(out pulled) ? pulled : Array.Empty<WeaponDefinition>();
+        }
+
+        public bool TryThirtyPull(out List<WeaponDefinition> pulled)
+        {
+            return TryPull(30, definition != null ? definition.costThirty : 0, out pulled);
         }
 
         public IReadOnlyList<WeaponGradeWeight> GetCurrentUpperGradeWeightsNormalized()

@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Weapons.GachaDefinition
   gachaId: standard
   displayName: "\uAE30\uBCF8 \uBB34\uAE30 \uC18C\uD658"
-  costSingle: 30
-  costTen: 270
+  costSingle: 100
+  costTen: 1000
+  costThirty: 3000
   pool: {fileID: 11400000, guid: f6d725a9de01843209cc6dd9c248454f, type: 2}
   summonLevels:
   - level: 1

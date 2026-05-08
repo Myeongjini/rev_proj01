@@ -7,8 +7,9 @@ namespace WizardGrower.Weapons
     {
         public string gachaId = "standard";
         public string displayName = "기본 뽑기";
-        public int costSingle = 30;
-        public int costTen = 270;
+        public int costSingle = 100;
+        public int costTen = 1000;
+        public int costThirty = 3000;
         public WeaponDatabase pool;
         public SummonLevelDefinition[] summonLevels;
         // Deprecated in Task V — kept for SO asset compat.
