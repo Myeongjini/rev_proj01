@@ -81,8 +81,8 @@ Sub-bundle 6C (Weapons & Gacha — depends on Task I ✅)
 | Sub-bundle | ID | Title | Status | Depends On |
 |---|---|---|---|---|
 | 6A | J | LoginScene + Splash + AuthBootstrapHolder | ✅ DONE | Tasks.md Bundle 5 H ✅ |
-| 6B | K | RTDB integration + PresenceService | 🟡 IN REVIEW | RTDB user prework ✅ |
-| 6B | L | RemotePlayerView + on-stage rendering | 🔴 TODO | K |
+| 6B | K | RTDB integration + PresenceService | ✅ DONE | RTDB user prework ✅ |
+| 6B | L | RemotePlayerView + on-stage rendering | 🟡 IN REVIEW | K |
 | 6B | M | World + Stage Chat | 🔴 TODO | K |
 | 6C | N | Weapon data model + stat composer | 🔴 TODO | Tasks.md Task G ✅ |
 | 6C | O | Weapon inventory + equip UI + visual swap | 🔴 TODO | N + Tasks.md Task I ✅ |
@@ -229,7 +229,7 @@ Convert MainScene-embedded login into a dedicated entry scene. MainScene receive
 
 ## Task K — RTDB Integration + PresenceService
 
-**Status:** 🟡 IN REVIEW
+**Status:** ✅ DONE (2026-05-08)
 **Depends On:** RTDB user prework ✅
 
 ### 🎯 Goal
@@ -300,7 +300,7 @@ Use the same defensive reflection-based pattern as `AuthService` in case the `Fi
 
 ## Task L — RemotePlayerView + On-Stage Rendering
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** K ✅
 
 ### 🎯 Goal
@@ -790,6 +790,7 @@ After all three sub-bundles ✅ + Bundle 6 release gate runbook completes → Bu
 |------|--------|--------|
 | 2026-05-08 | Planner | Document created. Bundle 6 split into 6A (J), 6B (K, L, M), 6C (N, O, P). User decisions resolved: separate LoginScene, Firebase Realtime Database for presence/chat, separate Gem currency, player sprite swap on equip. Initial weapon pool scoped to 6 weapons. RTDB user prework documented for Sub-bundle 6B. Cross-track coordination rules with `Tasks.md` (Bundle 1–5) added in §0.5. |
 | 2026-05-08 | Planner | Task J ✅ DONE. Sub-bundle 6A passes its gate (single-task bundle). LoginScene flow verified end-to-end via implementer's PlayMode evidence + reviewer's code reading. AuthBootstrapHolder extended beyond spec to carry CloudSyncService (necessary for Task I to survive scene boundary — approved). Bundle 6 progress: **6A ✅** / 6B (K/L/M) ready (RTDB prework done) / 6C (N) ready, (O) waits on Tasks.md Task I ✅ (which landed 2026-05-08). |
+| 2026-05-08 | Planner | Task K ✅ DONE. PresenceService (reflection-based, mirrors AuthService pattern) + PresenceCoordinator (5Hz throttle, stage switch, OnDisconnect cleanup) all spec-compliant. **MCP runtime validation passed**: PlayMode session emitted 20+ `Presence write presence/1_1/{uid}` log entries at expected cadence after LoginScene → MainScene transition; 0 game-code errors. Bundle 6 progress: 6A ✅, **6B partial (K ✅; L/M unblocked)**, 6C (N ready, O waits on Tasks.md I ✅ — done). |
 
 ---
 
@@ -801,6 +802,7 @@ After all three sub-bundles ✅ + Bundle 6 release gate runbook completes → Bu
 |------|------|-------|
 | 2026-05-08 | Task J | Added dedicated LoginScene, splash/login prefabs, AuthBootstrapHolder handoff, MainScene bootstrapped-auth consumption, build scene order, and PlayMode validation for auto-skip/guest-to-MainScene UID/HUD flow. |
 | 2026-05-08 | Task K | Added RTDB presence service/coordinator, 5Hz player position writes, stage/boss-room presence switching, MainScene wiring, and PlayMode validation for FirebaseDatabase import, presence/1_1 UID write loop, WriteOwnAsync immediate return, and boss-room presence clear. |
+| 2026-05-08 | Task L | Added RemotePlayerView, RemoteWizard prefab wiring, PresenceCoordinator remote spawn/change/remove/stale cleanup, and GameContext prefab registration. MCP PlayMode fake-event validation passed for add, 50% alpha/name label, 200ms lerp, removed cleanup, stale cleanup, and boss-room clear. Live RTDB stage subscription currently reports permission denied because the documented rules grant read at `presence/{stage}/{uid}` rather than the subscribed `presence/{stage}` parent path. |
 
 ---
 
@@ -811,3 +813,4 @@ After all three sub-bundles ✅ + Bundle 6 release gate runbook completes → Bu
 | Date | Task | Entry |
 |------|------|-------|
 | 2026-05-08 | J | ✅ DONE. Code review of commit `e3342f4`. **All spec items met:** `LoginScene.unity` + `LoginBootstrap.cs` (126 lines: splash ≥ 0.8s, anonymous login + profile creation, `hadExistingUser` skip, retry loop with Korean error messages) + `AuthBootstrapHolder.cs` (DontDestroyOnLoad singleton with `GetOrCreate` factory + idempotent `EnsureServices`) + `SplashView.cs` (100 lines) + `SplashCanvas.prefab` + `LoginCanvas.prefab` + `Splash_Logo.png`. `GameManager.cs` correctly **strips `InitializeAuthenticationAsync`** and consumes `AuthBootstrapHolder.Instance`; defensive fallback warns if MainScene is started without a holder (no crash). `EditorBuildSettings.asset` confirms `[0] LoginScene, [1] MainScene`. **Beyond-spec but reasonable:** `AuthBootstrapHolder` carries `CloudSyncService` in addition to Auth/Profile/Config — necessary for Task I's sync to survive scene boundary; no harm. **Implementer correctly logged Appendix D entry** confirming PlayMode validation (auto-skip for returning users, guest-to-MainScene UID/HUD flow). git: single commit ✅. Sub-bundle 6A is the only task in the bundle, so 6A gate also passes. Bundle 6 progress: 6A ✅, 6B 🔴 (RTDB prework done — agent free), 6C 🔴. |
+| 2026-05-08 | K | ✅ DONE. Code review of commit `4c07b2e` + **MCP runtime validation**. `PresenceService.cs` (377 lines) implements `InitializeAsync` / `WriteOwnAsync` / `RemoveOwnAsync` / `SubscribeStage` per spec. Reflection-based access to `Firebase.Database.*` types — consistent with Task H AuthService pattern; defensive against re-uninstall. `RemotePresenceEvent` struct has all 5 spec fields. `OnDisconnect` registered on every write (auto-cleanup). Self-UID filtered in `ToEvent` (own writes don't trigger remote events). **Bonus**: `ResolveDatabaseUrl` falls back to `google-services-desktop.json` and `google-services.xml` when `DefaultInstance.DatabaseURL` is missing — defensive against config-file races. `PresenceCoordinator.cs` (156 lines) wires position throttling at `Time.unscaledTime + 0.2s` (5Hz spec match), subscribes to `PlayerMovementController.PositionChanged` + `StageManager.StateChanged`, switches presence node on stage change (removes from old, writes to new), clears presence in BossRoom mode (solo). `OnDestroy` unsubscribes + removes own presence — clean teardown. `PlayerMovementController.PositionChanged` event added at line 29, invoked at line 131. `GameContext` adds both fields with `[field: SerializeField]`; `GameManager` calls `Begin(context, uid, "")` after auth at line 94. **Runtime evidence (MCP PlayMode session 2026-05-08):** LoginScene → LoginBootstrap reused Firebase UID `YOafTe9fkIT11MtCJLL2Cthg5TG3`; MainScene consumed bootstrapped UID; **20+ consecutive `Presence write presence/1_1/YOafTe9fkIT11MtCJLL2Cthg5TG3` log entries observed at ~5Hz cadence**, no game-code errors/warnings. Implementer logged Appendix D entry. git: single commit ✅. **Task K passes; Tasks L and M unblocked.** |

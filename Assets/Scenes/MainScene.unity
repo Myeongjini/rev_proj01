@@ -5172,6 +5172,7 @@ MonoBehaviour:
   <SyncCoordinator>k__BackingField: {fileID: 1819268688}
   <PresenceService>k__BackingField: {fileID: 1819268691}
   <PresenceCoordinator>k__BackingField: {fileID: 1819268690}
+  <RemoteWizardPrefab>k__BackingField: {fileID: 894186416656998243, guid: 5dc7b3228e99f4916a1cdf7ef73481c8, type: 3}
   <AuthService>k__BackingField: {fileID: 1819268687}
   <UserProfileService>k__BackingField: {fileID: 1819268686}
   <AuthConfig>k__BackingField: {fileID: 11400000, guid: b40d807ed1fab4f8a8390668378d273a, type: 2}
@@ -5281,6 +5282,10 @@ MonoBehaviour:
   presenceService: {fileID: 1819268691}
   writeIntervalSeconds: 0.2
   logWrites: 1
+  subscribeToRemoteEvents: 1
+  remoteWizardPrefab: {fileID: 894186416656998243, guid: 5dc7b3228e99f4916a1cdf7ef73481c8, type: 3}
+  remoteRoot: {fileID: 0}
+  staleThresholdMs: 30000
 --- !u!114 &1819268691
 MonoBehaviour:
   m_ObjectHideFlags: 0

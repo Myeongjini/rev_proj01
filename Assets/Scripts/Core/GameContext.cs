@@ -34,6 +34,7 @@ namespace WizardGrower.Core
         [field: SerializeField] public SyncCoordinator SyncCoordinator { get; private set; }
         [field: SerializeField] public PresenceService PresenceService { get; private set; }
         [field: SerializeField] public PresenceCoordinator PresenceCoordinator { get; private set; }
+        [field: SerializeField] public RemotePlayerView RemoteWizardPrefab { get; private set; }
         [field: SerializeField] public AuthService AuthService { get; private set; }
         [field: SerializeField] public UserProfileService UserProfileService { get; private set; }
         [field: SerializeField] public AuthConfig AuthConfig { get; private set; }

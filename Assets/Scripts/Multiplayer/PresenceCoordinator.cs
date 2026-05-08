@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using WizardGrower.Core;
@@ -11,12 +12,16 @@ namespace WizardGrower.Multiplayer
         [SerializeField] private PresenceService presenceService;
         [SerializeField] private float writeIntervalSeconds = 0.2f;
         [SerializeField] private bool logWrites = true;
-        [SerializeField] private bool subscribeToRemoteEvents;
+        [SerializeField] private bool subscribeToRemoteEvents = true;
+        [SerializeField] private RemotePlayerView remoteWizardPrefab;
+        [SerializeField] private Transform remoteRoot;
+        [SerializeField] private long staleThresholdMs = 30000;
 
         private GameContext context;
         private string uid;
         private string currentStageKey;
         private IDisposable subscription;
+        private readonly Dictionary<string, RemotePlayerView> remotes = new Dictionary<string, RemotePlayerView>();
         private Vector2 latestPosition;
         private float nextWriteTime;
         private bool beginComplete;
@@ -35,6 +40,8 @@ namespace WizardGrower.Multiplayer
             this.uid = uid;
             if (presenceService == null)
                 presenceService = context.PresenceService != null ? context.PresenceService : GetComponent<PresenceService>();
+            if (remoteWizardPrefab == null)
+                remoteWizardPrefab = context.RemoteWizardPrefab;
 
             if (presenceService == null)
             {
@@ -75,13 +82,17 @@ namespace WizardGrower.Multiplayer
         private void Update()
         {
             if (!beginComplete || !hasActiveStage || Time.unscaledTime < nextWriteTime)
+            {
+                CleanupStaleRemotes();
                 return;
+            }
 
             if (context != null && context.Wizard != null)
                 latestPosition = context.Wizard.transform.position;
 
             _ = WriteLatestAsync();
             nextWriteTime = Time.unscaledTime + writeIntervalSeconds;
+            CleanupStaleRemotes();
         }
 
         private void OnPositionChanged(Vector2 position)
@@ -106,6 +117,7 @@ namespace WizardGrower.Multiplayer
 
             subscription?.Dispose();
             subscription = null;
+            ClearRemotes();
             currentStageKey = nextStageKey;
             hasActiveStage = !string.IsNullOrEmpty(currentStageKey);
             writeLogMessage = string.Empty;
@@ -120,7 +132,7 @@ namespace WizardGrower.Multiplayer
             }
 
             if (subscribeToRemoteEvents)
-                subscription = presenceService.SubscribeStage(currentStageKey, evt => RemotePresenceChanged?.Invoke(evt));
+                subscription = presenceService.SubscribeStage(currentStageKey, HandleRemotePresenceEvent);
             writeLogMessage = string.Format("Presence write presence/{0}/{1}", currentStageKey, uid);
             nextWriteTime = 0f;
             await WriteLatestAsync();
@@ -152,5 +164,80 @@ namespace WizardGrower.Multiplayer
         {
             return string.Format("{0}_{1}", chapterNumber, stageNumber);
         }
+
+        public void HandleRemotePresenceEvent(RemotePresenceEvent evt)
+        {
+            if (string.IsNullOrEmpty(evt.Uid))
+                return;
+
+            if (evt.Type == RemotePresenceEventType.Removed)
+            {
+                RemoveRemote(evt.Uid);
+                RemotePresenceChanged?.Invoke(evt);
+                return;
+            }
+
+            RemotePlayerView view;
+            if (!remotes.TryGetValue(evt.Uid, out view) || view == null)
+            {
+                if (remoteWizardPrefab == null)
+                {
+                    Debug.LogWarning("RemoteWizardPrefab is not assigned.");
+                    return;
+                }
+
+                Transform parent = remoteRoot != null ? remoteRoot : transform;
+                view = Instantiate(remoteWizardPrefab, evt.Position, Quaternion.identity, parent);
+                view.Initialize(evt.Uid, evt.DisplayName, evt.Position);
+                remotes[evt.Uid] = view;
+            }
+            else
+            {
+                view.SetTarget(evt.Position);
+            }
+
+            view.Touch(evt.LastUpdateUnixMs);
+            RemotePresenceChanged?.Invoke(evt);
+        }
+
+        private void CleanupStaleRemotes()
+        {
+            if (remotes.Count == 0)
+                return;
+
+            long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            s_staleIds.Clear();
+            foreach (KeyValuePair<string, RemotePlayerView> pair in remotes)
+            {
+                if (pair.Value == null || pair.Value.IsStale(now, staleThresholdMs))
+                    s_staleIds.Add(pair.Key);
+            }
+
+            for (int i = 0; i < s_staleIds.Count; i++)
+                RemoveRemote(s_staleIds[i]);
+        }
+
+        private void ClearRemotes()
+        {
+            s_staleIds.Clear();
+            foreach (string remoteUid in remotes.Keys)
+                s_staleIds.Add(remoteUid);
+
+            for (int i = 0; i < s_staleIds.Count; i++)
+                RemoveRemote(s_staleIds[i]);
+        }
+
+        private void RemoveRemote(string remoteUid)
+        {
+            RemotePlayerView view;
+            if (!remotes.TryGetValue(remoteUid, out view))
+                return;
+
+            remotes.Remove(remoteUid);
+            if (view != null)
+                Destroy(view.gameObject);
+        }
+
+        private static readonly List<string> s_staleIds = new List<string>();
     }
 }
