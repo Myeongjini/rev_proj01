@@ -3,6 +3,7 @@ using WizardGrower.Auth;
 using WizardGrower.Combat;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
+using WizardGrower.Multiplayer;
 using WizardGrower.Player;
 using WizardGrower.Save;
 using WizardGrower.Stages;
@@ -31,6 +32,8 @@ namespace WizardGrower.Core
         [field: SerializeField] public SaveBinder SaveBinder { get; private set; }
         [field: SerializeField] public CloudSyncService CloudSyncService { get; private set; }
         [field: SerializeField] public SyncCoordinator SyncCoordinator { get; private set; }
+        [field: SerializeField] public PresenceService PresenceService { get; private set; }
+        [field: SerializeField] public PresenceCoordinator PresenceCoordinator { get; private set; }
         [field: SerializeField] public AuthService AuthService { get; private set; }
         [field: SerializeField] public UserProfileService UserProfileService { get; private set; }
         [field: SerializeField] public AuthConfig AuthConfig { get; private set; }

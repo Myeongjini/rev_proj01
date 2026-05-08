@@ -26,6 +26,7 @@ namespace WizardGrower.Player
 
         public event Action<bool> AutoModeChanged;
         public event Action<bool, Vector2, Vector2> JoystickChanged;
+        public event Action<Vector2> PositionChanged;
 
         public bool IsManualMoving { get; private set; }
         public bool AutoModeEnabled => autoModeEnabled;
@@ -127,6 +128,7 @@ namespace WizardGrower.Player
             next.x = Mathf.Clamp(next.x, minBounds.x, maxBounds.x);
             next.y = Mathf.Clamp(next.y, minBounds.y, maxBounds.y);
             wizard.transform.position = next;
+            PositionChanged?.Invoke(next);
         }
 
         private bool IsPointerOverUi()

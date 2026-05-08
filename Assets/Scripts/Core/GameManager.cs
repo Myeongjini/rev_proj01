@@ -90,6 +90,8 @@ namespace WizardGrower.Core
                 }
 
                 context.AuthService.UserChanged += OnUserChanged;
+                if (context.PresenceCoordinator != null)
+                    context.PresenceCoordinator.Begin(context, uid, string.Empty);
                 if (context.SyncCoordinator != null)
                     await context.SyncCoordinator.StartSyncAsync(uid, context);
                 else

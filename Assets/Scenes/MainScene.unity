@@ -4995,6 +4995,8 @@ GameObject:
   - component: {fileID: 1819268686}
   - component: {fileID: 1819268689}
   - component: {fileID: 1819268688}
+  - component: {fileID: 1819268691}
+  - component: {fileID: 1819268690}
   m_Layer: 0
   m_Name: Runtime
   m_TagString: Untagged
@@ -5168,6 +5170,8 @@ MonoBehaviour:
   <SaveBinder>k__BackingField: {fileID: 1819268684}
   <CloudSyncService>k__BackingField: {fileID: 1819268689}
   <SyncCoordinator>k__BackingField: {fileID: 1819268688}
+  <PresenceService>k__BackingField: {fileID: 1819268691}
+  <PresenceCoordinator>k__BackingField: {fileID: 1819268690}
   <AuthService>k__BackingField: {fileID: 1819268687}
   <UserProfileService>k__BackingField: {fileID: 1819268686}
   <AuthConfig>k__BackingField: {fileID: 11400000, guid: b40d807ed1fab4f8a8390668378d273a, type: 2}
@@ -5262,6 +5266,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0988a1350d61847d19558db89945f10b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Save.CloudSyncService
+--- !u!114 &1819268690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1819268672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89284b958a1f449f1a3784aa29b6e849, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Multiplayer.PresenceCoordinator
+  presenceService: {fileID: 1819268691}
+  writeIntervalSeconds: 0.2
+  logWrites: 1
+--- !u!114 &1819268691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1819268672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d370fee07e274474af260fff4a57b33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Multiplayer.PresenceService
 --- !u!1 &1823621947
 GameObject:
   m_ObjectHideFlags: 0
