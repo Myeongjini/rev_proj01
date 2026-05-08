@@ -22,13 +22,19 @@ namespace WizardGrower.Core
             calculator = new CombatCalculator(context.Wizard.Stats);
 
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
+            if (context.WeaponInventory != null)
+                context.WeaponInventory.Initialize(context.WeaponDatabase);
+            if (context.ProjectileFactory != null)
+                context.ProjectileFactory.BindWeaponInventory(context.WeaponInventory);
             context.UpgradeSystem.Initialize(context.Wallet, context.Wizard, context.Mana);
             context.AutoAttack.Initialize(context.Wizard, context.Movement, context.EnemySpawner, context.ProjectileFactory, calculator);
             context.ClickAttack.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, calculator);
             context.ActiveSkill.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
-            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService);
+            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
+            if (context.WeaponVisual != null)
+                context.WeaponVisual.Bind(context.WeaponInventory);
             context.SaveBinder.RegisterAutoSaveTriggers(context, context.SaveService);
 
             context.EnemySpawner.EnemyDamaged += OnEnemyDamaged;

@@ -19,6 +19,11 @@ namespace WizardGrower.Save
                 return;
 
             ctx.Wizard.Stats.ApplySnapshot(data.stats);
+            if (ctx.WeaponInventory != null)
+            {
+                ctx.WeaponInventory.LoadFromSave(data.ownedWeaponIds, data.equippedWeaponId);
+                ctx.Wizard.Stats.RecomputeWithEquipped(ctx.WeaponInventory.Equipped != null ? ctx.WeaponInventory.Equipped.statBonuses : (WizardGrower.Weapons.WeaponStats?)null);
+            }
             ctx.Wallet.SetGold(data.gold);
             ctx.UpgradeSystem.LoadLevels(data.upgrades);
             ctx.StageManager.LoadProgress(data.currentChapter, data.currentStage);
@@ -38,6 +43,12 @@ namespace WizardGrower.Save
             data.currentStage = ctx.StageManager != null ? ctx.StageManager.CurrentStageNumber : 1;
             data.stats = ctx.Wizard != null ? ctx.Wizard.Stats.CaptureSnapshot() : new PlayerStatsSnapshot();
             data.upgrades = ctx.UpgradeSystem != null ? ctx.UpgradeSystem.CaptureLevels() : new System.Collections.Generic.List<UpgradeLevelEntry>();
+            if (ctx.WeaponInventory != null)
+            {
+                var weaponSave = ctx.WeaponInventory.CaptureForSave();
+                data.ownedWeaponIds = weaponSave.owned;
+                data.equippedWeaponId = weaponSave.equipped;
+            }
             return data;
         }
 
@@ -51,6 +62,11 @@ namespace WizardGrower.Save
             context.Wallet.GoldChanged += _ => QueueSave();
             context.UpgradeSystem.UpgradePurchased += (_, _, _) => QueueSave();
             context.StageManager.StateChanged += (_, _, _) => QueueSave();
+            if (context.WeaponInventory != null)
+            {
+                context.WeaponInventory.EquippedChanged += _ => QueueSave();
+                context.WeaponInventory.WeaponObtained += _ => QueueSave();
+            }
         }
 
         public void SetUserId(string uid)

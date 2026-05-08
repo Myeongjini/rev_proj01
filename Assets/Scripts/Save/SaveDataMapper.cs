@@ -17,7 +17,9 @@ namespace WizardGrower.Save
                 CurrentChapter = data.currentChapter,
                 CurrentStage = data.currentStage,
                 Stats = ToDocument(data.stats),
-                Upgrades = ToDocument(data.upgrades)
+                Upgrades = ToDocument(data.upgrades),
+                EquippedWeaponId = string.IsNullOrEmpty(data.equippedWeaponId) ? "wand_starter" : data.equippedWeaponId,
+                OwnedWeaponIds = data.ownedWeaponIds != null ? new List<string>(data.ownedWeaponIds) : new List<string> { "wand_starter" }
             };
         }
 
@@ -35,7 +37,9 @@ namespace WizardGrower.Save
                 currentChapter = doc.CurrentChapter,
                 currentStage = doc.CurrentStage,
                 stats = FromDocument(doc.Stats),
-                upgrades = FromDocument(doc.Upgrades)
+                upgrades = FromDocument(doc.Upgrades),
+                equippedWeaponId = string.IsNullOrEmpty(doc.EquippedWeaponId) ? "wand_starter" : doc.EquippedWeaponId,
+                ownedWeaponIds = doc.OwnedWeaponIds != null ? new List<string>(doc.OwnedWeaponIds) : new List<string> { "wand_starter" }
             };
         }
 

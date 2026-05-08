@@ -10,6 +10,7 @@ using WizardGrower.Save;
 using WizardGrower.Stages;
 using WizardGrower.Upgrades;
 using WizardGrower.UI;
+using WizardGrower.Weapons;
 
 namespace WizardGrower.Core
 {
@@ -42,6 +43,9 @@ namespace WizardGrower.Core
         [field: SerializeField] public AuthConfig AuthConfig { get; private set; }
         [field: SerializeField] public HUDController HUD { get; private set; }
         [field: SerializeField] public FloatingTextSpawner FloatingText { get; private set; }
+        [field: SerializeField] public WeaponDatabase WeaponDatabase { get; private set; }
+        [field: SerializeField] public WeaponInventory WeaponInventory { get; private set; }
+        [field: SerializeField] public WeaponVisualController WeaponVisual { get; private set; }
 
         public void SetAuthenticationServices(AuthService authService, UserProfileService userProfileService, AuthConfig authConfig, CloudSyncService cloudSyncService = null)
         {

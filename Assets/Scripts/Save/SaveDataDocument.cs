@@ -14,6 +14,8 @@ namespace WizardGrower.Save
         [FirestoreProperty("currentStage")] public int CurrentStage { get; set; }
         [FirestoreProperty("stats")] public PlayerStatsSnapshotDoc Stats { get; set; }
         [FirestoreProperty("upgrades")] public List<UpgradeLevelEntryDoc> Upgrades { get; set; }
+        [FirestoreProperty("equippedWeaponId")] public string EquippedWeaponId { get; set; }
+        [FirestoreProperty("ownedWeaponIds")] public List<string> OwnedWeaponIds { get; set; }
     }
 
     [FirestoreData]

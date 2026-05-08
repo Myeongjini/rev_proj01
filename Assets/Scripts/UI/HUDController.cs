@@ -8,6 +8,7 @@ using WizardGrower.Enemies;
 using WizardGrower.Player;
 using WizardGrower.Stages;
 using WizardGrower.Upgrades;
+using WizardGrower.Weapons;
 
 namespace WizardGrower.UI
 {
@@ -32,6 +33,8 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text bossEntryButtonLabel;
         [SerializeField] private Button chatToggleButton;
         [SerializeField] private ChatPanel chatPanel;
+        [SerializeField] private Button weaponInventoryToggleButton;
+        [SerializeField] private WeaponInventoryPanel weaponInventoryPanel;
         [SerializeField] private UpgradeDrawerView upgradeDrawer;
         [SerializeField] private Transform upgradeButtonContainer;
         [SerializeField] private UpgradeButtonView upgradeButtonPrefab;
@@ -54,7 +57,9 @@ namespace WizardGrower.UI
             ActiveSkillController skillController,
             ClickAttackController manualAttackController,
             PlayerMovementController movementController,
-            ChatService chatService = null)
+            ChatService chatService = null,
+            WeaponInventory weaponInventory = null,
+            WeaponDatabase weaponDatabase = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
@@ -76,11 +81,15 @@ namespace WizardGrower.UI
                 bossEntryButton.onClick.AddListener(() => stageManager.EnterBossRoom());
             if (chatToggleButton != null && chatPanel != null)
                 chatToggleButton.onClick.AddListener(chatPanel.Toggle);
+            if (weaponInventoryToggleButton != null && weaponInventoryPanel != null)
+                weaponInventoryToggleButton.onClick.AddListener(weaponInventoryPanel.Toggle);
             movementController.AutoModeChanged += RefreshAutoToggle;
             if (joystickIndicator != null)
                 movementController.JoystickChanged += joystickIndicator.Refresh;
             if (chatPanel != null)
                 chatPanel.Initialize(chatService, stageManager);
+            if (weaponInventoryPanel != null)
+                weaponInventoryPanel.Initialize(weaponInventory, weaponDatabase);
 
             BindUpgradeButtons(upgradeSystem);
             RefreshAttack(wizard);

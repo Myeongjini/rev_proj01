@@ -85,7 +85,7 @@ Sub-bundle 6C (Weapons & Gacha — depends on Task I ✅)
 | 6B | L | RemotePlayerView + on-stage rendering | ✅ DONE | K |
 | 6B | M | World + Stage Chat | ✅ DONE | K |
 | 6C | N | Weapon data model + stat composer | 🟡 IN REVIEW | Tasks.md Task G ✅ |
-| 6C | O | Weapon inventory + equip UI + visual swap | 🔴 TODO | N + Tasks.md Task I ✅ |
+| 6C | O | Weapon inventory + equip UI + visual swap | 🟡 IN REVIEW | N + Tasks.md Task I ✅ |
 | 6C | P | Gacha service + UI + Gem currency | 🔴 TODO | N, O |
 
 Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · ⚠️ BLOCKED
@@ -554,7 +554,7 @@ Define the weapon data model (ScriptableObjects) and the stat composition layer 
 
 ## Task O — Weapon Inventory + Equip UI + Visual Swap
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** N + Tasks.md Task I ✅ (SaveData / Firestore mapper closed before bumping `saveVersion`)
 
 ### 🎯 Goal
@@ -808,6 +808,7 @@ After all three sub-bundles ✅ + Bundle 6 release gate runbook completes → Bu
 | 2026-05-08 | Task M | Added ChatService, World/Stage chat channels, ChatPanel, ChatMessageView, ChatMessage prefab, HUD chat toggle wiring, and GameContext/GameManager initialization. MCP validation passed for compile, HUD toggle opening, World/Stage tab flow, send button cooldown gating, and input clearing after async send. Live RTDB tail currently reports permission denied because the documented rules grant read at message-child paths rather than the subscribed `chat/world` / `chat/stage/{stage}` parent paths required by `LimitToLast(50).OnChildAdded`. |
 | 2026-05-08 | Task M (planner fix) | Removed local `AddMessage(chatService.CreateLocalMessage(text))` from `ChatPanel.SendCurrent` after rules fix exposed self-message duplication. Server `OnChildAdded` echo is now the single render path. PlayMode 0 error / 0 warning; user confirmed messages render once. |
 | 2026-05-08 | Task N | Added weapon data model scripts, documented stat composer, six seeded WeaponDefinition assets, WeaponDatabase asset, and VisualAssetUpdater menu items for weapon glyph/projectile sprite generation. MCP validation confirmed 6 weapons, 2 Rare entries, `arcane_scepter` lookup, and stat recompute (`auto=35`, `manual=60`, crit clamp to `1`, multiplier `2.3`). |
+| 2026-05-08 | Task O | Added WeaponInventory, WeaponVisualController, weapon inventory UI, WeaponSlot prefab, save schema v2 weapon fields, Firestore mapper fields, PlayerStats base/equipped recompute, and auto-projectile sprite override. MCP PlayMode validation passed for starter load, six-slot inventory view, apprentice add/equip, tint/glyph/projectile activation, ATK/manual stat bonus, and save capture/apply round-trip. |
 
 ---
 

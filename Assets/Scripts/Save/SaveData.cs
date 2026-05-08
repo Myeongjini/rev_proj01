@@ -6,7 +6,7 @@ namespace WizardGrower.Save
     [Serializable]
     public class SaveData
     {
-        public int saveVersion = 1;
+        public int saveVersion = 2;
         public string userId = "local";
         public long updatedAtUnixMs;
 
@@ -16,6 +16,8 @@ namespace WizardGrower.Save
 
         public PlayerStatsSnapshot stats = new PlayerStatsSnapshot();
         public List<UpgradeLevelEntry> upgrades = new List<UpgradeLevelEntry>();
+        public string equippedWeaponId = "wand_starter";
+        public List<string> ownedWeaponIds = new List<string> { "wand_starter" };
     }
 
     [Serializable]

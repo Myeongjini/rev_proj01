@@ -78,6 +78,18 @@ namespace WizardGrower.Save
             if (data.upgrades == null)
                 data.upgrades = new System.Collections.Generic.List<UpgradeLevelEntry>();
 
+            if (data.saveVersion < 2)
+                data.saveVersion = 2;
+
+            if (data.ownedWeaponIds == null)
+                data.ownedWeaponIds = new System.Collections.Generic.List<string>();
+
+            if (!data.ownedWeaponIds.Contains("wand_starter"))
+                data.ownedWeaponIds.Insert(0, "wand_starter");
+
+            if (string.IsNullOrEmpty(data.equippedWeaponId) || !data.ownedWeaponIds.Contains(data.equippedWeaponId))
+                data.equippedWeaponId = "wand_starter";
+
             return data;
         }
     }

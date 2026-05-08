@@ -13,6 +13,16 @@ namespace WizardGrower.Combat
         private DamageInfo damageInfo;
         private float lifeTimer;
 
+        public void ApplySpriteOverride(Sprite sprite)
+        {
+            if (sprite == null)
+                return;
+
+            SpriteRenderer renderer = GetComponentInChildren<SpriteRenderer>();
+            if (renderer != null)
+                renderer.sprite = sprite;
+        }
+
         public void Launch(IDamageable target, DamageInfo damageInfo, float projectileSpeed)
         {
             this.target = target;
