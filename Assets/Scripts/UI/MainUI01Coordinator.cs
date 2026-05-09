@@ -8,10 +8,16 @@ namespace WizardGrower.UI
         private UpgradeDrawerView upgrade;
         private WeaponInventoryPanel weapon;
         private GachaPanel summon;
+        private SkillTabPanel skill;
         private MainUI01Bar.NavTab? activeTab;
         private bool suppressCallbacks;
 
         public void Initialize(MainUI01Bar bar, UpgradeDrawerView upgrade, WeaponInventoryPanel weapon, GachaPanel summon)
+        {
+            Initialize(bar, upgrade, weapon, summon, null);
+        }
+
+        public void Initialize(MainUI01Bar bar, UpgradeDrawerView upgrade, WeaponInventoryPanel weapon, GachaPanel summon, SkillTabPanel skill)
         {
             if (this.bar != null)
                 this.bar.TabRequested -= OnTabRequested;
@@ -21,11 +27,14 @@ namespace WizardGrower.UI
                 this.weapon.OpenStateChanged -= OnWeaponChanged;
             if (this.summon != null)
                 this.summon.OpenStateChanged -= OnSummonChanged;
+            if (this.skill != null)
+                this.skill.OpenStateChanged -= OnSkillChanged;
 
             this.bar = bar;
             this.upgrade = upgrade;
             this.weapon = weapon;
             this.summon = summon;
+            this.skill = skill;
 
             if (this.bar != null)
             {
@@ -38,6 +47,8 @@ namespace WizardGrower.UI
                 this.weapon.OpenStateChanged += OnWeaponChanged;
             if (this.summon != null)
                 this.summon.OpenStateChanged += OnSummonChanged;
+            if (this.skill != null)
+                this.skill.OpenStateChanged += OnSkillChanged;
 
             CloseAll();
         }
@@ -57,6 +68,8 @@ namespace WizardGrower.UI
                 weapon.Close();
             if (summon != null)
                 summon.Close();
+            if (skill != null)
+                skill.Close();
 
             if (tab == MainUI01Bar.NavTab.Upgrade && upgrade != null)
                 upgrade.Open();
@@ -64,6 +77,8 @@ namespace WizardGrower.UI
                 weapon.Open();
             else if (tab == MainUI01Bar.NavTab.Summon && summon != null)
                 summon.Open();
+            else if (tab == MainUI01Bar.NavTab.Skill && skill != null)
+                skill.Open();
 
             suppressCallbacks = false;
             activeTab = tab;
@@ -80,6 +95,8 @@ namespace WizardGrower.UI
                 weapon.Close();
             if (summon != null)
                 summon.Close();
+            if (skill != null)
+                skill.Close();
             suppressCallbacks = false;
 
             activeTab = null;
@@ -89,7 +106,7 @@ namespace WizardGrower.UI
 
         private void OnTabRequested(MainUI01Bar.NavTab tab)
         {
-            if (tab == MainUI01Bar.NavTab.Reserved4 || tab == MainUI01Bar.NavTab.Reserved5)
+            if (tab == MainUI01Bar.NavTab.Reserved5)
                 return;
 
             Open(tab);
@@ -111,6 +128,12 @@ namespace WizardGrower.UI
         {
             if (!suppressCallbacks)
                 SyncExternalClose(open, MainUI01Bar.NavTab.Summon);
+        }
+
+        private void OnSkillChanged(bool open)
+        {
+            if (!suppressCallbacks)
+                SyncExternalClose(open, MainUI01Bar.NavTab.Skill);
         }
 
         private void SyncExternalClose(bool open, MainUI01Bar.NavTab tab)

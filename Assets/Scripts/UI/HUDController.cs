@@ -7,6 +7,7 @@ using WizardGrower.Economy;
 using WizardGrower.Enemies;
 using WizardGrower.Player;
 using WizardGrower.Stages;
+using WizardGrower.Skills;
 using WizardGrower.Upgrades;
 using WizardGrower.Weapons;
 
@@ -38,6 +39,8 @@ namespace WizardGrower.UI
         [SerializeField] private GachaPanel gachaPanel;
         [SerializeField] private MainUI01Bar mainUI01Bar;
         [SerializeField] private MainUI01Coordinator mainUI01Coordinator;
+        [SerializeField] private SkillBarView skillBarView;
+        [SerializeField] private SkillTabPanel skillTabPanel;
         [SerializeField] private CombatPowerPopupView combatPowerPopup;
         [SerializeField] private UpgradeDrawerView upgradeDrawer;
         [SerializeField] private Transform upgradeButtonContainer;
@@ -69,7 +72,8 @@ namespace WizardGrower.UI
             GachaService gachaService = null,
             GachaDefinition gachaDefinition = null,
             CombatPowerService combatPowerService = null,
-            WeaponFusionService weaponFusionService = null)
+            WeaponFusionService weaponFusionService = null,
+            SkillCastOrchestrator skillCastOrchestrator = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
@@ -111,8 +115,12 @@ namespace WizardGrower.UI
                 weaponInventoryPanel.Initialize(weaponInventory, weaponDatabase, weaponFusionService);
             if (gachaPanel != null)
                 gachaPanel.Initialize(gachaService, gachaDefinition);
+            if (skillBarView != null)
+                skillBarView.Bind(skillCastOrchestrator, mana);
+            if (skillTabPanel != null)
+                skillTabPanel.Bind(skillCastOrchestrator);
             if (mainUI01Coordinator != null)
-                mainUI01Coordinator.Initialize(mainUI01Bar, upgradeDrawer, weaponInventoryPanel, gachaPanel);
+                mainUI01Coordinator.Initialize(mainUI01Bar, upgradeDrawer, weaponInventoryPanel, gachaPanel, skillTabPanel);
 
             BindUpgradeButtons(upgradeSystem);
             RefreshAttack(wizard);
