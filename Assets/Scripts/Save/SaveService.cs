@@ -116,6 +116,10 @@ namespace WizardGrower.Save
             data.summonPullsInLevel = Mathf.Max(0, data.summonPullsInLevel);
             data.ownedSkillIds = SaveDataMapper.NormalizeOwnedSkills(data.ownedSkillIds);
             data.equippedSkillSlots = SaveDataMapper.NormalizeEquippedSkills(data.equippedSkillSlots);
+            if (data.dailyMissions == null)
+                data.dailyMissions = new System.Collections.Generic.List<WizardGrower.Missions.DailyMissionState>();
+            if (data.repeatMissions == null)
+                data.repeatMissions = new System.Collections.Generic.List<WizardGrower.Missions.RepeatMissionState>();
 
             return data;
         }

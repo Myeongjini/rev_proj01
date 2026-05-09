@@ -10,13 +10,17 @@ namespace WizardGrower.Economy
 
         public event Action<int> GoldChanged;
         public event Action<int> GemsChanged;
+        public event Action<int> GoldGained;
         public int Gold => gold;
         public int Gems => gems;
 
         public void AddGold(int amount)
         {
-            gold += Mathf.Max(0, amount);
+            int gained = Mathf.Max(0, amount);
+            gold += gained;
             GoldChanged?.Invoke(gold);
+            if (gained > 0)
+                GoldGained?.Invoke(gained);
         }
 
         public bool TrySpendGold(int amount)

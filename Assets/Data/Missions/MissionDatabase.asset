@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adaa07996bde9405582ed74dd7dda79c, type: 3}
+  m_Name: MissionDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Missions.MissionDatabase
+  missions:
+  - {fileID: 11400000, guid: 5104a88bd82e4b5bb6d6e1a2e879ed01, type: 2}
+  - {fileID: 11400000, guid: 9c7e1e0b381940059f18eae15ccfeaa2, type: 2}
+  - {fileID: 11400000, guid: 026bc9a6aa5446e6a6a7fa6a1acae57c, type: 2}
+  - {fileID: 11400000, guid: 470ef13c3cf44d0589b4c02400a31e67, type: 2}
+  - {fileID: 11400000, guid: 6874e92567f847458b67f1ed1e3aab73, type: 2}
+  - {fileID: 11400000, guid: f2ecbeb0ed2d4d7bb6f145e45b529587, type: 2}

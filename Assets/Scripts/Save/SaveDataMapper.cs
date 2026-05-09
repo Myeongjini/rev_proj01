@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using WizardGrower.Missions;
 using WizardGrower.Skills;
 using WizardGrower.Weapons;
 
@@ -29,7 +30,9 @@ namespace WizardGrower.Save
                 OwnedWeapons = ToDocument(data.ownedWeapons),
                 OwnedWeaponIds = data.ownedWeaponIds != null ? new List<string>(data.ownedWeaponIds) : new List<string> { "wand_starter" },
                 OwnedSkillIds = NormalizeOwnedSkills(data.ownedSkillIds),
-                EquippedSkillSlots = NormalizeEquippedSkills(data.equippedSkillSlots)
+                EquippedSkillSlots = NormalizeEquippedSkills(data.equippedSkillSlots),
+                DailyMissions = ToDailyMissionDocs(data.dailyMissions),
+                RepeatMissions = ToRepeatMissionDocs(data.repeatMissions)
             };
         }
 
@@ -56,7 +59,9 @@ namespace WizardGrower.Save
                 ownedWeapons = FromDocument(doc.OwnedWeapons),
                 ownedWeaponIds = doc.OwnedWeaponIds != null ? new List<string>(doc.OwnedWeaponIds) : new List<string> { "wand_starter" },
                 ownedSkillIds = NormalizeOwnedSkills(doc.OwnedSkillIds),
-                equippedSkillSlots = NormalizeEquippedSkills(doc.EquippedSkillSlots)
+                equippedSkillSlots = NormalizeEquippedSkills(doc.EquippedSkillSlots),
+                dailyMissions = FromDailyMissionDocs(doc.DailyMissions),
+                repeatMissions = FromRepeatMissionDocs(doc.RepeatMissions)
             };
         }
 
@@ -192,6 +197,100 @@ namespace WizardGrower.Save
                 entries.Add(new OwnedWeaponEntry(doc.WeaponId, doc.Count));
             }
             return entries;
+        }
+
+        private static List<DailyMissionStateDoc> ToDailyMissionDocs(List<DailyMissionState> states)
+        {
+            List<DailyMissionStateDoc> docs = new List<DailyMissionStateDoc>();
+            if (states == null)
+                return docs;
+
+            for (int i = 0; i < states.Count; i++)
+            {
+                DailyMissionState state = states[i];
+                if (state == null || string.IsNullOrEmpty(state.missionId))
+                    continue;
+
+                docs.Add(new DailyMissionStateDoc
+                {
+                    MissionId = state.missionId,
+                    Progress = state.progress,
+                    Claimed = state.claimed,
+                    LastResetUtcMs = state.lastResetUtcMs
+                });
+            }
+
+            return docs;
+        }
+
+        private static List<DailyMissionState> FromDailyMissionDocs(List<DailyMissionStateDoc> docs)
+        {
+            List<DailyMissionState> states = new List<DailyMissionState>();
+            if (docs == null)
+                return states;
+
+            for (int i = 0; i < docs.Count; i++)
+            {
+                DailyMissionStateDoc doc = docs[i];
+                if (doc == null || string.IsNullOrEmpty(doc.MissionId))
+                    continue;
+
+                states.Add(new DailyMissionState
+                {
+                    missionId = doc.MissionId,
+                    progress = Mathf.Max(0, doc.Progress),
+                    claimed = doc.Claimed,
+                    lastResetUtcMs = doc.LastResetUtcMs
+                });
+            }
+
+            return states;
+        }
+
+        private static List<RepeatMissionStateDoc> ToRepeatMissionDocs(List<RepeatMissionState> states)
+        {
+            List<RepeatMissionStateDoc> docs = new List<RepeatMissionStateDoc>();
+            if (states == null)
+                return docs;
+
+            for (int i = 0; i < states.Count; i++)
+            {
+                RepeatMissionState state = states[i];
+                if (state == null || string.IsNullOrEmpty(state.missionId))
+                    continue;
+
+                docs.Add(new RepeatMissionStateDoc
+                {
+                    MissionId = state.missionId,
+                    CurrentTargetN = Mathf.Max(1, state.currentTargetN),
+                    RunningCounter = Mathf.Max(0, state.runningCounter)
+                });
+            }
+
+            return docs;
+        }
+
+        private static List<RepeatMissionState> FromRepeatMissionDocs(List<RepeatMissionStateDoc> docs)
+        {
+            List<RepeatMissionState> states = new List<RepeatMissionState>();
+            if (docs == null)
+                return states;
+
+            for (int i = 0; i < docs.Count; i++)
+            {
+                RepeatMissionStateDoc doc = docs[i];
+                if (doc == null || string.IsNullOrEmpty(doc.MissionId))
+                    continue;
+
+                states.Add(new RepeatMissionState
+                {
+                    missionId = doc.MissionId,
+                    currentTargetN = Mathf.Max(1, doc.CurrentTargetN),
+                    runningCounter = Mathf.Max(0, doc.RunningCounter)
+                });
+            }
+
+            return states;
         }
     }
 }

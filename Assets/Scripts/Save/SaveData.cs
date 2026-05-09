@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using WizardGrower.Missions;
 using WizardGrower.Skills;
 using WizardGrower.Weapons;
 
@@ -27,6 +28,8 @@ namespace WizardGrower.Save
         public List<string> ownedWeaponIds = new List<string> { "wand_starter" };
         public List<string> ownedSkillIds = new List<string>(SkillId.DefaultOwned);
         public List<string> equippedSkillSlots = new List<string> { SkillId.Meteor, string.Empty, string.Empty, string.Empty, string.Empty };
+        public List<DailyMissionState> dailyMissions = new List<DailyMissionState>();
+        public List<RepeatMissionState> repeatMissions = new List<RepeatMissionState>();
     }
 
     [Serializable]

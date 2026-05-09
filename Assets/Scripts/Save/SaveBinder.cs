@@ -33,6 +33,8 @@ namespace WizardGrower.Save
                 ctx.SkillCastOrchestrator.LoadOwnedSkills(data.ownedSkillIds);
                 ctx.SkillCastOrchestrator.LoadEquippedSlots(data.equippedSkillSlots);
             }
+            if (ctx.MissionService != null)
+                ctx.MissionService.Load(data.dailyMissions, data.repeatMissions, ctx.MissionResetService != null ? ctx.MissionResetService.CurrentServerUtcMs : System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             ctx.UpgradeSystem.LoadLevels(data.upgrades);
             ctx.StageManager.LoadProgress(data.currentChapter, data.currentStage);
             ctx.Progression.RecordCombatPower(ctx.Wizard.Stats.CombatPower);
@@ -55,6 +57,11 @@ namespace WizardGrower.Save
             {
                 data.ownedSkillIds = ctx.SkillCastOrchestrator.CaptureOwnedSkillIds();
                 data.equippedSkillSlots = ctx.SkillCastOrchestrator.CaptureEquippedSkillSlots();
+            }
+            if (ctx.MissionService != null)
+            {
+                data.dailyMissions = ctx.MissionService.CaptureDaily();
+                data.repeatMissions = ctx.MissionService.CaptureRepeat();
             }
             data.currentChapter = ctx.StageManager != null ? ctx.StageManager.CurrentChapterNumber : 1;
             data.currentStage = ctx.StageManager != null ? ctx.StageManager.CurrentStageNumber : 1;
@@ -91,6 +98,8 @@ namespace WizardGrower.Save
             }
             if (context.SkillCastOrchestrator != null)
                 context.SkillCastOrchestrator.SlotChanged += (_, _) => QueueSave();
+            if (context.MissionService != null)
+                context.MissionService.StateChanged += QueueSave;
         }
 
         public void SetUserId(string uid)

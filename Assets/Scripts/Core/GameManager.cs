@@ -3,6 +3,7 @@ using WizardGrower.Auth;
 using WizardGrower.Combat;
 using WizardGrower.Enemies;
 using WizardGrower.Login;
+using WizardGrower.Missions;
 using WizardGrower.Player;
 using WizardGrower.UI;
 
@@ -27,6 +28,7 @@ namespace WizardGrower.Core
             context.SetCombatPowerService(combatPower);
             weaponFusion = new WizardGrower.Weapons.WeaponFusionService();
             context.SetWeaponFusionService(weaponFusion);
+            EnsureMissionServices();
 
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
             if (context.WeaponInventory != null)
@@ -42,7 +44,9 @@ namespace WizardGrower.Core
                 context.ActiveSkill.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
             if (context.SkillCastOrchestrator != null)
                 context.SkillCastOrchestrator.Initialize(context.SkillDatabase, context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
-            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator);
+            if (context.MissionService != null)
+                context.MissionService.Initialize(context.MissionDatabase, context.Wallet, context.EnemySpawner, context.StageManager, context.GachaService, weaponFusion, context.MissionResetService);
+            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             if (context.WeaponVisual != null)
@@ -60,6 +64,21 @@ namespace WizardGrower.Core
             context.EnemySpawner.EnemySpawned += OnEnemySpawned;
             combatPower.PowerChanged += power => context.Progression.RecordCombatPower(power);
             ConsumeBootstrappedAuthentication();
+        }
+
+        private void EnsureMissionServices()
+        {
+            MissionResetService resetService = context.MissionResetService != null
+                ? context.MissionResetService
+                : context.gameObject.AddComponent<MissionResetService>();
+            MissionService missionService = context.MissionService != null
+                ? context.MissionService
+                : context.gameObject.AddComponent<MissionService>();
+            MissionDatabase missionDatabase = context.MissionDatabase != null
+                ? context.MissionDatabase
+                : MissionService.CreateDefaultDatabase();
+
+            context.SetMissionServices(missionDatabase, missionService, resetService);
         }
 
         private void Update()

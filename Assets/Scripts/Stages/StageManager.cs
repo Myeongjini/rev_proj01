@@ -23,6 +23,7 @@ namespace WizardGrower.Stages
         public event Action<ChapterDefinition, StageDefinition, StageMode> StateChanged;
         public event Action<string> Feedback;
         public event Action<bool> BossEntryAvailabilityChanged;
+        public event Action BossCleared;
 
         public ChapterDefinition CurrentChapter { get; private set; }
         public StageDefinition CurrentStage { get; private set; }
@@ -99,6 +100,7 @@ namespace WizardGrower.Stages
             {
                 bossStageController.StopTimer();
                 Feedback?.Invoke("Boss Cleared!");
+                BossCleared?.Invoke();
                 AdvanceToNextStage();
                 return;
             }

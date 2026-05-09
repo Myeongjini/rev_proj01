@@ -5,6 +5,7 @@ using WizardGrower.Chat;
 using WizardGrower.Combat;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
+using WizardGrower.Missions;
 using WizardGrower.Player;
 using WizardGrower.Stages;
 using WizardGrower.Skills;
@@ -41,6 +42,8 @@ namespace WizardGrower.UI
         [SerializeField] private MainUI01Coordinator mainUI01Coordinator;
         [SerializeField] private SkillBarView skillBarView;
         [SerializeField] private SkillTabPanel skillTabPanel;
+        [SerializeField] private AchievementButton achievementButton;
+        [SerializeField] private AchievementPanel achievementPanel;
         [SerializeField] private CombatPowerPopupView combatPowerPopup;
         [SerializeField] private UpgradeDrawerView upgradeDrawer;
         [SerializeField] private Transform upgradeButtonContainer;
@@ -73,7 +76,8 @@ namespace WizardGrower.UI
             GachaDefinition gachaDefinition = null,
             CombatPowerService combatPowerService = null,
             WeaponFusionService weaponFusionService = null,
-            SkillCastOrchestrator skillCastOrchestrator = null)
+            SkillCastOrchestrator skillCastOrchestrator = null,
+            MissionService missionService = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
@@ -119,6 +123,11 @@ namespace WizardGrower.UI
                 skillBarView.Bind(skillCastOrchestrator, mana);
             if (skillTabPanel != null)
                 skillTabPanel.Bind(skillCastOrchestrator);
+            EnsureAchievementUi(missionService);
+            if (achievementPanel != null)
+                achievementPanel.Bind(missionService);
+            if (achievementButton != null)
+                achievementButton.Bind(achievementPanel);
             if (mainUI01Coordinator != null)
                 mainUI01Coordinator.Initialize(mainUI01Bar, upgradeDrawer, weaponInventoryPanel, gachaPanel, skillTabPanel);
 
@@ -240,6 +249,73 @@ namespace WizardGrower.UI
         {
             foreach (UpgradeButtonView view in upgradeButtonViews)
                 view.Refresh();
+        }
+
+        private void EnsureAchievementUi(MissionService missionService)
+        {
+            if (missionService == null || achievementButton != null && achievementPanel != null)
+                return;
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            Transform root = canvas != null ? canvas.transform : transform;
+
+            if (achievementPanel == null)
+            {
+                GameObject panelGo = new GameObject("AchievementPanel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(AchievementPanel));
+                panelGo.transform.SetParent(root, false);
+                RectTransform rect = panelGo.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0.5f, 0f);
+                rect.anchorMax = new Vector2(0.5f, 0f);
+                rect.pivot = new Vector2(0.5f, 0f);
+                rect.anchoredPosition = new Vector2(0f, 92f);
+                rect.sizeDelta = new Vector2(700f, 380f);
+                achievementPanel = panelGo.GetComponent<AchievementPanel>();
+            }
+
+            if (achievementButton == null)
+            {
+                Transform parent = autoToggleButton != null ? autoToggleButton.transform.parent : root;
+                GameObject buttonGo = new GameObject("AchievementButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(AchievementButton));
+                buttonGo.transform.SetParent(parent, false);
+                RectTransform rect = buttonGo.GetComponent<RectTransform>();
+                RectTransform autoRect = autoToggleButton != null ? autoToggleButton.transform as RectTransform : null;
+                if (autoRect != null)
+                {
+                    rect.anchorMin = autoRect.anchorMin;
+                    rect.anchorMax = autoRect.anchorMax;
+                    rect.pivot = autoRect.pivot;
+                    rect.anchoredPosition = autoRect.anchoredPosition + new Vector2(0f, -42f);
+                }
+                else
+                {
+                    rect.anchorMin = new Vector2(0f, 1f);
+                    rect.anchorMax = new Vector2(0f, 1f);
+                    rect.pivot = new Vector2(0f, 1f);
+                    rect.anchoredPosition = new Vector2(14f, -116f);
+                }
+                rect.sizeDelta = new Vector2(82f, 34f);
+                buttonGo.GetComponent<Image>().color = new Color(0.12f, 0.18f, 0.28f, 0.92f);
+                TMP_Text label = CreateRuntimeLabel(buttonGo.transform, "업적", 14f);
+                label.fontStyle = FontStyles.Bold;
+                achievementButton = buttonGo.GetComponent<AchievementButton>();
+            }
+        }
+
+        private TMP_Text CreateRuntimeLabel(Transform parent, string text, float fontSize)
+        {
+            GameObject labelGo = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelGo.transform.SetParent(parent, false);
+            RectTransform rect = labelGo.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            TMP_Text label = labelGo.GetComponent<TMP_Text>();
+            label.text = text;
+            label.alignment = TextAlignmentOptions.Center;
+            label.fontSize = fontSize;
+            label.color = Color.white;
+            return label;
         }
 
         private void ShowFeedback(string message)

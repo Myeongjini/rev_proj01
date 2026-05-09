@@ -45,6 +45,7 @@ namespace WizardGrower.Weapons
         public event Action<int> SummonLevelChanged;
         public event Action StateChanged;
         public event Action<string> PullFailed;
+        public event Action<int> PullCompleted;
 
         public void Initialize(CurrencyWallet wallet, WeaponInventory inv, GachaDefinition definition, SaveService save)
         {
@@ -225,6 +226,7 @@ namespace WizardGrower.Weapons
             }
 
             StateChanged?.Invoke();
+            PullCompleted?.Invoke(pulled.Count);
             return true;
         }
 

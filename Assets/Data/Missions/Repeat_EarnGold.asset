@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a888af2a66664ea1b7208352371c469, type: 3}
+  m_Name: Repeat_EarnGold
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Missions.MissionDefinition
+  missionId: earn_gold_repeat
+  descriptionKo: "골드 {0} 누적 획득"
+  type: 1
+  tracker: 2
+  initialTargetCount: 10000
+  repeatDelta: 10000
+  rewardKind: 0
+  rewardAmount: 30

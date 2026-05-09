@@ -4,6 +4,7 @@ using WizardGrower.Chat;
 using WizardGrower.Combat;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
+using WizardGrower.Missions;
 using WizardGrower.Multiplayer;
 using WizardGrower.Player;
 using WizardGrower.Save;
@@ -51,6 +52,9 @@ namespace WizardGrower.Core
         [field: SerializeField] public GachaService GachaService { get; private set; }
         [field: SerializeField] public SkillDatabase SkillDatabase { get; private set; }
         [field: SerializeField] public SkillCastOrchestrator SkillCastOrchestrator { get; private set; }
+        [field: SerializeField] public MissionDatabase MissionDatabase { get; private set; }
+        [field: SerializeField] public MissionService MissionService { get; private set; }
+        [field: SerializeField] public MissionResetService MissionResetService { get; private set; }
         [field: SerializeField] public CombatPowerPopupView CombatPowerPopup { get; private set; }
         public CombatPowerService CombatPower { get; private set; }
         public WeaponFusionService WeaponFusion { get; private set; }
@@ -63,6 +67,16 @@ namespace WizardGrower.Core
         public void SetWeaponFusionService(WeaponFusionService weaponFusion)
         {
             WeaponFusion = weaponFusion;
+        }
+
+        public void SetMissionServices(MissionDatabase missionDatabase, MissionService missionService, MissionResetService missionResetService)
+        {
+            if (missionDatabase != null)
+                MissionDatabase = missionDatabase;
+            if (missionService != null)
+                MissionService = missionService;
+            if (missionResetService != null)
+                MissionResetService = missionResetService;
         }
 
         public void SetAuthenticationServices(AuthService authService, UserProfileService userProfileService, AuthConfig authConfig, CloudSyncService cloudSyncService = null)

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Firebase.Firestore;
+using WizardGrower.Missions;
 
 namespace WizardGrower.Save
 {
@@ -23,6 +24,8 @@ namespace WizardGrower.Save
         [FirestoreProperty("ownedWeaponIds")] public List<string> OwnedWeaponIds { get; set; }
         [FirestoreProperty("ownedSkillIds")] public List<string> OwnedSkillIds { get; set; }
         [FirestoreProperty("equippedSkillSlots")] public List<string> EquippedSkillSlots { get; set; }
+        [FirestoreProperty("dailyMissions")] public List<DailyMissionStateDoc> DailyMissions { get; set; }
+        [FirestoreProperty("repeatMissions")] public List<RepeatMissionStateDoc> RepeatMissions { get; set; }
     }
 
     [FirestoreData]
@@ -52,5 +55,22 @@ namespace WizardGrower.Save
     {
         [FirestoreProperty("weaponId")] public string WeaponId { get; set; }
         [FirestoreProperty("count")] public int Count { get; set; }
+    }
+
+    [FirestoreData]
+    public class DailyMissionStateDoc
+    {
+        [FirestoreProperty("missionId")] public string MissionId { get; set; }
+        [FirestoreProperty("progress")] public int Progress { get; set; }
+        [FirestoreProperty("claimed")] public bool Claimed { get; set; }
+        [FirestoreProperty("lastResetUtcMs")] public long LastResetUtcMs { get; set; }
+    }
+
+    [FirestoreData]
+    public class RepeatMissionStateDoc
+    {
+        [FirestoreProperty("missionId")] public string MissionId { get; set; }
+        [FirestoreProperty("currentTargetN")] public int CurrentTargetN { get; set; }
+        [FirestoreProperty("runningCounter")] public int RunningCounter { get; set; }
     }
 }
