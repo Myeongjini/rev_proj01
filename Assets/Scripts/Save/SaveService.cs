@@ -120,6 +120,8 @@ namespace WizardGrower.Save
                 data.dailyMissions = new System.Collections.Generic.List<WizardGrower.Missions.DailyMissionState>();
             if (data.repeatMissions == null)
                 data.repeatMissions = new System.Collections.Generic.List<WizardGrower.Missions.RepeatMissionState>();
+            if (data.attendance == null)
+                data.attendance = new WizardGrower.Attendance.AttendanceState();
 
             return data;
         }

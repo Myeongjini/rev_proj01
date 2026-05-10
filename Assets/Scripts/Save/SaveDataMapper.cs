@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using WizardGrower.Attendance;
 using WizardGrower.Missions;
 using WizardGrower.Skills;
 using WizardGrower.Weapons;
@@ -32,7 +33,8 @@ namespace WizardGrower.Save
                 OwnedSkillIds = NormalizeOwnedSkills(data.ownedSkillIds),
                 EquippedSkillSlots = NormalizeEquippedSkills(data.equippedSkillSlots),
                 DailyMissions = ToDailyMissionDocs(data.dailyMissions),
-                RepeatMissions = ToRepeatMissionDocs(data.repeatMissions)
+                RepeatMissions = ToRepeatMissionDocs(data.repeatMissions),
+                Attendance = ToAttendanceDoc(data.attendance)
             };
         }
 
@@ -61,7 +63,8 @@ namespace WizardGrower.Save
                 ownedSkillIds = NormalizeOwnedSkills(doc.OwnedSkillIds),
                 equippedSkillSlots = NormalizeEquippedSkills(doc.EquippedSkillSlots),
                 dailyMissions = FromDailyMissionDocs(doc.DailyMissions),
-                repeatMissions = FromRepeatMissionDocs(doc.RepeatMissions)
+                repeatMissions = FromRepeatMissionDocs(doc.RepeatMissions),
+                attendance = FromAttendanceDoc(doc.Attendance)
             };
         }
 
@@ -291,6 +294,30 @@ namespace WizardGrower.Save
             }
 
             return states;
+        }
+
+        private static AttendanceStateDoc ToAttendanceDoc(AttendanceState state)
+        {
+            state ??= new AttendanceState();
+            return new AttendanceStateDoc
+            {
+                CurrentDayIndex = Mathf.Clamp(state.currentDayIndex <= 0 ? 1 : state.currentDayIndex, 1, 10),
+                LastClaimedUtcMs = state.lastClaimedUtcMs,
+                TotalCheckIns = Mathf.Max(0, state.totalCheckIns)
+            };
+        }
+
+        private static AttendanceState FromAttendanceDoc(AttendanceStateDoc doc)
+        {
+            if (doc == null)
+                return new AttendanceState();
+
+            return new AttendanceState
+            {
+                currentDayIndex = Mathf.Clamp(doc.CurrentDayIndex <= 0 ? 1 : doc.CurrentDayIndex, 1, 10),
+                lastClaimedUtcMs = doc.LastClaimedUtcMs,
+                totalCheckIns = Mathf.Max(0, doc.TotalCheckIns)
+            };
         }
     }
 }

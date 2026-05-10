@@ -34,6 +34,8 @@ namespace WizardGrower.UI
         private bool initialized;
         private bool visible;
 
+        public bool IsVisible => visible;
+
         public void Initialize(ChatService chatService, StageManager stageManager)
         {
             this.chatService = chatService;

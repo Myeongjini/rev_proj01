@@ -1,4 +1,5 @@
 using UnityEngine;
+using WizardGrower.Attendance;
 using WizardGrower.Auth;
 using WizardGrower.Chat;
 using WizardGrower.Combat;
@@ -55,9 +56,11 @@ namespace WizardGrower.Core
         [field: SerializeField] public MissionDatabase MissionDatabase { get; private set; }
         [field: SerializeField] public MissionService MissionService { get; private set; }
         [field: SerializeField] public MissionResetService MissionResetService { get; private set; }
+        [field: SerializeField] public AttendanceConfig AttendanceConfig { get; private set; }
         [field: SerializeField] public CombatPowerPopupView CombatPowerPopup { get; private set; }
         public CombatPowerService CombatPower { get; private set; }
         public WeaponFusionService WeaponFusion { get; private set; }
+        public AttendanceService AttendanceService { get; private set; }
 
         public void SetCombatPowerService(CombatPowerService combatPower)
         {
@@ -77,6 +80,14 @@ namespace WizardGrower.Core
                 MissionService = missionService;
             if (missionResetService != null)
                 MissionResetService = missionResetService;
+        }
+
+        public void SetAttendanceServices(AttendanceConfig attendanceConfig, AttendanceService attendanceService)
+        {
+            if (attendanceConfig != null)
+                AttendanceConfig = attendanceConfig;
+            if (attendanceService != null)
+                AttendanceService = attendanceService;
         }
 
         public void SetAuthenticationServices(AuthService authService, UserProfileService userProfileService, AuthConfig authConfig, CloudSyncService cloudSyncService = null)

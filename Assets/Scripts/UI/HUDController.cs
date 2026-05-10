@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using WizardGrower.Attendance;
 using WizardGrower.Chat;
 using WizardGrower.Combat;
 using WizardGrower.Economy;
@@ -44,6 +45,8 @@ namespace WizardGrower.UI
         [SerializeField] private SkillTabPanel skillTabPanel;
         [SerializeField] private AchievementButton achievementButton;
         [SerializeField] private AchievementPanel achievementPanel;
+        [SerializeField] private AttendanceButton attendanceButton;
+        [SerializeField] private AttendancePanel attendancePanel;
         [SerializeField] private CombatPowerPopupView combatPowerPopup;
         [SerializeField] private UpgradeDrawerView upgradeDrawer;
         [SerializeField] private Transform upgradeButtonContainer;
@@ -77,7 +80,8 @@ namespace WizardGrower.UI
             CombatPowerService combatPowerService = null,
             WeaponFusionService weaponFusionService = null,
             SkillCastOrchestrator skillCastOrchestrator = null,
-            MissionService missionService = null)
+            MissionService missionService = null,
+            AttendanceService attendanceService = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
@@ -109,7 +113,7 @@ namespace WizardGrower.UI
             if (bossEntryButton != null)
                 bossEntryButton.onClick.AddListener(() => stageManager.EnterBossRoom());
             if (chatToggleButton != null && chatPanel != null)
-                chatToggleButton.onClick.AddListener(chatPanel.Toggle);
+                chatToggleButton.onClick.AddListener(ToggleChatPanel);
             movementController.AutoModeChanged += RefreshAutoToggle;
             if (joystickIndicator != null)
                 movementController.JoystickChanged += joystickIndicator.Refresh;
@@ -128,6 +132,12 @@ namespace WizardGrower.UI
                 achievementPanel.Bind(missionService);
             if (achievementButton != null)
                 achievementButton.Bind(achievementPanel);
+            EnsureAttendanceUi(attendanceService);
+            if (attendancePanel != null)
+                attendancePanel.Bind(attendanceService);
+            if (attendanceButton != null)
+                attendanceButton.Bind(attendancePanel);
+            BindSecondaryPanelCoordinator();
             if (mainUI01Coordinator != null)
                 mainUI01Coordinator.Initialize(mainUI01Bar, upgradeDrawer, weaponInventoryPanel, gachaPanel, skillTabPanel);
 
@@ -298,6 +308,99 @@ namespace WizardGrower.UI
                 TMP_Text label = CreateRuntimeLabel(buttonGo.transform, "업적", 14f);
                 label.fontStyle = FontStyles.Bold;
                 achievementButton = buttonGo.GetComponent<AchievementButton>();
+            }
+        }
+
+        private void EnsureAttendanceUi(AttendanceService attendanceService)
+        {
+            if (attendanceService == null || attendanceButton != null && attendancePanel != null)
+                return;
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            Transform root = canvas != null ? canvas.transform : transform;
+
+            if (attendancePanel == null)
+            {
+                GameObject panelGo = new GameObject("AttendancePanel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(AttendancePanel));
+                panelGo.transform.SetParent(root, false);
+                RectTransform rect = panelGo.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0.5f, 0f);
+                rect.anchorMax = new Vector2(0.5f, 0f);
+                rect.pivot = new Vector2(0.5f, 0f);
+                rect.anchoredPosition = new Vector2(0f, 92f);
+                rect.sizeDelta = new Vector2(700f, 330f);
+                attendancePanel = panelGo.GetComponent<AttendancePanel>();
+            }
+
+            if (attendanceButton == null)
+            {
+                Transform parent = achievementButton != null ? achievementButton.transform.parent : (autoToggleButton != null ? autoToggleButton.transform.parent : root);
+                GameObject buttonGo = new GameObject("AttendanceButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(AttendanceButton));
+                buttonGo.transform.SetParent(parent, false);
+                RectTransform rect = buttonGo.GetComponent<RectTransform>();
+                RectTransform achievementRect = achievementButton != null ? achievementButton.transform as RectTransform : null;
+                RectTransform autoRect = autoToggleButton != null ? autoToggleButton.transform as RectTransform : null;
+                if (achievementRect != null)
+                {
+                    rect.anchorMin = achievementRect.anchorMin;
+                    rect.anchorMax = achievementRect.anchorMax;
+                    rect.pivot = achievementRect.pivot;
+                    rect.anchoredPosition = achievementRect.anchoredPosition + new Vector2(0f, -42f);
+                }
+                else if (autoRect != null)
+                {
+                    rect.anchorMin = autoRect.anchorMin;
+                    rect.anchorMax = autoRect.anchorMax;
+                    rect.pivot = autoRect.pivot;
+                    rect.anchoredPosition = autoRect.anchoredPosition + new Vector2(0f, -84f);
+                }
+                else
+                {
+                    rect.anchorMin = new Vector2(0f, 1f);
+                    rect.anchorMax = new Vector2(0f, 1f);
+                    rect.pivot = new Vector2(0f, 1f);
+                    rect.anchoredPosition = new Vector2(14f, -158f);
+                }
+                rect.sizeDelta = new Vector2(82f, 34f);
+                buttonGo.GetComponent<Image>().color = new Color(0.18f, 0.15f, 0.30f, 0.92f);
+                TMP_Text label = CreateRuntimeLabel(buttonGo.transform, "출석", 14f);
+                label.fontStyle = FontStyles.Bold;
+                attendanceButton = buttonGo.GetComponent<AttendanceButton>();
+            }
+        }
+
+        private void BindSecondaryPanelCoordinator()
+        {
+            if (achievementPanel != null)
+                achievementPanel.OpenStateChanged += open =>
+                {
+                    if (!open)
+                        return;
+                    attendancePanel?.Close();
+                    chatPanel?.SetVisible(false);
+                };
+
+            if (attendancePanel != null)
+                attendancePanel.OpenStateChanged += open =>
+                {
+                    if (!open)
+                        return;
+                    achievementPanel?.Close();
+                    chatPanel?.SetVisible(false);
+                };
+        }
+
+        private void ToggleChatPanel()
+        {
+            if (chatPanel == null)
+                return;
+
+            bool show = !chatPanel.IsVisible;
+            chatPanel.SetVisible(show);
+            if (show)
+            {
+                achievementPanel?.Close();
+                attendancePanel?.Close();
             }
         }
 

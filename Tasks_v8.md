@@ -82,7 +82,7 @@ AA: Daily attendance (10-day cycle)
 | 8 | X | Active Skill System (3 Skills + Cast Pipeline) | 🟡 IN REVIEW | v7 baseline |
 | 8 | Y | Skill Bar HUD + 메인UI01 스킬 탭 + Equip Flow | 🟡 IN REVIEW | X ✅ |
 | 8 | Z | Achievements (Daily + Repeat Missions) | 🟡 IN REVIEW | v7 baseline |
-| 8 | AA | Daily Attendance (10-Day Cycle) | 🔴 TODO | Z ✅ |
+| 8 | AA | Daily Attendance (10-Day Cycle) | 🟡 IN REVIEW | Z ✅ |
 
 Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · ⚠️ BLOCKED
 
@@ -532,7 +532,7 @@ Add an achievement system with 2 sub-tabs:
 
 ## Task AA — Daily Attendance (10-Day Cycle)
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** Z ✅
 
 ### 🎯 Goal
@@ -697,6 +697,7 @@ After Task AA reaches `✅ DONE`:
 | 2026-05-09 | Task X | Added v4 skill runtime foundation: `SkillDefinition`, `SkillDatabase`, `SkillRuntime`, `SkillCastOrchestrator`, 3 seed skill assets (`메테오`, `콜드빔`, `돌진`), ParticleSystem cast/impact prefabs, GameContext/GameManager wiring, auto-cast tick, and save/cloud round-trip for `ownedSkillIds` + 5 equipped slots. Migration v3→v4 grants all 3 seeds and equips meteor in slot 0. MCP PlayMode validation passed: fresh defaults, seed values/VFX, manual meteor cooldown/mana, cold/charge equip/cast, auto idle cast, charge dash movement, save round-trip, and v3 migration. Final console check after clearing had no game-code errors/warnings; only MCP transport log noise remained. Start-state unrelated dirty files left unstaged: `.DS_Store`, `Assets/.DS_Store`, `Assets/Fonts/NanumGothicBold SDF.asset`, `Tasks_v7.md`, `.codex/`; Unity also touched `Assets/Scripts/.DS_Store`, left unstaged. |
 | 2026-05-09 | Task Y | Added skill bar HUD, 5 slot views with cooldown/mana overlays, `스킬` MainUI01 tab, bottom skill tab panel, skill cards, slot picker, SkillBar/SkillTabPanel prefabs, and MainScene/HUD wiring to `SkillCastOrchestrator`. MCP PlayMode Validation 1~10 PASS: default meteor slot, manual cast/cooldown, skill nav button, panel/card render, cold_beam equip/unequip, slot overwrite, panel close, and save restore. Final console after cleanup had no game-code errors/warnings; only MCP transport log noise remained. |
 | 2026-05-09 | Task Z | Added daily/repeat mission runtime, seed mission assets/database, AchievementPanel/MissionRow prefabs, save/cloud round-trip fields under v4, event hooks for kills/gold/boss/gacha/fusion, runtime HUD 업적 button/panel fallback, and default mission seeding/migration. Unity MCP execute/read_console remained timed out after reconnect/restart, so validation was run through Unity batchmode: compile/import succeeded and Task Z mission validation PASS (fresh seed, kill/daily claim, repeat target advance without counter reset, gacha/boss/gold/fusion tracker increments, save mapper round-trip, daily reset preserving repeat, panel open/close). Separate `dotnet build Assembly-CSharp.csproj` reported 0 compile errors; only existing Chat/Presence nullable field warnings appeared. Start-state unrelated dirty files left unstaged: `.DS_Store`, `Assets/.DS_Store`, `Assets/Scripts/.DS_Store`, `Assets/Fonts/NanumGothicBold SDF.asset`, `Tasks_v7.md`, `.codex/`. |
+| 2026-05-11 | Task AA | Added 10-day attendance runtime, editable `StandardAttendanceConfig`, AttendancePanel/DayCell prefabs, save/cloud round-trip state under v4, HUD `출석` button fallback below `업적`, and secondary-panel mutual exclusion for chat/achievement/attendance. Unity batchmode validation PASS: fresh Day 1 claimable, same-day double-claim blocked, next-day Day 2 unlock, Day 10 cycle resets to Day 1 on the following server day, save mapper round-trip, Day 5 config edit to gem 200, and panel open/close. During validation, Unity batchmode still emitted external UnityConnect timeout and pre-existing TMP font-atlas quit exception after PASS; no Task AA compile/runtime validation failure occurred. Start-state unrelated dirty files left unstaged: `.DS_Store`, `Assets/.DS_Store`, `Assets/Scripts/.DS_Store`, `Assets/Fonts/NanumGothicBold SDF.asset`, `Tasks_v7.md`, deleted `Tasks_BtoI_Draft.md`, `.codex/`, `References.md`. |
 
 ---
 

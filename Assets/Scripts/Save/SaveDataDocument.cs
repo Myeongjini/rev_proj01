@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Firebase.Firestore;
+using WizardGrower.Attendance;
 using WizardGrower.Missions;
 
 namespace WizardGrower.Save
@@ -26,6 +27,7 @@ namespace WizardGrower.Save
         [FirestoreProperty("equippedSkillSlots")] public List<string> EquippedSkillSlots { get; set; }
         [FirestoreProperty("dailyMissions")] public List<DailyMissionStateDoc> DailyMissions { get; set; }
         [FirestoreProperty("repeatMissions")] public List<RepeatMissionStateDoc> RepeatMissions { get; set; }
+        [FirestoreProperty("attendance")] public AttendanceStateDoc Attendance { get; set; }
     }
 
     [FirestoreData]
@@ -72,5 +74,13 @@ namespace WizardGrower.Save
         [FirestoreProperty("missionId")] public string MissionId { get; set; }
         [FirestoreProperty("currentTargetN")] public int CurrentTargetN { get; set; }
         [FirestoreProperty("runningCounter")] public int RunningCounter { get; set; }
+    }
+
+    [FirestoreData]
+    public class AttendanceStateDoc
+    {
+        [FirestoreProperty("currentDayIndex")] public int CurrentDayIndex { get; set; } = 1;
+        [FirestoreProperty("lastClaimedUtcMs")] public long LastClaimedUtcMs { get; set; }
+        [FirestoreProperty("totalCheckIns")] public int TotalCheckIns { get; set; }
     }
 }
