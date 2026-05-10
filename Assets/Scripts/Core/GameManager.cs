@@ -55,6 +55,7 @@ namespace WizardGrower.Core
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             if (context.OfflineTime != null)
                 context.OfflineTime.Initialize(context.SaveService, context.SaveBinder, context.MissionResetService);
+            EnsureOfflineRewardService();
             if (context.WeaponVisual != null)
                 context.WeaponVisual.Bind(context.Wizard, context.WeaponInventory, context.ProjectileFactory);
             if (context.WeaponInventory != null)
@@ -103,6 +104,15 @@ namespace WizardGrower.Core
                 ? context.OfflineTime
                 : context.gameObject.AddComponent<OfflineTimeTracker>();
             context.SetOfflineServices(offlineTime);
+        }
+
+        private void EnsureOfflineRewardService()
+        {
+            OfflineRewardService reward = context.OfflineReward != null
+                ? context.OfflineReward
+                : context.gameObject.AddComponent<OfflineRewardService>();
+            reward.Initialize(context.OfflineTime, context.Wallet, context.StageManager, context.Wizard, context.SaveService);
+            context.SetOfflineServices(context.OfflineTime, reward);
         }
 
         private void Update()

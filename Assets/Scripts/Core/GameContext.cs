@@ -59,6 +59,7 @@ namespace WizardGrower.Core
         [field: SerializeField] public MissionResetService MissionResetService { get; private set; }
         [field: SerializeField] public AttendanceConfig AttendanceConfig { get; private set; }
         [field: SerializeField] public OfflineTimeTracker OfflineTime { get; private set; }
+        [field: SerializeField] public OfflineRewardService OfflineReward { get; private set; }
         [field: SerializeField] public CombatPowerPopupView CombatPowerPopup { get; private set; }
         public CombatPowerService CombatPower { get; private set; }
         public WeaponFusionService WeaponFusion { get; private set; }
@@ -92,10 +93,12 @@ namespace WizardGrower.Core
                 AttendanceService = attendanceService;
         }
 
-        public void SetOfflineServices(OfflineTimeTracker offlineTime)
+        public void SetOfflineServices(OfflineTimeTracker offlineTime, OfflineRewardService offlineReward = null)
         {
             if (offlineTime != null)
                 OfflineTime = offlineTime;
+            if (offlineReward != null)
+                OfflineReward = offlineReward;
         }
 
         public void SetAuthenticationServices(AuthService authService, UserProfileService userProfileService, AuthConfig authConfig, CloudSyncService cloudSyncService = null)

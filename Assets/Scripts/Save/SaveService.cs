@@ -123,6 +123,7 @@ namespace WizardGrower.Save
             if (data.attendance == null)
                 data.attendance = new WizardGrower.Attendance.AttendanceState();
             data.lastSeenAtUtcMs = System.Math.Max(0, data.lastSeenAtUtcMs);
+            data.offlineRewardPending = System.Math.Max(0, data.offlineRewardPending);
 
             return data;
         }

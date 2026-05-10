@@ -33,6 +33,7 @@ namespace WizardGrower.Save
         public List<RepeatMissionState> repeatMissions = new List<RepeatMissionState>();
         public AttendanceState attendance = new AttendanceState();
         public long lastSeenAtUtcMs;
+        public long offlineRewardPending;
     }
 
     [Serializable]

@@ -36,7 +36,8 @@ namespace WizardGrower.Save
                 DailyMissions = ToDailyMissionDocs(data.dailyMissions),
                 RepeatMissions = ToRepeatMissionDocs(data.repeatMissions),
                 Attendance = ToAttendanceDoc(data.attendance),
-                LastSeenAtUtcMs = data.lastSeenAtUtcMs
+                LastSeenAtUtcMs = data.lastSeenAtUtcMs,
+                OfflineRewardPending = Math.Max(0, data.offlineRewardPending)
             };
         }
 
@@ -67,7 +68,8 @@ namespace WizardGrower.Save
                 dailyMissions = FromDailyMissionDocs(doc.DailyMissions),
                 repeatMissions = FromRepeatMissionDocs(doc.RepeatMissions),
                 attendance = FromAttendanceDoc(doc.Attendance),
-                lastSeenAtUtcMs = Math.Max(0, doc.LastSeenAtUtcMs)
+                lastSeenAtUtcMs = Math.Max(0, doc.LastSeenAtUtcMs),
+                offlineRewardPending = Math.Max(0, doc.OfflineRewardPending)
             };
         }
 

@@ -82,7 +82,7 @@ AE:  Save Schema v5 Migration + Cross-Feature Regression
 | Bundle | ID | Title | Status | Depends On |
 |---|---|---|---|---|
 | 9 | AB | Offline Time Tracking Infrastructure | 🟡 IN REVIEW | v8 baseline |
-| 9 | AC | Offline Gold Reward Calculation | 🔴 TODO | AB ✅ |
+| 9 | AC | Offline Gold Reward Calculation | 🟡 IN REVIEW | AB ✅ |
 | 9 | AD | Offline Reward Modal UI + Ad Simulation | 🔴 TODO | AC ✅ |
 | 9 | AE | Save Schema v5 Migration + Regression | 🔴 TODO | AD ✅ |
 
@@ -197,7 +197,7 @@ Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · �
 
 ## Task AC — Offline Gold Reward Calculation
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** AB ✅
 
 ### 🎯 Goal
@@ -532,6 +532,7 @@ After Task AE reaches `✅ DONE`:
 | Date | Task | Entry |
 |------|------|-------|
 | 2026-05-11 | Task AB | Added `OfflineTimeTracker` + `IOfflineTimeProvider`, `OfflineWindow`, `lastSeenAtUtcMs` save/cloud mirror, GameContext/GameManager lifecycle wiring, and 30s trigger / 12h cap / negative elapsed clamp behavior. Unity batchmode validation PASS: first-run seed, 10s ignored, 31s triggers, 25h clamps to 43200s with cap flag, future timestamp clamps to 0 with expected warning, mapper round-trip, and last-seen save. Batchmode still emitted external UnityConnect timeout and pre-existing TMP font-atlas quit exception after PASS; no Task AB compile/runtime validation failure occurred. Start-state unrelated dirty files left unstaged: `.DS_Store`, `Assets/.DS_Store`, `Assets/Scripts/.DS_Store`, `Assets/Fonts/NanumGothicBold SDF.asset`, deleted `Tasks_BtoI_Draft.md`, `Tasks_v7.md`, `.codex/`, `References.md`. |
+| 2026-05-11 | Task AC | Added `OfflineRewardCalculator`, `OfflineRewardService`, `offlineRewardPending` save/cloud mirror, and GameContext/GameManager service wiring after stage/load initialization. Unity batchmode validation PASS: 1h elapsed resolves positive base gold, repeated ResolvePendingAsync is idempotent, normal claim adds base gold and clears pending, ad claim adds exactly 2x, 24h clamps to 12h cap, pending survives later recalculation, and mapper round-trip preserves pending. Batchmode still emitted external UnityConnect timeout and pre-existing TMP font-atlas quit exception after PASS; no Task AC compile/runtime validation failure occurred. |
 
 ---
 
