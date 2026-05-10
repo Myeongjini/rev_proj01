@@ -96,7 +96,10 @@ namespace WizardGrower.Save
             if (data.saveVersion < 4)
                 MigrateSkillsToV4(data);
 
-            data.saveVersion = Mathf.Max(data.saveVersion, 4);
+            if (data.saveVersion < 5)
+                MigrateOfflineRewardToV5(data);
+
+            data.saveVersion = Mathf.Max(data.saveVersion, 5);
 
             if (data.ownedWeapons.Count == 0)
                 data.ownedWeapons.Add(new OwnedWeaponEntry(WeaponInventory.StarterWeaponId, 1));
@@ -126,6 +129,14 @@ namespace WizardGrower.Save
             data.offlineRewardPending = System.Math.Max(0, data.offlineRewardPending);
 
             return data;
+        }
+
+        private static void MigrateOfflineRewardToV5(SaveData data)
+        {
+            if (data.lastSeenAtUtcMs <= 0)
+                data.lastSeenAtUtcMs = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            data.offlineRewardPending = System.Math.Max(0, data.offlineRewardPending);
         }
 
         private static void MigrateSkillsToV4(SaveData data)
