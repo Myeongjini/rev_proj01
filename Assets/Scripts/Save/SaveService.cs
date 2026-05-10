@@ -122,6 +122,7 @@ namespace WizardGrower.Save
                 data.repeatMissions = new System.Collections.Generic.List<WizardGrower.Missions.RepeatMissionState>();
             if (data.attendance == null)
                 data.attendance = new WizardGrower.Attendance.AttendanceState();
+            data.lastSeenAtUtcMs = System.Math.Max(0, data.lastSeenAtUtcMs);
 
             return data;
         }

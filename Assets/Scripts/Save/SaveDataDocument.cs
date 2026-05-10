@@ -28,6 +28,7 @@ namespace WizardGrower.Save
         [FirestoreProperty("dailyMissions")] public List<DailyMissionStateDoc> DailyMissions { get; set; }
         [FirestoreProperty("repeatMissions")] public List<RepeatMissionStateDoc> RepeatMissions { get; set; }
         [FirestoreProperty("attendance")] public AttendanceStateDoc Attendance { get; set; }
+        [FirestoreProperty("lastSeenAtUtcMs")] public long LastSeenAtUtcMs { get; set; }
     }
 
     [FirestoreData]

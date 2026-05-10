@@ -5,6 +5,7 @@ using WizardGrower.Combat;
 using WizardGrower.Enemies;
 using WizardGrower.Login;
 using WizardGrower.Missions;
+using WizardGrower.Offline;
 using WizardGrower.Player;
 using WizardGrower.UI;
 
@@ -31,6 +32,7 @@ namespace WizardGrower.Core
             context.SetWeaponFusionService(weaponFusion);
             EnsureMissionServices();
             EnsureAttendanceServices();
+            EnsureOfflineTimeTracker();
 
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
             if (context.WeaponInventory != null)
@@ -51,6 +53,8 @@ namespace WizardGrower.Core
             context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService, context.AttendanceService);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
+            if (context.OfflineTime != null)
+                context.OfflineTime.Initialize(context.SaveService, context.SaveBinder, context.MissionResetService);
             if (context.WeaponVisual != null)
                 context.WeaponVisual.Bind(context.Wizard, context.WeaponInventory, context.ProjectileFactory);
             if (context.WeaponInventory != null)
@@ -93,6 +97,14 @@ namespace WizardGrower.Core
             context.SetAttendanceServices(config, service);
         }
 
+        private void EnsureOfflineTimeTracker()
+        {
+            OfflineTimeTracker offlineTime = context.OfflineTime != null
+                ? context.OfflineTime
+                : context.gameObject.AddComponent<OfflineTimeTracker>();
+            context.SetOfflineServices(offlineTime);
+        }
+
         private void Update()
         {
             if (context == null || context.SkillCastOrchestrator == null || context.Movement == null)
@@ -106,6 +118,8 @@ namespace WizardGrower.Core
         {
             if (paused && context != null)
             {
+                if (context.OfflineTime != null)
+                    context.OfflineTime.RecordLastSeenAndSave(context);
                 context.SaveBinder.SaveNow(context, context.SaveService);
                 if (context.SyncCoordinator != null)
                     context.SyncCoordinator.FlushNow();
@@ -116,6 +130,8 @@ namespace WizardGrower.Core
         {
             if (context != null)
             {
+                if (context.OfflineTime != null)
+                    context.OfflineTime.RecordLastSeenAndSave(context);
                 context.SaveBinder.SaveNow(context, context.SaveService);
                 if (context.SyncCoordinator != null)
                     context.SyncCoordinator.FlushNow();

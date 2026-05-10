@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 using WizardGrower.Attendance;
 using WizardGrower.Missions;
@@ -34,7 +35,8 @@ namespace WizardGrower.Save
                 EquippedSkillSlots = NormalizeEquippedSkills(data.equippedSkillSlots),
                 DailyMissions = ToDailyMissionDocs(data.dailyMissions),
                 RepeatMissions = ToRepeatMissionDocs(data.repeatMissions),
-                Attendance = ToAttendanceDoc(data.attendance)
+                Attendance = ToAttendanceDoc(data.attendance),
+                LastSeenAtUtcMs = data.lastSeenAtUtcMs
             };
         }
 
@@ -64,7 +66,8 @@ namespace WizardGrower.Save
                 equippedSkillSlots = NormalizeEquippedSkills(doc.EquippedSkillSlots),
                 dailyMissions = FromDailyMissionDocs(doc.DailyMissions),
                 repeatMissions = FromRepeatMissionDocs(doc.RepeatMissions),
-                attendance = FromAttendanceDoc(doc.Attendance)
+                attendance = FromAttendanceDoc(doc.Attendance),
+                lastSeenAtUtcMs = Math.Max(0, doc.LastSeenAtUtcMs)
             };
         }
 

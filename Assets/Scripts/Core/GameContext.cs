@@ -7,6 +7,7 @@ using WizardGrower.Economy;
 using WizardGrower.Enemies;
 using WizardGrower.Missions;
 using WizardGrower.Multiplayer;
+using WizardGrower.Offline;
 using WizardGrower.Player;
 using WizardGrower.Save;
 using WizardGrower.Skills;
@@ -57,6 +58,7 @@ namespace WizardGrower.Core
         [field: SerializeField] public MissionService MissionService { get; private set; }
         [field: SerializeField] public MissionResetService MissionResetService { get; private set; }
         [field: SerializeField] public AttendanceConfig AttendanceConfig { get; private set; }
+        [field: SerializeField] public OfflineTimeTracker OfflineTime { get; private set; }
         [field: SerializeField] public CombatPowerPopupView CombatPowerPopup { get; private set; }
         public CombatPowerService CombatPower { get; private set; }
         public WeaponFusionService WeaponFusion { get; private set; }
@@ -88,6 +90,12 @@ namespace WizardGrower.Core
                 AttendanceConfig = attendanceConfig;
             if (attendanceService != null)
                 AttendanceService = attendanceService;
+        }
+
+        public void SetOfflineServices(OfflineTimeTracker offlineTime)
+        {
+            if (offlineTime != null)
+                OfflineTime = offlineTime;
         }
 
         public void SetAuthenticationServices(AuthService authService, UserProfileService userProfileService, AuthConfig authConfig, CloudSyncService cloudSyncService = null)

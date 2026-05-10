@@ -32,6 +32,7 @@ namespace WizardGrower.Save
         public List<DailyMissionState> dailyMissions = new List<DailyMissionState>();
         public List<RepeatMissionState> repeatMissions = new List<RepeatMissionState>();
         public AttendanceState attendance = new AttendanceState();
+        public long lastSeenAtUtcMs;
     }
 
     [Serializable]
