@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.UI;
+using WizardGrower.Ads;
 using WizardGrower.Attendance;
 using WizardGrower.Auth;
 using WizardGrower.Combat;
@@ -56,6 +58,7 @@ namespace WizardGrower.Core
             if (context.OfflineTime != null)
                 context.OfflineTime.Initialize(context.SaveService, context.SaveBinder, context.MissionResetService);
             EnsureOfflineRewardService();
+            EnsureStartupPopupServices();
             if (context.WeaponVisual != null)
                 context.WeaponVisual.Bind(context.Wizard, context.WeaponInventory, context.ProjectileFactory);
             if (context.WeaponInventory != null)
@@ -71,6 +74,14 @@ namespace WizardGrower.Core
             context.EnemySpawner.EnemySpawned += OnEnemySpawned;
             combatPower.PowerChanged += power => context.Progression.RecordCombatPower(power);
             ConsumeBootstrappedAuthentication();
+        }
+
+        private async void Start()
+        {
+            if (context == null || context.StartupPopupQueue == null)
+                return;
+
+            await context.StartupPopupQueue.RunAsync();
         }
 
         private void EnsureMissionServices()
@@ -113,6 +124,64 @@ namespace WizardGrower.Core
                 : context.gameObject.AddComponent<OfflineRewardService>();
             reward.Initialize(context.OfflineTime, context.Wallet, context.StageManager, context.Wizard, context.SaveService);
             context.SetOfflineServices(context.OfflineTime, reward);
+        }
+
+        private void EnsureStartupPopupServices()
+        {
+            GameStartupPopupQueue popupQueue = context.StartupPopupQueue != null
+                ? context.StartupPopupQueue
+                : context.GetComponent<GameStartupPopupQueue>();
+            if (popupQueue == null)
+                popupQueue = context.gameObject.AddComponent<GameStartupPopupQueue>();
+            AdSimulationService adSimulation = context.AdSimulation != null
+                ? context.AdSimulation
+                : context.GetComponent<AdSimulationService>();
+            if (adSimulation == null)
+                adSimulation = context.gameObject.AddComponent<AdSimulationService>();
+            OfflineRewardModal modal = context.OfflineRewardModal != null
+                ? context.OfflineRewardModal
+                : FindOfflineRewardModalInScene();
+            if (modal == null)
+                modal = CreateOfflineRewardModal();
+
+            modal.Bind(context.OfflineReward, adSimulation);
+            popupQueue.Register(modal);
+            context.SetStartupPopupServices(popupQueue, modal, adSimulation);
+        }
+
+        private OfflineRewardModal FindOfflineRewardModalInScene()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas != null)
+            {
+                OfflineRewardModal modal = canvas.GetComponentInChildren<OfflineRewardModal>(true);
+                if (modal != null)
+                    return modal;
+            }
+
+            OfflineRewardModal[] modals = FindObjectsByType<OfflineRewardModal>(FindObjectsInactive.Include);
+            return modals != null && modals.Length > 0 ? modals[0] : null;
+        }
+
+        private OfflineRewardModal CreateOfflineRewardModal()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas == null)
+                canvas = FindAnyObjectByType<Canvas>();
+
+            Transform parent = canvas != null ? canvas.transform : context.transform;
+            GameObject modalGo = new GameObject("OfflineRewardModal", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(OfflineRewardModal));
+            modalGo.transform.SetParent(parent, false);
+            RectTransform rect = modalGo.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            Image overlay = modalGo.GetComponent<Image>();
+            overlay.color = new Color(0f, 0f, 0f, 0.72f);
+            modalGo.transform.SetAsLastSibling();
+            modalGo.SetActive(false);
+            return modalGo.GetComponent<OfflineRewardModal>();
         }
 
         private void Update()
