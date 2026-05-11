@@ -1,10 +1,12 @@
 using UnityEngine;
 using WizardGrower.Ads;
+using WizardGrower.Armor;
 using WizardGrower.Attendance;
 using WizardGrower.Auth;
 using WizardGrower.Chat;
 using WizardGrower.Combat;
 using WizardGrower.Dungeons;
+using WizardGrower.Drops;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
 using WizardGrower.Missions;
@@ -52,6 +54,11 @@ namespace WizardGrower.Core
         [field: SerializeField] public WeaponDatabase WeaponDatabase { get; private set; }
         [field: SerializeField] public WeaponInventory WeaponInventory { get; private set; }
         [field: SerializeField] public WeaponVisualController WeaponVisual { get; private set; }
+        [field: SerializeField] public ArmorDatabase ArmorDatabase { get; private set; }
+        [field: SerializeField] public ArmorInventory ArmorInventory { get; private set; }
+        [field: SerializeField] public ArmorDropTable ArmorDropTable { get; private set; }
+        [field: SerializeField] public EliteSpawnTracker EliteSpawnTracker { get; private set; }
+        [field: SerializeField] public ArmorAcquiredPopupView ArmorAcquiredPopup { get; private set; }
         [field: SerializeField] public GachaDefinition GachaDefinition { get; private set; }
         [field: SerializeField] public GachaService GachaService { get; private set; }
         [field: SerializeField] public SkillDatabase SkillDatabase { get; private set; }
@@ -77,6 +84,7 @@ namespace WizardGrower.Core
         [field: SerializeField] public CombatPowerPopupView CombatPowerPopup { get; private set; }
         public CombatPowerService CombatPower { get; private set; }
         public WeaponFusionService WeaponFusion { get; private set; }
+        public ArmorFusionService ArmorFusion { get; private set; }
         public AttendanceService AttendanceService { get; private set; }
 
         public void SetCombatPowerService(CombatPowerService combatPower)
@@ -87,6 +95,22 @@ namespace WizardGrower.Core
         public void SetWeaponFusionService(WeaponFusionService weaponFusion)
         {
             WeaponFusion = weaponFusion;
+        }
+
+        public void SetArmorServices(ArmorDatabase database, ArmorInventory inventory, ArmorFusionService fusion, EliteSpawnTracker eliteSpawnTracker = null, ArmorDropTable dropTable = null, ArmorAcquiredPopupView popup = null)
+        {
+            if (database != null)
+                ArmorDatabase = database;
+            if (inventory != null)
+                ArmorInventory = inventory;
+            if (fusion != null)
+                ArmorFusion = fusion;
+            if (eliteSpawnTracker != null)
+                EliteSpawnTracker = eliteSpawnTracker;
+            if (dropTable != null)
+                ArmorDropTable = dropTable;
+            if (popup != null)
+                ArmorAcquiredPopup = popup;
         }
 
         public void SetMissionServices(MissionDatabase missionDatabase, MissionService missionService, MissionResetService missionResetService)

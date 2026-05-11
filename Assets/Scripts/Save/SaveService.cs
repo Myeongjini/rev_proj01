@@ -105,7 +105,10 @@ namespace WizardGrower.Save
             if (data.saveVersion < 7)
                 MigratePlayerExpAndEXPDungeonToV7(data);
 
-            data.saveVersion = Mathf.Max(data.saveVersion, 7);
+            if (data.saveVersion < 9)
+                MigrateArmorAndDefenseToV9(data);
+
+            data.saveVersion = Mathf.Max(data.saveVersion, 9);
 
             if (data.ownedWeapons.Count == 0)
                 data.ownedWeapons.Add(new OwnedWeaponEntry(WeaponInventory.StarterWeaponId, 1));
@@ -138,8 +141,28 @@ namespace WizardGrower.Save
             data.offlineRewardPendingExp = System.Math.Max(0, data.offlineRewardPendingExp);
             NormalizeGoldDungeon(data);
             NormalizeEXPDungeon(data);
+            NormalizeArmor(data);
 
             return data;
+        }
+
+        private static void MigrateArmorAndDefenseToV9(SaveData data)
+        {
+            NormalizeArmor(data);
+            data.eliteSpawnCounter = Mathf.Max(0, data.eliteSpawnCounter);
+        }
+
+        private static void NormalizeArmor(SaveData data)
+        {
+            if (data.ownedArmors == null)
+                data.ownedArmors = new System.Collections.Generic.List<WizardGrower.Armor.OwnedArmorEntry>();
+            if (data.equippedArmors == null)
+                data.equippedArmors = new System.Collections.Generic.List<WizardGrower.Armor.EquippedArmorEntry>();
+            if (data.equippedArmorBySlot == null)
+                data.equippedArmorBySlot = new System.Collections.Generic.Dictionary<string, string>();
+            data.eliteSpawnCounter = Mathf.Max(0, data.eliteSpawnCounter);
+            if (data.stats != null)
+                data.stats.defense = Mathf.Max(0f, data.stats.defense);
         }
 
         private static void MigratePlayerExpAndEXPDungeonToV7(SaveData data)
@@ -260,6 +283,8 @@ namespace WizardGrower.Save
                 stats.autoAttackDamage = stats.attackDamage;
             if (stats.manualAttackDamage <= 0f)
                 stats.manualAttackDamage = stats.attackDamage * 2f;
+            stats.defense = Mathf.Max(0f, stats.defense);
+            stats.maxMana = Mathf.Max(0f, stats.maxMana);
         }
     }
 }

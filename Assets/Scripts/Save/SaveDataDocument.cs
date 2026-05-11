@@ -24,6 +24,10 @@ namespace WizardGrower.Save
         [FirestoreProperty("upgrades")] public List<UpgradeLevelEntryDoc> Upgrades { get; set; }
         [FirestoreProperty("equippedWeaponId")] public string EquippedWeaponId { get; set; }
         [FirestoreProperty("ownedWeapons")] public List<OwnedWeaponEntryDoc> OwnedWeapons { get; set; }
+        [FirestoreProperty("ownedArmors")] public List<OwnedArmorEntryDoc> OwnedArmors { get; set; }
+        [FirestoreProperty("equippedArmors")] public List<EquippedArmorEntryDoc> EquippedArmors { get; set; }
+        [FirestoreProperty("equippedArmorBySlot")] public Dictionary<string, string> EquippedArmorBySlot { get; set; }
+        [FirestoreProperty("eliteSpawnCounter")] public int EliteSpawnCounter { get; set; }
         [FirestoreProperty("ownedWeaponIds")] public List<string> OwnedWeaponIds { get; set; }
         [FirestoreProperty("ownedSkillIds")] public List<string> OwnedSkillIds { get; set; }
         [FirestoreProperty("equippedSkillSlots")] public List<string> EquippedSkillSlots { get; set; }
@@ -48,7 +52,9 @@ namespace WizardGrower.Save
         [FirestoreProperty("criticalChance")] public float CriticalChance { get; set; }
         [FirestoreProperty("criticalMultiplier")] public float CriticalMultiplier { get; set; }
         [FirestoreProperty("armorPenetration")] public float ArmorPenetration { get; set; }
+        [FirestoreProperty("defense")] public float Defense { get; set; }
         [FirestoreProperty("maxHealth")] public float MaxHealth { get; set; }
+        [FirestoreProperty("maxMana")] public float MaxMana { get; set; }
         [FirestoreProperty("currentHealth")] public float CurrentHealth { get; set; }
     }
 
@@ -64,6 +70,20 @@ namespace WizardGrower.Save
     {
         [FirestoreProperty("weaponId")] public string WeaponId { get; set; }
         [FirestoreProperty("count")] public int Count { get; set; }
+    }
+
+    [FirestoreData]
+    public class OwnedArmorEntryDoc
+    {
+        [FirestoreProperty("armorId")] public string ArmorId { get; set; }
+        [FirestoreProperty("count")] public int Count { get; set; }
+    }
+
+    [FirestoreData]
+    public class EquippedArmorEntryDoc
+    {
+        [FirestoreProperty("slot")] public string Slot { get; set; }
+        [FirestoreProperty("armorId")] public string ArmorId { get; set; }
     }
 
     [FirestoreData]

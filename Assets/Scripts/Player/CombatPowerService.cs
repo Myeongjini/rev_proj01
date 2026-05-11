@@ -62,6 +62,7 @@ namespace WizardGrower.Player
                 * (1f + stats.CriticalChance * (stats.CriticalMultiplier - 1f))
                 * (1f / UnityEngine.Mathf.Max(0.05f, stats.AutoAttackInterval))
                 + stats.ArmorPenetration * 2f
+                + stats.Defense * 1.5f
                 + stats.MaxHealth * 0.1f
                 + maxMana * 0.05f;
         }

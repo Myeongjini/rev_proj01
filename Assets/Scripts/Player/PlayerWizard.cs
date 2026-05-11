@@ -17,7 +17,17 @@ namespace WizardGrower.Player
 
         public void TakeBossHit(int amount)
         {
-            stats.TakeHealth(amount);
+            stats.TakeHealth(ApplyDefense(amount));
+        }
+
+        public void TakeNormalHit(int amount)
+        {
+            stats.TakeHealth(ApplyDefense(amount));
+        }
+
+        private float ApplyDefense(int amount)
+        {
+            return Mathf.Max(1f, amount - stats.Defense);
         }
     }
 }

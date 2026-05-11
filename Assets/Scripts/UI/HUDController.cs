@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using WizardGrower.Attendance;
+using WizardGrower.Armor;
 using WizardGrower.Chat;
 using WizardGrower.Combat;
 using WizardGrower.Economy;
@@ -86,7 +87,10 @@ namespace WizardGrower.UI
             AttendanceService attendanceService = null,
             GoldDungeonEntryPanel goldDungeonEntryPanel = null,
             PlayerLevelService playerLevelService = null,
-            PlayerExpBarView playerExpBarView = null)
+            PlayerExpBarView playerExpBarView = null,
+            ArmorInventory armorInventory = null,
+            ArmorDatabase armorDatabase = null,
+            ArmorFusionService armorFusionService = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
@@ -129,7 +133,10 @@ namespace WizardGrower.UI
             if (chatPanel != null)
                 chatPanel.Initialize(chatService, stageManager);
             if (weaponInventoryPanel != null)
+            {
                 weaponInventoryPanel.Initialize(weaponInventory, weaponDatabase, weaponFusionService);
+                weaponInventoryPanel.InitializeArmor(armorInventory, armorDatabase, armorFusionService);
+            }
             if (gachaPanel != null)
                 gachaPanel.Initialize(gachaService, gachaDefinition);
             if (skillBarView != null)

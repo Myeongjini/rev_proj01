@@ -15,6 +15,7 @@ namespace WizardGrower.Enemies
         [SerializeField] private Vector2 minWanderBounds = new Vector2(-5.8f, -3.25f);
         [SerializeField] private Vector2 maxWanderBounds = new Vector2(5.8f, 3.25f);
         [SerializeField] private float minSpawnSpacing = 1.15f;
+        [SerializeField] private GameObject eliteGlowPrefab;
 
         public event Action<EnemyBase> EnemySpawned;
         public event Action<EnemyBase, DamageInfo> EnemyDamaged;
@@ -47,6 +48,23 @@ namespace WizardGrower.Enemies
         {
             ClearEnemies();
             return Spawn(bossEnemyPrefab, health, reward, armor, spawnPoint.position, false) as BossEnemy;
+        }
+
+        public EnemyBase SpawnEliteNear(Vector3 nearPosition, float baseHealth, int baseReward, float armor)
+        {
+            Vector3 position = nearPosition + new Vector3(UnityEngine.Random.Range(-1.2f, 1.2f), UnityEngine.Random.Range(-1.2f, 1.2f), 0f);
+            position.x = Mathf.Clamp(position.x, minWanderBounds.x, maxWanderBounds.x);
+            position.y = Mathf.Clamp(position.y, minWanderBounds.y, maxWanderBounds.y);
+            EnemyBase enemy = Spawn(normalEnemyPrefab, Mathf.Max(1f, baseHealth) * 5f, Mathf.Max(0, baseReward) * 5, armor, position, true);
+            if (enemy != null)
+            {
+                enemy.MarkElite();
+                EliteMonsterController elite = enemy.GetComponent<EliteMonsterController>();
+                if (elite == null)
+                    elite = enemy.gameObject.AddComponent<EliteMonsterController>();
+                elite.ApplyEliteVisuals(eliteGlowPrefab);
+            }
+            return enemy;
         }
 
         public void ClearEnemies()

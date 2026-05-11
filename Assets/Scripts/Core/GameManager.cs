@@ -2,10 +2,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using WizardGrower.Ads;
+using WizardGrower.Armor;
 using WizardGrower.Attendance;
 using WizardGrower.Auth;
 using WizardGrower.Combat;
 using WizardGrower.Dungeons;
+using WizardGrower.Drops;
 using WizardGrower.Enemies;
 using WizardGrower.Login;
 using WizardGrower.Missions;
@@ -22,6 +24,7 @@ namespace WizardGrower.Core
         private CombatCalculator calculator;
         private CombatPowerService combatPower;
         private WizardGrower.Weapons.WeaponFusionService weaponFusion;
+        private ArmorFusionService armorFusion;
 
         private void Awake()
         {
@@ -34,6 +37,7 @@ namespace WizardGrower.Core
             context.SetCombatPowerService(combatPower);
             weaponFusion = new WizardGrower.Weapons.WeaponFusionService();
             context.SetWeaponFusionService(weaponFusion);
+            armorFusion = new ArmorFusionService();
             EnsureMissionServices();
             EnsureAttendanceServices();
             EnsureOfflineTimeTracker();
@@ -47,6 +51,7 @@ namespace WizardGrower.Core
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
             if (context.WeaponInventory != null)
                 context.WeaponInventory.Initialize(context.WeaponDatabase);
+            EnsureArmorServices();
             if (context.ProjectileFactory != null)
                 context.ProjectileFactory.BindWeaponInventory(context.WeaponInventory);
             if (context.GachaService != null)
@@ -61,7 +66,7 @@ namespace WizardGrower.Core
             if (context.MissionService != null)
                 context.MissionService.Initialize(context.MissionDatabase, context.Wallet, context.EnemySpawner, context.StageManager, context.GachaService, weaponFusion, context.MissionResetService);
             EnsureGoldDungeonEntryPanel();
-            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService, context.AttendanceService, context.GoldDungeonEntryPanel, context.PlayerLevelService, context.PlayerExpBar);
+            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService, context.AttendanceService, context.GoldDungeonEntryPanel, context.PlayerLevelService, context.PlayerExpBar, context.ArmorInventory, context.ArmorDatabase, armorFusion);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             if (context.OfflineTime != null)
@@ -74,6 +79,8 @@ namespace WizardGrower.Core
                 context.WeaponVisual.Bind(context.Wizard, context.WeaponInventory, context.ProjectileFactory);
             if (context.WeaponInventory != null)
                 context.WeaponInventory.EquippedChanged += OnWeaponEquipped;
+            if (context.ArmorInventory != null)
+                context.ArmorInventory.EquippedChanged += OnArmorEquipped;
             combatPower.Initialize(context.Wizard.Stats, context.Mana);
             if (context.CombatPowerPopup != null)
                 context.CombatPowerPopup.Bind(combatPower);
@@ -114,6 +121,31 @@ namespace WizardGrower.Core
                 : MissionService.CreateDefaultDatabase();
 
             context.SetMissionServices(missionDatabase, missionService, resetService);
+        }
+
+        private void EnsureArmorServices()
+        {
+            ArmorInventory inventory = context.ArmorInventory != null
+                ? context.ArmorInventory
+                : context.GetComponent<ArmorInventory>();
+            if (inventory == null)
+                inventory = context.gameObject.AddComponent<ArmorInventory>();
+
+            ArmorDatabase database = context.ArmorDatabase;
+            inventory.Initialize(database);
+
+            ArmorDropTable dropTable = context.ArmorDropTable != null
+                ? context.ArmorDropTable
+                : ScriptableObject.CreateInstance<ArmorDropTable>();
+
+            EliteSpawnTracker tracker = context.EliteSpawnTracker != null
+                ? context.EliteSpawnTracker
+                : context.GetComponent<EliteSpawnTracker>();
+            if (tracker == null)
+                tracker = context.gameObject.AddComponent<EliteSpawnTracker>();
+
+            tracker.Initialize(context.EnemySpawner, inventory, database, dropTable, context.ArmorAcquiredPopup);
+            context.SetArmorServices(database, inventory, armorFusion, tracker, dropTable, context.ArmorAcquiredPopup);
         }
 
         private void EnsureAttendanceServices()
@@ -535,7 +567,23 @@ namespace WizardGrower.Core
             if (context == null || context.Wizard == null)
                 return;
 
-            context.Wizard.Stats.RecomputeWithEquipped(weapon != null ? weapon.statBonuses : (WizardGrower.Weapons.WeaponStats?)null);
+            RecomputeEquipmentStats(weapon != null ? weapon.statBonuses : (WizardGrower.Weapons.WeaponStats?)null);
+        }
+
+        private void OnArmorEquipped(ArmorDefinition armor)
+        {
+            RecomputeEquipmentStats(context != null && context.WeaponInventory != null && context.WeaponInventory.Equipped != null
+                ? context.WeaponInventory.Equipped.statBonuses
+                : (WizardGrower.Weapons.WeaponStats?)null);
+        }
+
+        private void RecomputeEquipmentStats(WizardGrower.Weapons.WeaponStats? weaponStats)
+        {
+            if (context == null || context.Wizard == null)
+                return;
+
+            ArmorStats armorStats = context.ArmorInventory != null ? context.ArmorInventory.CaptureEquippedStats() : default;
+            context.Wizard.Stats.RecomputeWithEquipment(weaponStats, armorStats);
             if (context.CombatPower != null)
                 context.CombatPower.Recalculate(true);
         }

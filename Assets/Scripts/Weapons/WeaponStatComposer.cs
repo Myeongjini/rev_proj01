@@ -32,7 +32,9 @@ namespace WizardGrower.Weapons
                 criticalChance = Mathf.Clamp01(source.criticalChance),
                 criticalMultiplier = Mathf.Max(1f, source.criticalMultiplier),
                 armorPenetration = Mathf.Max(0f, source.armorPenetration),
+                defense = Mathf.Max(0f, source.defense),
                 maxHealth = Mathf.Max(1f, source.maxHealth),
+                maxMana = Mathf.Max(0f, source.maxMana),
                 currentHealth = source.currentHealth
             };
 
@@ -47,6 +49,7 @@ namespace WizardGrower.Weapons
                 result.criticalMultiplier = Mathf.Max(1f, result.criticalMultiplier + bonus.criticalMultiplier);
                 result.armorPenetration = Mathf.Max(0f, result.armorPenetration + bonus.armorPenetration);
                 result.maxHealth = Mathf.Max(1f, result.maxHealth + bonus.maxHealth);
+                result.maxMana = Mathf.Max(0f, result.maxMana + bonus.maxMana);
             }
 
             result.currentHealth = Mathf.Clamp(result.currentHealth <= 0f ? result.maxHealth : result.currentHealth, 0f, result.maxHealth);

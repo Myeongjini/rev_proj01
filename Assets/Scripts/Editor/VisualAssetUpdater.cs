@@ -32,6 +32,12 @@ namespace WizardGrower.EditorTools
             Debug.Log(GenerateWeaponProjectiles());
         }
 
+        [MenuItem("Wizard Grower/Generate Armor Icons")]
+        public static void GenerateArmorIconsMenu()
+        {
+            Debug.Log(GenerateArmorIcons());
+        }
+
         public static string UpdateVisualAssets()
         {
             Directory.CreateDirectory(ArtPath);
@@ -86,6 +92,69 @@ namespace WizardGrower.EditorTools
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             return "Generated 20 weapon projectile sprites.";
+        }
+
+        public static string GenerateArmorIcons()
+        {
+            string folder = ArtPath + "ArmorIcons/";
+            Directory.CreateDirectory(folder);
+            for (int i = 0; i < V13ArmorIds.Length; i++)
+                SaveSprite(folder, V13ArmorIds[i], DrawArmorIcon(i / 4, i % 4), 96f);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return "Generated 20 armor icon sprites.";
+        }
+
+        private static readonly string[] V13ArmorIds =
+        {
+            "helmet_common_beginner", "helmet_common_intermediate", "helmet_common_upper", "helmet_common_supreme",
+            "chest_common_beginner", "chest_common_intermediate", "chest_common_upper", "chest_common_supreme",
+            "legs_common_beginner", "legs_common_intermediate", "legs_common_upper", "legs_common_supreme",
+            "gloves_common_beginner", "gloves_common_intermediate", "gloves_common_upper", "gloves_common_supreme",
+            "boots_common_beginner", "boots_common_intermediate", "boots_common_upper", "boots_common_supreme"
+        };
+
+        private static Texture2D DrawArmorIcon(int slotIndex, int lowerIndex)
+        {
+            Color[] slotColors =
+            {
+                new Color(0.32f, 0.48f, 0.92f, 1f),
+                new Color(0.48f, 0.32f, 0.88f, 1f),
+                new Color(0.34f, 0.66f, 0.42f, 1f),
+                new Color(0.88f, 0.56f, 0.24f, 1f),
+                new Color(0.28f, 0.72f, 0.76f, 1f)
+            };
+
+            Texture2D t = NewTexture(128, 128, Color.clear);
+            Color main = Color.Lerp(slotColors[Mathf.Clamp(slotIndex, 0, slotColors.Length - 1)], Color.white, lowerIndex * 0.08f);
+            Color ink = new Color(0.04f, 0.035f, 0.05f, 1f);
+            Ellipse(t, 64, 64, 46, 46, new Color(main.r, main.g, main.b, 0.28f));
+            Ellipse(t, 64, 64, 40, 40, ink, true);
+
+            switch (slotIndex)
+            {
+                case 0:
+                    Poly(t, new[] { new Vector2(33, 65), new Vector2(48, 91), new Vector2(80, 91), new Vector2(95, 65), new Vector2(82, 50), new Vector2(46, 50) }, main);
+                    break;
+                case 1:
+                    Poly(t, new[] { new Vector2(42, 94), new Vector2(32, 59), new Vector2(47, 34), new Vector2(64, 48), new Vector2(81, 34), new Vector2(96, 59), new Vector2(86, 94) }, main);
+                    break;
+                case 2:
+                    Poly(t, new[] { new Vector2(45, 94), new Vector2(49, 42), new Vector2(61, 42), new Vector2(61, 96) }, main);
+                    Poly(t, new[] { new Vector2(83, 94), new Vector2(79, 42), new Vector2(67, 42), new Vector2(67, 96) }, main);
+                    break;
+                case 3:
+                    Ellipse(t, 64, 64, 28, 25, main);
+                    Rect(t, 48, 57, 32, 18, Color.Lerp(main, Color.white, 0.12f));
+                    break;
+                default:
+                    Poly(t, new[] { new Vector2(35, 48), new Vector2(91, 48), new Vector2(100, 71), new Vector2(76, 86), new Vector2(32, 76) }, main);
+                    break;
+            }
+
+            Ellipse(t, 73, 78, 10, 4, new Color(1f, 1f, 1f, 0.35f));
+            t.Apply();
+            return t;
         }
 
         private static readonly string[] V7WeaponIds =

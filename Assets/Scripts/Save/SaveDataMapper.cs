@@ -5,6 +5,7 @@ using WizardGrower.Attendance;
 using WizardGrower.Dungeons;
 using WizardGrower.Missions;
 using WizardGrower.Skills;
+using WizardGrower.Armor;
 using WizardGrower.Weapons;
 
 namespace WizardGrower.Save
@@ -33,6 +34,10 @@ namespace WizardGrower.Save
                 Upgrades = ToDocument(data.upgrades),
                 EquippedWeaponId = string.IsNullOrEmpty(data.equippedWeaponId) ? WeaponInventory.StarterWeaponId : data.equippedWeaponId,
                 OwnedWeapons = ToDocument(data.ownedWeapons),
+                OwnedArmors = ToArmorDocument(data.ownedArmors),
+                EquippedArmors = ToEquippedArmorDocument(data.equippedArmors),
+                EquippedArmorBySlot = data.equippedArmorBySlot != null ? new Dictionary<string, string>(data.equippedArmorBySlot) : ToEquippedArmorDictionary(data.equippedArmors),
+                EliteSpawnCounter = Mathf.Max(0, data.eliteSpawnCounter),
                 OwnedWeaponIds = data.ownedWeaponIds != null ? new List<string>(data.ownedWeaponIds) : new List<string> { "wand_starter" },
                 OwnedSkillIds = NormalizeOwnedSkills(data.ownedSkillIds),
                 EquippedSkillSlots = NormalizeEquippedSkills(data.equippedSkillSlots),
@@ -70,6 +75,10 @@ namespace WizardGrower.Save
                 upgrades = FromDocument(doc.Upgrades),
                 equippedWeaponId = string.IsNullOrEmpty(doc.EquippedWeaponId) ? WeaponInventory.StarterWeaponId : doc.EquippedWeaponId,
                 ownedWeapons = FromDocument(doc.OwnedWeapons),
+                ownedArmors = FromArmorDocument(doc.OwnedArmors),
+                equippedArmors = FromEquippedArmorDocument(doc.EquippedArmors, doc.EquippedArmorBySlot),
+                equippedArmorBySlot = doc.EquippedArmorBySlot != null ? new Dictionary<string, string>(doc.EquippedArmorBySlot) : ToEquippedArmorDictionary(FromEquippedArmorDocument(doc.EquippedArmors, null)),
+                eliteSpawnCounter = Mathf.Max(0, doc.EliteSpawnCounter),
                 ownedWeaponIds = doc.OwnedWeaponIds != null ? new List<string>(doc.OwnedWeaponIds) : new List<string> { "wand_starter" },
                 ownedSkillIds = NormalizeOwnedSkills(doc.OwnedSkillIds),
                 equippedSkillSlots = NormalizeEquippedSkills(doc.EquippedSkillSlots),
@@ -117,7 +126,9 @@ namespace WizardGrower.Save
                 CriticalChance = snapshot.criticalChance,
                 CriticalMultiplier = snapshot.criticalMultiplier,
                 ArmorPenetration = snapshot.armorPenetration,
+                Defense = snapshot.defense,
                 MaxHealth = snapshot.maxHealth,
+                MaxMana = snapshot.maxMana,
                 CurrentHealth = snapshot.currentHealth
             };
         }
@@ -137,7 +148,9 @@ namespace WizardGrower.Save
                 criticalChance = doc.CriticalChance,
                 criticalMultiplier = doc.CriticalMultiplier,
                 armorPenetration = doc.ArmorPenetration,
+                defense = doc.Defense,
                 maxHealth = doc.MaxHealth,
+                maxMana = doc.MaxMana,
                 currentHealth = doc.CurrentHealth
             };
         }
@@ -216,6 +229,91 @@ namespace WizardGrower.Save
                 entries.Add(new OwnedWeaponEntry(doc.WeaponId, doc.Count));
             }
             return entries;
+        }
+
+        private static List<OwnedArmorEntryDoc> ToArmorDocument(List<OwnedArmorEntry> entries)
+        {
+            List<OwnedArmorEntryDoc> docs = new List<OwnedArmorEntryDoc>();
+            if (entries == null)
+                return docs;
+
+            foreach (OwnedArmorEntry entry in entries)
+            {
+                if (entry == null || string.IsNullOrEmpty(entry.armorId) || entry.count <= 0)
+                    continue;
+                docs.Add(new OwnedArmorEntryDoc { ArmorId = entry.armorId, Count = entry.count });
+            }
+            return docs;
+        }
+
+        private static List<OwnedArmorEntry> FromArmorDocument(List<OwnedArmorEntryDoc> docs)
+        {
+            List<OwnedArmorEntry> entries = new List<OwnedArmorEntry>();
+            if (docs == null)
+                return entries;
+
+            foreach (OwnedArmorEntryDoc doc in docs)
+            {
+                if (doc == null || string.IsNullOrEmpty(doc.ArmorId) || doc.Count <= 0)
+                    continue;
+                entries.Add(new OwnedArmorEntry(doc.ArmorId, doc.Count));
+            }
+            return entries;
+        }
+
+        private static List<EquippedArmorEntryDoc> ToEquippedArmorDocument(List<EquippedArmorEntry> entries)
+        {
+            List<EquippedArmorEntryDoc> docs = new List<EquippedArmorEntryDoc>();
+            if (entries == null)
+                return docs;
+
+            foreach (EquippedArmorEntry entry in entries)
+            {
+                if (entry == null || string.IsNullOrEmpty(entry.armorId))
+                    continue;
+                docs.Add(new EquippedArmorEntryDoc { Slot = entry.slot.ToString(), ArmorId = entry.armorId });
+            }
+            return docs;
+        }
+
+        private static List<EquippedArmorEntry> FromEquippedArmorDocument(List<EquippedArmorEntryDoc> docs, Dictionary<string, string> dictionary)
+        {
+            List<EquippedArmorEntry> entries = new List<EquippedArmorEntry>();
+            if (docs != null)
+            {
+                foreach (EquippedArmorEntryDoc doc in docs)
+                {
+                    if (doc == null || string.IsNullOrEmpty(doc.ArmorId))
+                        continue;
+                    if (Enum.TryParse(doc.Slot, out ArmorSlot slot))
+                        entries.Add(new EquippedArmorEntry(slot, doc.ArmorId));
+                }
+            }
+
+            if (dictionary != null)
+            {
+                foreach (KeyValuePair<string, string> pair in dictionary)
+                {
+                    if (string.IsNullOrEmpty(pair.Value))
+                        continue;
+                    if (Enum.TryParse(pair.Key, out ArmorSlot slot) && !entries.Exists(entry => entry.slot == slot))
+                        entries.Add(new EquippedArmorEntry(slot, pair.Value));
+                }
+            }
+            return entries;
+        }
+
+        private static Dictionary<string, string> ToEquippedArmorDictionary(List<EquippedArmorEntry> entries)
+        {
+            Dictionary<string, string> dictionary = new Dictionary<string, string>();
+            if (entries == null)
+                return dictionary;
+            foreach (EquippedArmorEntry entry in entries)
+            {
+                if (entry != null && !string.IsNullOrEmpty(entry.armorId))
+                    dictionary[entry.slot.ToString()] = entry.armorId;
+            }
+            return dictionary;
         }
 
         private static List<DailyMissionStateDoc> ToDailyMissionDocs(List<DailyMissionState> states)

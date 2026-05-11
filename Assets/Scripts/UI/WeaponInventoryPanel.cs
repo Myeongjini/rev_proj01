@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using WizardGrower.Armor;
 using WizardGrower.Weapons;
 
 namespace WizardGrower.UI
@@ -15,6 +16,10 @@ namespace WizardGrower.UI
         [SerializeField] private WeaponDetailView detailView;
         [SerializeField] private Button synthesizeAllButton;
         [SerializeField] private Button closeButton;
+        [SerializeField] private Button weaponTabButton;
+        [SerializeField] private Button armorTabButton;
+        [SerializeField] private GameObject weaponContentRoot;
+        [SerializeField] private ArmorInventoryTab armorInventoryTab;
         [SerializeField] private WeaponFusionResultView fusionResultView;
         [SerializeField] private RectTransform drawerRoot;
         [SerializeField] private float openY = 0f;
@@ -25,6 +30,9 @@ namespace WizardGrower.UI
         private WeaponInventory inventory;
         private WeaponDatabase database;
         private WeaponFusionService fusionService;
+        private ArmorInventory armorInventory;
+        private ArmorDatabase armorDatabase;
+        private ArmorFusionService armorFusionService;
         private bool visible;
         private WeaponDefinition selectedWeapon;
         private Coroutine slideRoutine;
@@ -66,6 +74,16 @@ namespace WizardGrower.UI
                 closeButton.onClick.RemoveListener(Close);
                 closeButton.onClick.AddListener(Close);
             }
+            if (weaponTabButton != null)
+            {
+                weaponTabButton.onClick.RemoveListener(ShowWeaponTab);
+                weaponTabButton.onClick.AddListener(ShowWeaponTab);
+            }
+            if (armorTabButton != null)
+            {
+                armorTabButton.onClick.RemoveListener(ShowArmorTab);
+                armorTabButton.onClick.AddListener(ShowArmorTab);
+            }
             GridLayoutGroup grid = slotContainer != null ? slotContainer.GetComponent<GridLayoutGroup>() : null;
             if (grid != null)
             {
@@ -78,6 +96,16 @@ namespace WizardGrower.UI
                 detailView.Clear();
             RefreshFusionButton();
             SetVisible(false);
+        }
+
+        public void InitializeArmor(ArmorInventory inventory, ArmorDatabase database, ArmorFusionService fusionService)
+        {
+            armorInventory = inventory;
+            armorDatabase = database;
+            armorFusionService = fusionService;
+            if (armorInventoryTab != null)
+                armorInventoryTab.Initialize(armorInventory, armorDatabase, armorFusionService);
+            ShowWeaponTab();
         }
 
         private void OnDestroy()
@@ -93,6 +121,10 @@ namespace WizardGrower.UI
                 synthesizeAllButton.onClick.RemoveListener(OnSynthesizeAll);
             if (closeButton != null)
                 closeButton.onClick.RemoveListener(Close);
+            if (weaponTabButton != null)
+                weaponTabButton.onClick.RemoveListener(ShowWeaponTab);
+            if (armorTabButton != null)
+                armorTabButton.onClick.RemoveListener(ShowArmorTab);
         }
 
         public void Toggle()
@@ -242,6 +274,25 @@ namespace WizardGrower.UI
         {
             if (synthesizeAllButton != null)
                 synthesizeAllButton.interactable = fusionService != null && fusionService.CanFuseAny(inventory, database);
+        }
+
+        private void ShowWeaponTab()
+        {
+            if (weaponContentRoot != null)
+                weaponContentRoot.SetActive(true);
+            if (armorInventoryTab != null)
+                armorInventoryTab.gameObject.SetActive(false);
+        }
+
+        private void ShowArmorTab()
+        {
+            if (weaponContentRoot != null)
+                weaponContentRoot.SetActive(false);
+            if (armorInventoryTab != null)
+            {
+                armorInventoryTab.gameObject.SetActive(true);
+                armorInventoryTab.Initialize(armorInventory, armorDatabase, armorFusionService);
+            }
         }
     }
 }

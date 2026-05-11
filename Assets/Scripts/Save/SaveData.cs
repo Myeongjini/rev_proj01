@@ -11,7 +11,7 @@ namespace WizardGrower.Save
     [Serializable]
     public class SaveData
     {
-        public int saveVersion = 7;
+        public int saveVersion = 9;
         public string userId = "local";
         public long updatedAtUnixMs;
 
@@ -29,6 +29,10 @@ namespace WizardGrower.Save
         public List<UpgradeLevelEntry> upgrades = new List<UpgradeLevelEntry>();
         public string equippedWeaponId = "common_beginner_staff";
         public List<OwnedWeaponEntry> ownedWeapons = new List<OwnedWeaponEntry> { new OwnedWeaponEntry("common_beginner_staff", 1) };
+        public List<WizardGrower.Armor.OwnedArmorEntry> ownedArmors = new List<WizardGrower.Armor.OwnedArmorEntry>();
+        public List<WizardGrower.Armor.EquippedArmorEntry> equippedArmors = new List<WizardGrower.Armor.EquippedArmorEntry>();
+        public Dictionary<string, string> equippedArmorBySlot = new Dictionary<string, string>();
+        public int eliteSpawnCounter;
         public List<string> ownedWeaponIds = new List<string> { "wand_starter" };
         public List<string> ownedSkillIds = new List<string>(SkillId.DefaultOwned);
         public List<string> equippedSkillSlots = new List<string> { SkillId.Meteor, string.Empty, string.Empty, string.Empty, string.Empty };
@@ -53,7 +57,9 @@ namespace WizardGrower.Save
         public float criticalChance = 0.1f;
         public float criticalMultiplier = 2f;
         public float armorPenetration;
+        public float defense;
         public float maxHealth = 100f;
+        public float maxMana;
         public float currentHealth = 100f;
     }
 

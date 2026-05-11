@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49692dc0134d4cefa12bb12374591009, type: 3}
+  m_Name: ArmorDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Armor.ArmorDatabase
+  armors:
+  - {fileID: 11400000, guid: 3d16f313dd37407cafb776dff14bbecf, type: 2}
+  - {fileID: 11400000, guid: e87b67e6aff04d538d7cb4bf4732026f, type: 2}
+  - {fileID: 11400000, guid: 751e7445fd184267ae2187c979bf04f2, type: 2}
+  - {fileID: 11400000, guid: 6623c8711140477ba7da7bf9e161c497, type: 2}
+  - {fileID: 11400000, guid: ef16ead7b32548b5bfaca23c02f631b0, type: 2}
+  - {fileID: 11400000, guid: f08fa51d26ba458f8f2ff57dce65386e, type: 2}
+  - {fileID: 11400000, guid: 0b3bcfb6b35240d8b023cc48abf69fbf, type: 2}
+  - {fileID: 11400000, guid: 6eb35214ae334e7ca725c8bae39f03ed, type: 2}
+  - {fileID: 11400000, guid: df152bc719fd41bdb4a3d90a945822f6, type: 2}
+  - {fileID: 11400000, guid: 80c71cb82f864479851453539bbf3f2b, type: 2}
+  - {fileID: 11400000, guid: 8b10d4aa42924a2abe558fe259399d01, type: 2}
+  - {fileID: 11400000, guid: 95fcccaa430d4c88bb26d1d12c9fe25a, type: 2}
+  - {fileID: 11400000, guid: 7067334926494c6f9dbd2662bcd0cd51, type: 2}
+  - {fileID: 11400000, guid: df44d940df444db095dba4c5f38ea827, type: 2}
+  - {fileID: 11400000, guid: 7798a047cf024849887c9d78623915e8, type: 2}
+  - {fileID: 11400000, guid: 300008160d05497c809335c7e856b5d0, type: 2}
+  - {fileID: 11400000, guid: 755263ace267432392e25f0cfaee22cf, type: 2}
+  - {fileID: 11400000, guid: e7d91130858a4086b8eec8f20d18cb9f, type: 2}
+  - {fileID: 11400000, guid: e73e313caff9462ca5ea85ee566b82c8, type: 2}
+  - {fileID: 11400000, guid: 7cd9f1ae49314963ac91fb73faeb444c, type: 2}

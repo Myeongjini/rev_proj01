@@ -11,6 +11,7 @@ namespace WizardGrower.Enemies
         [SerializeField] private float armor = 0f;
         [SerializeField] private int rewardGold = 10;
         [SerializeField] private Transform hitTransform;
+        [SerializeField] private bool isElite;
 
         public event Action<DamageInfo> Damaged;
         public event Action<IDamageable> Killed;
@@ -20,6 +21,7 @@ namespace WizardGrower.Enemies
         public float MaxHealth => maxHealth;
         public float Armor => armor;
         public int RewardGold => rewardGold;
+        public bool IsElite => isElite;
         public bool IsAlive => currentHealth > 0f;
 
         public virtual void Initialize(float health, int reward, float armor = 0f)
@@ -28,7 +30,13 @@ namespace WizardGrower.Enemies
             currentHealth = maxHealth;
             this.armor = Mathf.Max(0f, armor);
             rewardGold = Mathf.Max(0, reward);
+            isElite = false;
             gameObject.SetActive(true);
+        }
+
+        public void MarkElite()
+        {
+            isElite = true;
         }
 
         public void TakeDamage(DamageInfo info)

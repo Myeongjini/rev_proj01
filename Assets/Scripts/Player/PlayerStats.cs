@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using WizardGrower.Armor;
 using WizardGrower.Save;
 using WizardGrower.Weapons;
 
@@ -14,12 +15,14 @@ namespace WizardGrower.Player
         [SerializeField, Range(0f, 1f)] private float criticalChance = 0.1f;
         [SerializeField] private float criticalMultiplier = 2f;
         [SerializeField] private float armorPenetration = 0f;
+        [SerializeField] private float defense = 0f;
         [SerializeField] private float maxHealth = 100f;
         [SerializeField] private float currentHealth = 100f;
         [SerializeField] private float combatPower = 10f;
 
         private PlayerStatsSnapshot baseSnapshot;
         private WeaponStats? equippedStats;
+        private ArmorStats equippedArmorStats;
 
         public event Action Changed;
         public event Action HealthChanged;
@@ -30,6 +33,7 @@ namespace WizardGrower.Player
         public float CriticalChance => criticalChance;
         public float CriticalMultiplier => criticalMultiplier;
         public float ArmorPenetration => armorPenetration;
+        public float Defense => defense;
         public float MaxHealth => maxHealth;
         public float CurrentHealth => currentHealth;
         public float CombatPower => combatPower;
@@ -38,42 +42,42 @@ namespace WizardGrower.Player
         {
             EnsureBaseSnapshot();
             baseSnapshot.attackDamage += amount;
-            RecomputeWithEquipped(equippedStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats);
         }
 
         public void AddAutoFireRate(float amount)
         {
             EnsureBaseSnapshot();
             baseSnapshot.autoAttackInterval = Mathf.Max(0.05f, baseSnapshot.autoAttackInterval - amount);
-            RecomputeWithEquipped(equippedStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats);
         }
 
         public void AddManualFireRate(float amount)
         {
             EnsureBaseSnapshot();
             baseSnapshot.manualAttackInterval = Mathf.Max(0.05f, baseSnapshot.manualAttackInterval - amount);
-            RecomputeWithEquipped(equippedStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats);
         }
 
         public void AddCriticalChance(float amount)
         {
             EnsureBaseSnapshot();
             baseSnapshot.criticalChance = Mathf.Clamp01(baseSnapshot.criticalChance + amount);
-            RecomputeWithEquipped(equippedStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats);
         }
 
         public void AddCriticalMultiplier(float amount)
         {
             EnsureBaseSnapshot();
             baseSnapshot.criticalMultiplier = Mathf.Max(1f, baseSnapshot.criticalMultiplier + amount);
-            RecomputeWithEquipped(equippedStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats);
         }
 
         public void AddArmorPenetration(float amount)
         {
             EnsureBaseSnapshot();
             baseSnapshot.armorPenetration = Mathf.Max(0f, baseSnapshot.armorPenetration + amount);
-            RecomputeWithEquipped(equippedStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats);
         }
 
         public void AddMaxHealth(float amount)
@@ -81,7 +85,7 @@ namespace WizardGrower.Player
             EnsureBaseSnapshot();
             baseSnapshot.maxHealth = Mathf.Max(1f, baseSnapshot.maxHealth + amount);
             baseSnapshot.currentHealth = Mathf.Clamp(baseSnapshot.currentHealth + amount, 0f, baseSnapshot.maxHealth);
-            RecomputeWithEquipped(equippedStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats);
         }
 
         public void Heal(float amount)
@@ -108,6 +112,7 @@ namespace WizardGrower.Player
                 return;
 
             equippedStats = null;
+            equippedArmorStats = default;
             baseSnapshot = NormalizeSnapshot(snapshot);
             ApplyRuntimeSnapshot(baseSnapshot);
             RecalculateCombatPower();
@@ -123,9 +128,15 @@ namespace WizardGrower.Player
 
         public void RecomputeWithEquipped(WeaponStats? equipped)
         {
+            RecomputeWithEquipment(equipped, equippedArmorStats);
+        }
+
+        public void RecomputeWithEquipment(WeaponStats? equipped, ArmorStats armorStats)
+        {
             EnsureBaseSnapshot();
             equippedStats = equipped;
-            PlayerStatsSnapshot composed = WeaponStatComposer.Recompute(baseSnapshot, equippedStats);
+            equippedArmorStats = armorStats;
+            PlayerStatsSnapshot composed = ArmorStatComposer.Recompute(baseSnapshot, equippedStats, equippedArmorStats);
             ApplyRuntimeSnapshot(composed);
             RecalculateCombatPower();
             HealthChanged?.Invoke();
@@ -135,6 +146,7 @@ namespace WizardGrower.Player
         {
             combatPower = attackDamage * (1f + criticalChance * (criticalMultiplier - 1f)) * (1f / Mathf.Max(0.05f, autoAttackInterval))
                 + armorPenetration * 2f
+                + defense * 1.5f
                 + maxHealth * 0.1f;
             Changed?.Invoke();
         }
@@ -154,6 +166,7 @@ namespace WizardGrower.Player
                 criticalChance = criticalChance,
                 criticalMultiplier = criticalMultiplier,
                 armorPenetration = armorPenetration,
+                defense = defense,
                 maxHealth = maxHealth,
                 currentHealth = currentHealth
             });
@@ -168,6 +181,7 @@ namespace WizardGrower.Player
             criticalChance = normalized.criticalChance;
             criticalMultiplier = normalized.criticalMultiplier;
             armorPenetration = normalized.armorPenetration;
+            defense = normalized.defense;
             maxHealth = normalized.maxHealth;
             currentHealth = normalized.currentHealth;
         }
@@ -189,7 +203,9 @@ namespace WizardGrower.Player
                 criticalChance = Mathf.Clamp01(source.criticalChance),
                 criticalMultiplier = Mathf.Max(1f, source.criticalMultiplier),
                 armorPenetration = Mathf.Max(0f, source.armorPenetration),
+                defense = Mathf.Max(0f, source.defense),
                 maxHealth = normalizedMaxHealth,
+                maxMana = Mathf.Max(0f, source.maxMana),
                 currentHealth = Mathf.Clamp(source.currentHealth <= 0f ? normalizedMaxHealth : source.currentHealth, 0f, normalizedMaxHealth)
             };
         }
@@ -206,7 +222,9 @@ namespace WizardGrower.Player
                 criticalChance = source.criticalChance,
                 criticalMultiplier = source.criticalMultiplier,
                 armorPenetration = source.armorPenetration,
+                defense = source.defense,
                 maxHealth = source.maxHealth,
+                maxMana = source.maxMana,
                 currentHealth = source.currentHealth
             };
         }

@@ -22,8 +22,16 @@ namespace WizardGrower.Save
             if (ctx.WeaponInventory != null)
             {
                 ctx.WeaponInventory.LoadFromSave(data.ownedWeapons, data.equippedWeaponId);
-                ctx.Wizard.Stats.RecomputeWithEquipped(ctx.WeaponInventory.Equipped != null ? ctx.WeaponInventory.Equipped.statBonuses : (WizardGrower.Weapons.WeaponStats?)null);
             }
+            if (ctx.ArmorInventory != null)
+            {
+                ctx.ArmorInventory.LoadFromSave(data.ownedArmors, data.equippedArmors);
+                if (ctx.EliteSpawnTracker != null)
+                    ctx.EliteSpawnTracker.LoadCounter(data.eliteSpawnCounter);
+            }
+            ctx.Wizard.Stats.RecomputeWithEquipment(
+                ctx.WeaponInventory != null && ctx.WeaponInventory.Equipped != null ? ctx.WeaponInventory.Equipped.statBonuses : (WizardGrower.Weapons.WeaponStats?)null,
+                ctx.ArmorInventory != null ? ctx.ArmorInventory.CaptureEquippedStats() : default);
             ctx.Wallet.SetGold(data.gold);
             ctx.Wallet.SetGems(data.gems);
             if (ctx.GachaService != null)
@@ -80,6 +88,15 @@ namespace WizardGrower.Save
                 data.ownedWeapons = new System.Collections.Generic.List<WizardGrower.Weapons.OwnedWeaponEntry>(ctx.WeaponInventory.CaptureForSave());
                 data.equippedWeaponId = ctx.WeaponInventory.EquippedWeaponId;
             }
+            if (ctx.ArmorInventory != null)
+            {
+                data.ownedArmors = new System.Collections.Generic.List<WizardGrower.Armor.OwnedArmorEntry>(ctx.ArmorInventory.CaptureForSave());
+                data.equippedArmors = new System.Collections.Generic.List<WizardGrower.Armor.EquippedArmorEntry>(ctx.ArmorInventory.CaptureEquippedForSave());
+                data.equippedArmorBySlot = new System.Collections.Generic.Dictionary<string, string>();
+                for (int i = 0; i < data.equippedArmors.Count; i++)
+                    data.equippedArmorBySlot[data.equippedArmors[i].slot.ToString()] = data.equippedArmors[i].armorId;
+            }
+            data.eliteSpawnCounter = ctx.EliteSpawnTracker != null ? ctx.EliteSpawnTracker.Counter : 0;
             data.goldDungeon = ctx.GoldDungeonService != null && ctx.SaveService != null && ctx.SaveService.CurrentData.goldDungeon != null
                 ? ctx.SaveService.CurrentData.goldDungeon
                 : new WizardGrower.Dungeons.GoldDungeonState();
@@ -105,6 +122,13 @@ namespace WizardGrower.Save
                 context.WeaponInventory.EquippedChanged += _ => QueueSave();
                 context.WeaponInventory.InventoryChanged += QueueSave;
             }
+            if (context.ArmorInventory != null)
+            {
+                context.ArmorInventory.EquippedChanged += _ => QueueSave();
+                context.ArmorInventory.InventoryChanged += QueueSave;
+            }
+            if (context.EliteSpawnTracker != null)
+                context.EliteSpawnTracker.CounterChanged += _ => QueueSave();
             if (context.GachaService != null)
             {
                 context.GachaService.PityChanged += _ => QueueSave();
