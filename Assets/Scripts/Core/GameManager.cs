@@ -63,6 +63,7 @@ namespace WizardGrower.Core
                 context.OfflineTime.Initialize(context.SaveService, context.SaveBinder, context.MissionResetService);
             EnsureOfflineRewardService();
             EnsureStartupPopupServices();
+            EnsureGoldDungeonResultModal();
             if (context.WeaponVisual != null)
                 context.WeaponVisual.Bind(context.Wizard, context.WeaponInventory, context.ProjectileFactory);
             if (context.WeaponInventory != null)
@@ -218,6 +219,53 @@ namespace WizardGrower.Core
             panelGo.transform.SetAsLastSibling();
             panelGo.SetActive(false);
             return panelGo.GetComponent<GoldDungeonEntryPanel>();
+        }
+
+        private void EnsureGoldDungeonResultModal()
+        {
+            GoldDungeonResultModal resultModal = context.GoldDungeonResultModal != null
+                ? context.GoldDungeonResultModal
+                : FindGoldDungeonResultModalInScene();
+            if (resultModal == null)
+                resultModal = CreateGoldDungeonResultModal();
+
+            resultModal.Bind(context.GoldDungeonService, context.AdSimulation);
+            if (context.StartupPopupQueue != null)
+                context.StartupPopupQueue.Register(resultModal);
+            context.SetGoldDungeonResultModal(resultModal);
+        }
+
+        private GoldDungeonResultModal FindGoldDungeonResultModalInScene()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas != null)
+            {
+                GoldDungeonResultModal modal = canvas.GetComponentInChildren<GoldDungeonResultModal>(true);
+                if (modal != null)
+                    return modal;
+            }
+
+            GoldDungeonResultModal[] modals = FindObjectsByType<GoldDungeonResultModal>(FindObjectsInactive.Include);
+            return modals != null && modals.Length > 0 ? modals[0] : null;
+        }
+
+        private GoldDungeonResultModal CreateGoldDungeonResultModal()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas == null)
+                canvas = FindAnyObjectByType<Canvas>();
+
+            Transform parent = canvas != null ? canvas.transform : context.transform;
+            GameObject modalGo = new GameObject("GoldDungeonResultModal", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(GoldDungeonResultModal));
+            modalGo.transform.SetParent(parent, false);
+            RectTransform rect = modalGo.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            modalGo.transform.SetAsLastSibling();
+            modalGo.SetActive(false);
+            return modalGo.GetComponent<GoldDungeonResultModal>();
         }
 
         private OfflineRewardModal FindOfflineRewardModalInScene()

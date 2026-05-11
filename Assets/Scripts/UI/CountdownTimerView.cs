@@ -40,6 +40,27 @@ namespace WizardGrower.UI
             label.fontSize = 22f;
             label.fontStyle = FontStyles.Bold;
             label.color = Color.white;
+            ApplyProjectFont(label);
+        }
+
+        private void ApplyProjectFont(TMP_Text text)
+        {
+            if (text == null)
+                return;
+
+            Canvas canvas = GetComponentInParent<Canvas>(true);
+            if (canvas == null)
+                return;
+
+            TMP_Text[] labels = canvas.GetComponentsInChildren<TMP_Text>(true);
+            for (int i = 0; i < labels.Length; i++)
+            {
+                if (labels[i] != null && labels[i].font != null && labels[i].font.name.Contains("Nanum"))
+                {
+                    text.font = labels[i].font;
+                    return;
+                }
+            }
         }
     }
 }

@@ -66,6 +66,7 @@ namespace WizardGrower.Core
         [field: SerializeField] public GameStartupPopupQueue StartupPopupQueue { get; private set; }
         [field: SerializeField] public AdSimulationService AdSimulation { get; private set; }
         [field: SerializeField] public GoldDungeonEntryPanel GoldDungeonEntryPanel { get; private set; }
+        [field: SerializeField] public GoldDungeonResultModal GoldDungeonResultModal { get; private set; }
         [field: SerializeField] public GoldDungeonService GoldDungeonService { get; private set; }
         [field: SerializeField] public CombatPowerPopupView CombatPowerPopup { get; private set; }
         public CombatPowerService CombatPower { get; private set; }
@@ -122,6 +123,12 @@ namespace WizardGrower.Core
         {
             if (entryPanel != null)
                 GoldDungeonEntryPanel = entryPanel;
+        }
+
+        public void SetGoldDungeonResultModal(GoldDungeonResultModal resultModal)
+        {
+            if (resultModal != null)
+                GoldDungeonResultModal = resultModal;
         }
 
         public void SetGoldDungeonService(GoldDungeonService service)

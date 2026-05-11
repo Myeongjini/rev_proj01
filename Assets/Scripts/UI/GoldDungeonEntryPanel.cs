@@ -14,10 +14,13 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text remainingLabel;
         [SerializeField] private TMP_Text feedbackLabel;
         [SerializeField] private Button enterButton;
+        [SerializeField] private Button sweepButton;
         [SerializeField] private Button cancelButton;
         [SerializeField] private string dungeonSceneName = "GoldDungeonScene";
 
         private GoldDungeonService service;
+        private readonly System.Collections.Generic.List<GoldDungeonDifficultySlotView> difficultySlots = new System.Collections.Generic.List<GoldDungeonDifficultySlotView>();
+        private int selectedDifficultyIndex;
 
         public event Action<bool> OpenStateChanged;
 
@@ -74,13 +77,16 @@ namespace WizardGrower.UI
                 feedbackLabel.text = "난이도 Lv1";
             if (enterButton != null)
                 enterButton.interactable = remainingEntries > 0;
+            if (sweepButton != null)
+                sweepButton.interactable = remainingEntries > 0 && service != null && service.GetBestScore() > 0;
+            RefreshDifficultySlots();
         }
 
         private async void Enter()
         {
             if (service != null)
             {
-                bool entered = await service.BeginEntryAsync(0);
+                bool entered = await service.BeginEntryAsync(selectedDifficultyIndex);
                 if (!entered)
                 {
                     if (feedbackLabel != null)
@@ -91,6 +97,33 @@ namespace WizardGrower.UI
             }
 
             AsyncOperation operation = SceneManager.LoadSceneAsync(dungeonSceneName, LoadSceneMode.Single);
+        }
+
+        private async void Sweep()
+        {
+            if (service == null)
+                return;
+
+            long bestScore = service.GetBestScore();
+            if (bestScore <= 0)
+                return;
+
+            bool entered = await service.BeginEntryAsync(selectedDifficultyIndex);
+            if (!entered)
+            {
+                if (feedbackLabel != null)
+                    feedbackLabel.text = "오늘 입장 횟수를 모두 사용했습니다";
+                RefreshFromService();
+                return;
+            }
+
+            GoldDungeonSceneTransfer.SetPending(new GoldDungeonResult
+            {
+                killCount = 0,
+                earnedGold = bestScore,
+                difficulty = selectedDifficultyIndex + 1
+            });
+            Close();
         }
 
         private async void RefreshFromService()
@@ -149,13 +182,59 @@ namespace WizardGrower.UI
                 feedbackLabel = CreateText(panel, "Feedback", "난이도 Lv1", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 24f), new Vector2(-90f, 44f), 18f, FontStyles.Normal);
             if (enterButton == null)
                 enterButton = CreateButton(panel, "EnterButton", "입장", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-120f, 70f), new Vector2(200f, 60f), new Color(0.12f, 0.36f, 0.92f, 1f));
+            if (sweepButton == null)
+                sweepButton = CreateButton(panel, "SweepButton", "소탕", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 138f), new Vector2(200f, 48f), new Color(0.78f, 0.48f, 0.12f, 1f));
             if (cancelButton == null)
                 cancelButton = CreateButton(panel, "CancelButton", "취소", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(120f, 70f), new Vector2(200f, 60f), new Color(0.20f, 0.22f, 0.26f, 1f));
+            EnsureDifficultySlots(panel);
 
             enterButton.onClick.RemoveAllListeners();
+            sweepButton.onClick.RemoveAllListeners();
             cancelButton.onClick.RemoveAllListeners();
             enterButton.onClick.AddListener(Enter);
+            sweepButton.onClick.AddListener(Sweep);
             cancelButton.onClick.AddListener(Close);
+        }
+
+        private void EnsureDifficultySlots(Transform panel)
+        {
+            if (difficultySlots.Count > 0)
+                return;
+
+            for (int i = 0; i < 5; i++)
+            {
+                GameObject slotGo = new GameObject($"DifficultySlot_{i + 1}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(GoldDungeonDifficultySlotView));
+                slotGo.transform.SetParent(panel, false);
+                RectTransform rect = slotGo.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = new Vector2(-208f + i * 104f, -50f);
+                rect.sizeDelta = new Vector2(94f, 70f);
+                GoldDungeonDifficultySlotView slot = slotGo.GetComponent<GoldDungeonDifficultySlotView>();
+                int captured = i;
+                slot.AddClickListener(() =>
+                {
+                    selectedDifficultyIndex = captured;
+                    RefreshDifficultySlots();
+                });
+                difficultySlots.Add(slot);
+            }
+        }
+
+        private void RefreshDifficultySlots()
+        {
+            if (difficultySlots.Count == 0)
+                return;
+
+            for (int i = 0; i < difficultySlots.Count; i++)
+            {
+                GoldDungeonDifficulty difficulty = null;
+                if (service != null && service.Difficulties != null && i < service.Difficulties.Count)
+                    difficulty = service.Difficulties[i];
+                else
+                    difficulty = new GoldDungeonDifficulty { level = i + 1, unlockPlayerLevel = i == 0 ? 0 : (i + 1) * 5 };
+                difficultySlots[i].Bind(i, difficulty, i == selectedDifficultyIndex);
+            }
         }
 
         private TMP_Text CreateText(Transform parent, string name, string text, Vector2 min, Vector2 max, Vector2 pos, Vector2 size, float fontSize, FontStyles style)
@@ -168,11 +247,12 @@ namespace WizardGrower.UI
             rect.anchoredPosition = pos;
             rect.sizeDelta = size;
             TMP_Text label = go.GetComponent<TMP_Text>();
-            label.text = text;
             label.alignment = TextAlignmentOptions.Center;
             label.fontSize = fontSize;
             label.fontStyle = style;
             label.color = Color.white;
+            ApplyProjectFont(label);
+            label.text = text;
             return label;
         }
 
@@ -188,6 +268,26 @@ namespace WizardGrower.UI
             go.GetComponent<Image>().color = color;
             CreateText(go.transform, "Label", text, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, 18f, FontStyles.Bold);
             return go.GetComponent<Button>();
+        }
+
+        private void ApplyProjectFont(TMP_Text text)
+        {
+            if (text == null)
+                return;
+
+            Canvas canvas = GetComponentInParent<Canvas>(true);
+            if (canvas == null)
+                return;
+
+            TMP_Text[] labels = canvas.GetComponentsInChildren<TMP_Text>(true);
+            for (int i = 0; i < labels.Length; i++)
+            {
+                if (labels[i] != null && labels[i].font != null && labels[i].font.name.Contains("Nanum"))
+                {
+                    text.font = labels[i].font;
+                    return;
+                }
+            }
         }
     }
 }

@@ -18,6 +18,24 @@ namespace WizardGrower.Dungeons
         public int difficulty;
     }
 
+    public static class GoldDungeonSceneTransfer
+    {
+        public static event Action PendingResultChanged;
+
+        public static GoldDungeonResult? PendingResult { get; private set; }
+
+        public static void SetPending(GoldDungeonResult result)
+        {
+            PendingResult = result;
+            PendingResultChanged?.Invoke();
+        }
+
+        public static void Clear()
+        {
+            PendingResult = null;
+        }
+    }
+
     public class GoldDungeonBootstrap : MonoBehaviour
     {
         [SerializeField] private float durationSeconds = 60f;
@@ -87,6 +105,7 @@ namespace WizardGrower.Dungeons
                 earnedGold = (long)killCount * goldPerKill,
                 difficulty = Mathf.Max(1, difficulty)
             };
+            GoldDungeonSceneTransfer.SetPending(result);
             Completed?.Invoke(result);
             SceneManager.LoadSceneAsync(mainSceneName, LoadSceneMode.Single);
         }
