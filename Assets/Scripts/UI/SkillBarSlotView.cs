@@ -16,13 +16,15 @@ namespace WizardGrower.UI
         private SkillRuntime runtime;
         private System.Action<int> clicked;
         private int slotIndex;
+        private bool locked;
+        private int unlockLevel = 1;
 
         private void Awake()
         {
             EnsureUi();
         }
 
-        public void Bind(int slotIndex, SkillRuntime runtime, System.Action<int> clicked)
+        public void Bind(int slotIndex, SkillRuntime runtime, System.Action<int> clicked, bool locked = false, int unlockLevel = 1)
         {
             if (this.runtime != null)
                 this.runtime.CooldownChanged -= OnCooldownChanged;
@@ -31,6 +33,8 @@ namespace WizardGrower.UI
             this.slotIndex = slotIndex;
             this.runtime = runtime;
             this.clicked = clicked;
+            this.locked = locked;
+            this.unlockLevel = Mathf.Max(1, unlockLevel);
 
             if (button != null)
             {
@@ -60,15 +64,15 @@ namespace WizardGrower.UI
             if (label != null)
             {
                 ApplyProjectFont(label);
-                label.text = hasSkill ? skill.displayName : "-";
+                label.text = locked ? $"🔒\nLv {unlockLevel}" : (hasSkill ? skill.displayName : "-");
             }
 
             bool insufficient = hasSkill && currentMana < skill.manaCost;
             if (lockOverlay != null)
-                lockOverlay.enabled = insufficient;
+                lockOverlay.enabled = locked || insufficient;
 
             if (button != null)
-                button.interactable = hasSkill;
+                button.interactable = hasSkill && !locked;
 
             OnCooldownChanged(runtime != null ? runtime.CooldownRemaining : 0f);
         }

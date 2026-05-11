@@ -15,6 +15,7 @@ MonoBehaviour:
   skillId: cold_beam
   displayName: "\uCF5C\uB4DC\uBE54"
   icon: {fileID: 0}
+  unlockLevel: 5
   manaCost: 30
   cooldownSeconds: 6
   damageCoefficient: 5

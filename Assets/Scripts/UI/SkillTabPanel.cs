@@ -13,9 +13,11 @@ namespace WizardGrower.UI
         [SerializeField] private Transform cardContainer;
         [SerializeField] private SkillCardView cardPrefab;
         [SerializeField] private SkillSlotPicker slotPicker;
+        [SerializeField] private TMP_Text feedbackLabel;
 
         private SkillCastOrchestrator orchestrator;
         private bool isOpen;
+        private float feedbackTimer;
 
         public event Action<bool> OpenStateChanged;
 
@@ -28,13 +30,29 @@ namespace WizardGrower.UI
         public void Bind(SkillCastOrchestrator orchestrator)
         {
             if (this.orchestrator != null)
+            {
                 this.orchestrator.SlotChanged -= OnSlotChanged;
+                this.orchestrator.Feedback -= ShowFeedback;
+            }
             this.orchestrator = orchestrator;
             if (this.orchestrator != null)
+            {
                 this.orchestrator.SlotChanged += OnSlotChanged;
+                this.orchestrator.Feedback += ShowFeedback;
+            }
             if (slotPicker != null)
                 slotPicker.Bind(orchestrator);
             Refresh();
+        }
+
+        private void Update()
+        {
+            if (feedbackTimer <= 0f)
+                return;
+
+            feedbackTimer -= Time.unscaledDeltaTime;
+            if (feedbackTimer <= 0f && feedbackLabel != null)
+                feedbackLabel.text = string.Empty;
         }
 
         public void Open()
@@ -93,7 +111,9 @@ namespace WizardGrower.UI
                 RectTransform rect = card.transform as RectTransform;
                 if (rect != null)
                     rect.sizeDelta = new Vector2(620f, 116f);
-                card.Bind(skill, FindEquippedSlot(skill.skillId), ShowPicker, Unequip);
+                bool unlocked = orchestrator == null || orchestrator.IsSkillUnlocked(skill);
+                int unlockLevel = orchestrator != null ? orchestrator.GetUnlockLevel(skill) : 1;
+                card.Bind(skill, FindEquippedSlot(skill.skillId), unlocked, unlockLevel, ShowPicker, Unequip);
             }
         }
 
@@ -175,6 +195,23 @@ namespace WizardGrower.UI
                 rect.offsetMax = Vector2.zero;
                 slotPicker = picker.GetComponent<SkillSlotPicker>();
             }
+
+            if (feedbackLabel == null)
+            {
+                GameObject labelGo = new GameObject("Feedback", typeof(RectTransform), typeof(TextMeshProUGUI));
+                labelGo.transform.SetParent(transform, false);
+                RectTransform rect = labelGo.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0f, 1f);
+                rect.anchorMax = new Vector2(1f, 1f);
+                rect.anchoredPosition = new Vector2(0f, -34f);
+                rect.sizeDelta = new Vector2(-90f, 34f);
+                feedbackLabel = labelGo.GetComponent<TMP_Text>();
+                feedbackLabel.alignment = TextAlignmentOptions.Center;
+                feedbackLabel.fontSize = 16f;
+                feedbackLabel.fontStyle = FontStyles.Bold;
+                feedbackLabel.color = new Color(1f, 0.72f, 0.25f, 1f);
+                ApplyProjectFont(feedbackLabel);
+            }
         }
 
         private Button CreateButton(string name, string text, Vector2 min, Vector2 max, Vector2 position, Vector2 size)
@@ -227,7 +264,19 @@ namespace WizardGrower.UI
         private void OnDestroy()
         {
             if (orchestrator != null)
+            {
                 orchestrator.SlotChanged -= OnSlotChanged;
+                orchestrator.Feedback -= ShowFeedback;
+            }
+        }
+
+        private void ShowFeedback(string message)
+        {
+            if (feedbackLabel == null)
+                return;
+
+            feedbackTimer = 1.4f;
+            feedbackLabel.text = message;
         }
     }
 }

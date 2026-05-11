@@ -49,9 +49,8 @@ namespace WizardGrower.UI
                 slotButtons[i].onClick.RemoveAllListeners();
                 slotButtons[i].onClick.AddListener(() =>
                 {
-                    if (orchestrator != null && pendingSkill != null)
-                        orchestrator.EquipSkill(index, pendingSkill.skillId);
-                    Hide();
+                    if (orchestrator != null && pendingSkill != null && orchestrator.EquipSkill(index, pendingSkill.skillId))
+                        Hide();
                 });
             }
         }

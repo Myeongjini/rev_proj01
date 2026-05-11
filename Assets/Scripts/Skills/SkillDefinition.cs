@@ -15,6 +15,7 @@ namespace WizardGrower.Skills
         public string skillId;
         public string displayName;
         public Sprite icon;
+        public int unlockLevel = 1;
         public float manaCost;
         public float cooldownSeconds;
         public float damageCoefficient;

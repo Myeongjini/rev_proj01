@@ -15,6 +15,7 @@ MonoBehaviour:
   skillId: charge
   displayName: "\uB3CC\uC9C4"
   icon: {fileID: 0}
+  unlockLevel: 10
   manaCost: 25
   cooldownSeconds: 5
   damageCoefficient: 6

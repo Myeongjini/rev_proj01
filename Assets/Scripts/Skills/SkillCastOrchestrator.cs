@@ -17,12 +17,14 @@ namespace WizardGrower.Skills
         [SerializeField] private EnemySpawner enemySpawner;
         [SerializeField] private ProjectileFactory projectileFactory;
         [SerializeField] private PlayerMana mana;
+        [SerializeField] private PlayerLevelService playerLevel;
 
         private readonly SkillRuntime[] slots = new SkillRuntime[SlotCount];
         private CombatCalculator calculator;
         private bool isDashing;
 
         public event Action<int, SkillDefinition> SlotChanged;
+        public event Action<string> Feedback;
 
         public SkillDatabase Database => database;
         public IReadOnlyList<SkillDefinition> OwnedSkills { get; private set; } = Array.Empty<SkillDefinition>();
@@ -33,14 +35,21 @@ namespace WizardGrower.Skills
             EnemySpawner enemySpawner,
             ProjectileFactory projectileFactory,
             PlayerMana mana,
-            CombatCalculator calculator)
+            CombatCalculator calculator,
+            PlayerLevelService playerLevel = null)
         {
+            if (this.playerLevel != null)
+                this.playerLevel.LevelChanged -= OnPlayerLevelChanged;
+
             this.database = database;
             this.wizard = wizard;
             this.enemySpawner = enemySpawner;
             this.projectileFactory = projectileFactory;
             this.mana = mana;
             this.calculator = calculator;
+            this.playerLevel = playerLevel;
+            if (this.playerLevel != null)
+                this.playerLevel.LevelChanged += OnPlayerLevelChanged;
             LoadOwnedSkills(null);
         }
 
@@ -97,9 +106,9 @@ namespace WizardGrower.Skills
             return ids;
         }
 
-        public void EquipSkill(int slotIndex, string skillId)
+        public bool EquipSkill(int slotIndex, string skillId)
         {
-            EquipSkill(slotIndex, skillId, true);
+            return EquipSkill(slotIndex, skillId, true);
         }
 
         public string GetEquippedSkillId(int slotIndex)
@@ -127,10 +136,20 @@ namespace WizardGrower.Skills
             return TryCastSlot(slotIndex, mana);
         }
 
-        private void EquipSkill(int slotIndex, string skillId, bool notify)
+        public bool IsSkillUnlocked(SkillDefinition skill)
+        {
+            return skill == null || playerLevel == null || playerLevel.CurrentLevel >= GetUnlockLevel(skill);
+        }
+
+        public int GetUnlockLevel(SkillDefinition skill)
+        {
+            return Mathf.Max(1, skill != null ? skill.unlockLevel : 1);
+        }
+
+        private bool EquipSkill(int slotIndex, string skillId, bool notify)
         {
             if (slotIndex < 0 || slotIndex >= SlotCount)
-                return;
+                return false;
 
             if (!string.IsNullOrEmpty(skillId))
             {
@@ -146,9 +165,23 @@ namespace WizardGrower.Skills
             }
 
             SkillDefinition definition = database != null ? database.GetById(skillId) : null;
+            if (definition != null && !IsSkillUnlocked(definition))
+            {
+                if (notify)
+                    Feedback?.Invoke($"Lv {GetUnlockLevel(definition)} 필요");
+                return false;
+            }
+
             slots[slotIndex] = definition != null ? new SkillRuntime(definition) : null;
             if (notify)
                 SlotChanged?.Invoke(slotIndex, definition);
+            return true;
+        }
+
+        private void OnPlayerLevelChanged(int _)
+        {
+            for (int i = 0; i < SlotCount; i++)
+                SlotChanged?.Invoke(i, GetSlot(i)?.Definition);
         }
 
         private bool TryCastSlot(int slotIndex, PlayerMana manaForCast)
@@ -247,6 +280,12 @@ namespace WizardGrower.Skills
             instance.Play(true);
             ParticleSystem.MainModule main = instance.main;
             Destroy(instance.gameObject, main.duration + main.startLifetime.constantMax + 0.25f);
+        }
+
+        private void OnDestroy()
+        {
+            if (playerLevel != null)
+                playerLevel.LevelChanged -= OnPlayerLevelChanged;
         }
     }
 }

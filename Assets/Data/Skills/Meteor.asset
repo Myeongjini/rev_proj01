@@ -15,6 +15,7 @@ MonoBehaviour:
   skillId: meteor
   displayName: "\uBA54\uD14C\uC624"
   icon: {fileID: 0}
+  unlockLevel: 1
   manaCost: 60
   cooldownSeconds: 12
   damageCoefficient: 12

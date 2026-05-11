@@ -78,7 +78,10 @@ namespace WizardGrower.UI
             for (int i = 0; i < slots.Length; i++)
             {
                 SkillRuntime runtime = orchestrator != null ? orchestrator.GetSlot(i) : null;
-                slots[i].Bind(i, runtime, OnSlotClicked);
+                SkillDefinition skill = runtime != null ? runtime.Definition : null;
+                bool locked = orchestrator != null && skill != null && !orchestrator.IsSkillUnlocked(skill);
+                int unlockLevel = orchestrator != null ? orchestrator.GetUnlockLevel(skill) : 1;
+                slots[i].Bind(i, runtime, OnSlotClicked, locked, unlockLevel);
                 slots[i].Refresh(currentMana);
             }
         }
@@ -88,7 +91,11 @@ namespace WizardGrower.UI
             if (slotIndex < 0 || slotIndex >= slots.Length)
                 return;
 
-            slots[slotIndex].Bind(slotIndex, orchestrator != null ? orchestrator.GetSlot(slotIndex) : null, OnSlotClicked);
+            SkillRuntime runtime = orchestrator != null ? orchestrator.GetSlot(slotIndex) : null;
+            SkillDefinition skill = runtime != null ? runtime.Definition : null;
+            bool locked = orchestrator != null && skill != null && !orchestrator.IsSkillUnlocked(skill);
+            int unlockLevel = orchestrator != null ? orchestrator.GetUnlockLevel(skill) : 1;
+            slots[slotIndex].Bind(slotIndex, runtime, OnSlotClicked, locked, unlockLevel);
             slots[slotIndex].Refresh(currentMana);
         }
 

@@ -54,7 +54,7 @@ namespace WizardGrower.Core
             if (context.ActiveSkill != null)
                 context.ActiveSkill.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
             if (context.SkillCastOrchestrator != null)
-                context.SkillCastOrchestrator.Initialize(context.SkillDatabase, context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
+                context.SkillCastOrchestrator.Initialize(context.SkillDatabase, context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator, context.PlayerLevelService);
             if (context.MissionService != null)
                 context.MissionService.Initialize(context.MissionDatabase, context.Wallet, context.EnemySpawner, context.StageManager, context.GachaService, weaponFusion, context.MissionResetService);
             EnsureGoldDungeonEntryPanel();
@@ -75,6 +75,8 @@ namespace WizardGrower.Core
                 context.CombatPowerPopup.Bind(combatPower);
             if (context.LevelUpPopup != null)
                 context.LevelUpPopup.Bind(context.PlayerLevelService);
+            if (context.SkillUnlockPopup != null)
+                context.SkillUnlockPopup.Bind(context.PlayerLevelService, context.SkillDatabase);
             if (context.PlayerLevelService != null)
                 context.PlayerLevelService.Initialize(context.Wizard.Stats, context.EnemySpawner, combatPower);
             context.HUD.BindCombatPower(combatPower);
@@ -172,7 +174,13 @@ namespace WizardGrower.Core
             if (popup == null)
                 popup = CreateLevelUpPopup();
 
-            context.SetPlayerLevelServices(service, popup, context.PlayerExpBar);
+            SkillUnlockPopupView skillUnlockPopup = context.SkillUnlockPopup != null
+                ? context.SkillUnlockPopup
+                : FindSkillUnlockPopupInScene();
+            if (skillUnlockPopup == null)
+                skillUnlockPopup = CreateSkillUnlockPopup();
+
+            context.SetPlayerLevelServices(service, popup, context.PlayerExpBar, skillUnlockPopup);
         }
 
         private LevelUpPopupView FindLevelUpPopupInScene()
@@ -217,6 +225,50 @@ namespace WizardGrower.Core
             label.color = new Color(1f, 0.92f, 0.35f, 1f);
             popupGo.SetActive(false);
             return popupGo.GetComponent<LevelUpPopupView>();
+        }
+
+        private SkillUnlockPopupView FindSkillUnlockPopupInScene()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas != null)
+            {
+                SkillUnlockPopupView popup = canvas.GetComponentInChildren<SkillUnlockPopupView>(true);
+                if (popup != null)
+                    return popup;
+            }
+
+            SkillUnlockPopupView[] popups = FindObjectsByType<SkillUnlockPopupView>(FindObjectsInactive.Include);
+            return popups != null && popups.Length > 0 ? popups[0] : null;
+        }
+
+        private SkillUnlockPopupView CreateSkillUnlockPopup()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas == null)
+                canvas = FindAnyObjectByType<Canvas>();
+
+            Transform parent = canvas != null ? canvas.transform : context.transform;
+            GameObject popupGo = new GameObject("SkillUnlockPopup", typeof(RectTransform), typeof(CanvasGroup), typeof(SkillUnlockPopupView));
+            popupGo.transform.SetParent(parent, false);
+            RectTransform rect = popupGo.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, 84f);
+            rect.sizeDelta = new Vector2(460f, 100f);
+            TMP_Text label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
+            label.transform.SetParent(popupGo.transform, false);
+            RectTransform labelRect = label.transform as RectTransform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            label.alignment = TextAlignmentOptions.Center;
+            label.fontSize = 24f;
+            label.fontStyle = FontStyles.Bold;
+            label.color = new Color(0.52f, 0.9f, 1f, 1f);
+            popupGo.SetActive(false);
+            return popupGo.GetComponent<SkillUnlockPopupView>();
         }
 
         private void EnsureStartupPopupServices()

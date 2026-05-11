@@ -11,8 +11,10 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text detailLabel;
         [SerializeField] private Button equipButton;
         [SerializeField] private Button unequipButton;
+        [SerializeField] private Image background;
 
         private SkillDefinition skill;
+        private bool unlocked = true;
         private System.Action<SkillDefinition> equipClicked;
         private System.Action<SkillDefinition> unequipClicked;
 
@@ -21,31 +23,35 @@ namespace WizardGrower.UI
             EnsureUi();
         }
 
-        public void Bind(SkillDefinition skill, int equippedSlot, System.Action<SkillDefinition> equipClicked, System.Action<SkillDefinition> unequipClicked)
+        public void Bind(SkillDefinition skill, int equippedSlot, bool unlocked, int unlockLevel, System.Action<SkillDefinition> equipClicked, System.Action<SkillDefinition> unequipClicked)
         {
             EnsureUi();
             this.skill = skill;
+            this.unlocked = unlocked;
             this.equipClicked = equipClicked;
             this.unequipClicked = unequipClicked;
 
-            string equipped = equippedSlot >= 0 ? $"슬롯 {equippedSlot + 1} 장착됨" : "장착 가능";
+            string equipped = !unlocked ? $"🔒 Lv {unlockLevel} 필요" : (equippedSlot >= 0 ? $"슬롯 {equippedSlot + 1} 장착됨" : "장착 가능");
             ApplyProjectFont(titleLabel);
             ApplyProjectFont(detailLabel);
             ApplyButtonFont(equipButton);
             ApplyButtonFont(unequipButton);
             titleLabel.text = skill != null ? $"{skill.displayName}  {equipped}" : "-";
             detailLabel.text = skill != null
-                ? $"마나 {skill.manaCost:0} / 쿨 {skill.cooldownSeconds:0.#}초 / 피해 {skill.damageCoefficient:0.#}x\n{skill.flavorText}"
+                ? $"{(!unlocked ? $"🔒 Lv {unlockLevel} 필요\n" : string.Empty)}마나 {skill.manaCost:0} / 쿨 {skill.cooldownSeconds:0.#}초 / 피해 {skill.damageCoefficient:0.#}x\n{skill.flavorText}"
                 : string.Empty;
+            if (background != null)
+                background.color = unlocked ? new Color(0.08f, 0.09f, 0.13f, 0.95f) : new Color(0.05f, 0.05f, 0.06f, 0.92f);
+            equipButton.interactable = unlocked;
             unequipButton.interactable = equippedSlot >= 0;
         }
 
         private void EnsureUi()
         {
-            Image image = GetComponent<Image>();
-            if (image == null)
-                image = gameObject.AddComponent<Image>();
-            image.color = new Color(0.08f, 0.09f, 0.13f, 0.95f);
+            background = GetComponent<Image>();
+            if (background == null)
+                background = gameObject.AddComponent<Image>();
+            background.color = new Color(0.08f, 0.09f, 0.13f, 0.95f);
 
             if (titleLabel == null)
                 titleLabel = CreateText("Title", new Vector2(0f, 0.55f), new Vector2(1f, 1f), 16f, FontStyles.Bold);
