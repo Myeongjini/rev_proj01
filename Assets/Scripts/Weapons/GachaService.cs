@@ -233,6 +233,10 @@ namespace WizardGrower.Weapons
                 }
             }
 
+#if !UNITY_EDITOR
+            return Fail("서버 연결이 필요합니다. 잠시 후 다시 시도해주세요.");
+#endif
+
             int gemsBeforePull = wallet.Gems;
             if (!wallet.TrySpendGems(cost, $"gacha_local_{count}"))
                 return Fail("젬이 부족합니다.");
