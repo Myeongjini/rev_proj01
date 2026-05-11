@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using WizardGrower.Dungeons;
 
 namespace WizardGrower.UI
 {
@@ -16,6 +17,8 @@ namespace WizardGrower.UI
         [SerializeField] private Button cancelButton;
         [SerializeField] private string dungeonSceneName = "GoldDungeonScene";
 
+        private GoldDungeonService service;
+
         public event Action<bool> OpenStateChanged;
 
         private void Awake()
@@ -24,10 +27,18 @@ namespace WizardGrower.UI
             Close();
         }
 
-        public void Bind()
+        public void Bind(GoldDungeonService service = null)
         {
+            if (service != null)
+            {
+                if (this.service != null)
+                    this.service.EntryCountChanged -= OnEntryCountChanged;
+                this.service = service;
+                this.service.EntryCountChanged += OnEntryCountChanged;
+            }
+
             EnsureUi();
-            Refresh(3, 3);
+            RefreshFromService();
         }
 
         public void Open()
@@ -37,7 +48,7 @@ namespace WizardGrower.UI
             group.alpha = 1f;
             group.interactable = true;
             group.blocksRaycasts = true;
-            Refresh(3, 3);
+            RefreshFromService();
             OpenStateChanged?.Invoke(true);
         }
 
@@ -65,9 +76,38 @@ namespace WizardGrower.UI
                 enterButton.interactable = remainingEntries > 0;
         }
 
-        private void Enter()
+        private async void Enter()
         {
-            SceneManager.LoadSceneAsync(dungeonSceneName, LoadSceneMode.Single);
+            if (service != null)
+            {
+                bool entered = await service.BeginEntryAsync(0);
+                if (!entered)
+                {
+                    if (feedbackLabel != null)
+                        feedbackLabel.text = "오늘 입장 횟수를 모두 사용했습니다";
+                    RefreshFromService();
+                    return;
+                }
+            }
+
+            AsyncOperation operation = SceneManager.LoadSceneAsync(dungeonSceneName, LoadSceneMode.Single);
+        }
+
+        private async void RefreshFromService()
+        {
+            if (service == null)
+            {
+                Refresh(3, 3);
+                return;
+            }
+
+            int used = await service.GetTodayEntryCountAsync();
+            Refresh(service.DailyEntryLimit - used, service.DailyEntryLimit);
+        }
+
+        private void OnEntryCountChanged(int _)
+        {
+            RefreshFromService();
         }
 
         private void EnsureUi()

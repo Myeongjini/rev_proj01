@@ -30,6 +30,7 @@ namespace WizardGrower.Save
         [FirestoreProperty("attendance")] public AttendanceStateDoc Attendance { get; set; }
         [FirestoreProperty("lastSeenAtUtcMs")] public long LastSeenAtUtcMs { get; set; }
         [FirestoreProperty("offlineRewardPending")] public long OfflineRewardPending { get; set; }
+        [FirestoreProperty("goldDungeon")] public GoldDungeonStateDoc GoldDungeon { get; set; }
     }
 
     [FirestoreData]
@@ -84,5 +85,13 @@ namespace WizardGrower.Save
         [FirestoreProperty("currentDayIndex")] public int CurrentDayIndex { get; set; } = 1;
         [FirestoreProperty("lastClaimedUtcMs")] public long LastClaimedUtcMs { get; set; }
         [FirestoreProperty("totalCheckIns")] public int TotalCheckIns { get; set; }
+    }
+
+    [FirestoreData]
+    public class GoldDungeonStateDoc
+    {
+        [FirestoreProperty("lastEntryDateUtcMs")] public long LastEntryDateUtcMs { get; set; }
+        [FirestoreProperty("todayEntryCount")] public int TodayEntryCount { get; set; }
+        [FirestoreProperty("bestScore")] public long BestScore { get; set; }
     }
 }

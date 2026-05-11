@@ -76,6 +76,9 @@ namespace WizardGrower.Save
                 data.ownedWeapons = new System.Collections.Generic.List<WizardGrower.Weapons.OwnedWeaponEntry>(ctx.WeaponInventory.CaptureForSave());
                 data.equippedWeaponId = ctx.WeaponInventory.EquippedWeaponId;
             }
+            data.goldDungeon = ctx.GoldDungeonService != null && ctx.SaveService != null && ctx.SaveService.CurrentData.goldDungeon != null
+                ? ctx.SaveService.CurrentData.goldDungeon
+                : new WizardGrower.Dungeons.GoldDungeonState();
             return data;
         }
 
@@ -106,6 +109,8 @@ namespace WizardGrower.Save
                 context.MissionService.StateChanged += QueueSave;
             if (context.AttendanceService != null)
                 context.AttendanceService.StateChanged += QueueSave;
+            if (context.GoldDungeonService != null)
+                context.GoldDungeonService.StateChanged += QueueSave;
         }
 
         public void SetUserId(string uid)

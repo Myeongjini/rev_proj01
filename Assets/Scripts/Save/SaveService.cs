@@ -127,6 +127,11 @@ namespace WizardGrower.Save
                 data.attendance = new WizardGrower.Attendance.AttendanceState();
             data.lastSeenAtUtcMs = System.Math.Max(0, data.lastSeenAtUtcMs);
             data.offlineRewardPending = System.Math.Max(0, data.offlineRewardPending);
+            if (data.goldDungeon == null)
+                data.goldDungeon = new WizardGrower.Dungeons.GoldDungeonState();
+            data.goldDungeon.lastEntryDateUtcMs = System.Math.Max(0, data.goldDungeon.lastEntryDateUtcMs);
+            data.goldDungeon.todayEntryCount = Mathf.Max(0, data.goldDungeon.todayEntryCount);
+            data.goldDungeon.bestScore = System.Math.Max(0, data.goldDungeon.bestScore);
 
             return data;
         }

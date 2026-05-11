@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using WizardGrower.Attendance;
+using WizardGrower.Dungeons;
 using WizardGrower.Missions;
 using WizardGrower.Skills;
 using WizardGrower.Weapons;
@@ -34,6 +35,7 @@ namespace WizardGrower.Save
         public AttendanceState attendance = new AttendanceState();
         public long lastSeenAtUtcMs;
         public long offlineRewardPending;
+        public GoldDungeonState goldDungeon = new GoldDungeonState();
     }
 
     [Serializable]

@@ -81,7 +81,7 @@ AI:  Save Schema v6 Migration + Cross-Feature Regression
 | Bundle | ID | Title | Status | Depends On |
 |---|---|---|---|---|
 | 10 | AF | GoldDungeonScene + Entry Flow + MainUI01 슬롯 | 🟡 IN REVIEW | v9 baseline |
-| 10 | AG | GoldDungeonService + Daily Limit + Reward Calculation | 🔴 TODO | AF ✅ |
+| 10 | AG | GoldDungeonService + Daily Limit + Reward Calculation | 🟡 IN REVIEW | AF ✅ |
 | 10 | AH | GoldDungeon UI + Ad 2x + Best Record | 🔴 TODO | AG ✅ |
 | 10 | AI | Save Schema v6 Migration + Regression | 🔴 TODO | AH ✅ |
 
@@ -198,7 +198,7 @@ Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · �
 
 ## Task AG — GoldDungeonService + Daily Limit + Reward Calculation
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** AF ✅
 
 ### 🎯 Goal
@@ -464,6 +464,7 @@ After Task AI reaches `✅ DONE`:
 | Date | Task | Entry |
 |------|------|-------|
 | 2026-05-11 | Task AF | Added `GoldDungeonScene`, `GoldDungeonBootstrap`, `GoldDungeonEntryPanel`, `CountdownTimerView`, entry/timer prefabs, MainUI01 gold dungeon tab wiring, GameContext/GameManager/HUD runtime panel binding, and build setting index 2 registration. Validation PASS: `dotnet build Assembly-CSharp.csproj --no-restore` 0 errors / 0 warnings; MCP asset validation confirmed GoldDungeonScene, entry/timer prefabs, and build index order LoginScene/MainScene/GoldDungeonScene. Unity Console still contains MCP stale-client/disposed-object transport logs after refresh timeouts; no Task AF compile/runtime product error was found. Start-state unrelated dirty files left unstaged: `.DS_Store`, `Assets/.DS_Store`, `Assets/Scripts/.DS_Store`, `Assets/Fonts/NanumGothicBold SDF.asset`, deleted `Tasks_BtoI_Draft.md`, `Tasks_v7.md`, `.codex/`, `References.md`, later Tasks_v11~v17/v20/v21 docs. |
+| 2026-05-11 | Task AG | Added `GoldDungeonService`, `GoldDungeonState`, five seeded difficulties, save/cloud mapper mirror, SaveBinder capture/autosave trigger, GameContext/GameManager service wiring, and EntryPanel service-backed entry gating. Validation PASS: `dotnet build Assembly-CSharp.csproj --no-restore` 0 errors / 0 warnings; MCP validation confirmed initial entry count, daily limit at 3, 4th entry rejection, KST day reset via `MissionResetService`, reward calculation, normal/ad 2x completion, best score persistence, mapper round-trip, and Lv1/Lv2~Lv5 unlock settings. Unity Console residual entries are MCP stale-client disconnect logs only. |
 
 ---
 

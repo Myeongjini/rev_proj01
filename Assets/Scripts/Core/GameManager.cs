@@ -4,6 +4,7 @@ using WizardGrower.Ads;
 using WizardGrower.Attendance;
 using WizardGrower.Auth;
 using WizardGrower.Combat;
+using WizardGrower.Dungeons;
 using WizardGrower.Enemies;
 using WizardGrower.Login;
 using WizardGrower.Missions;
@@ -35,6 +36,8 @@ namespace WizardGrower.Core
             EnsureMissionServices();
             EnsureAttendanceServices();
             EnsureOfflineTimeTracker();
+            EnsureAdSimulationService();
+            EnsureGoldDungeonService();
 
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
             if (context.WeaponInventory != null)
@@ -127,6 +130,27 @@ namespace WizardGrower.Core
             context.SetOfflineServices(context.OfflineTime, reward);
         }
 
+        private void EnsureAdSimulationService()
+        {
+            AdSimulationService adSimulation = context.AdSimulation != null
+                ? context.AdSimulation
+                : context.GetComponent<AdSimulationService>();
+            if (adSimulation == null)
+                adSimulation = context.gameObject.AddComponent<AdSimulationService>();
+            context.SetStartupPopupServices(context.StartupPopupQueue, context.OfflineRewardModal, adSimulation);
+        }
+
+        private void EnsureGoldDungeonService()
+        {
+            GoldDungeonService service = context.GoldDungeonService != null
+                ? context.GoldDungeonService
+                : context.GetComponent<GoldDungeonService>();
+            if (service == null)
+                service = context.gameObject.AddComponent<GoldDungeonService>();
+            service.Initialize(context.SaveService, context.MissionResetService, context.Wallet, context.StageManager, context.AdSimulation);
+            context.SetGoldDungeonService(service);
+        }
+
         private void EnsureStartupPopupServices()
         {
             GameStartupPopupQueue popupQueue = context.StartupPopupQueue != null
@@ -134,11 +158,12 @@ namespace WizardGrower.Core
                 : context.GetComponent<GameStartupPopupQueue>();
             if (popupQueue == null)
                 popupQueue = context.gameObject.AddComponent<GameStartupPopupQueue>();
-            AdSimulationService adSimulation = context.AdSimulation != null
-                ? context.AdSimulation
-                : context.GetComponent<AdSimulationService>();
+            AdSimulationService adSimulation = context.AdSimulation;
             if (adSimulation == null)
-                adSimulation = context.gameObject.AddComponent<AdSimulationService>();
+            {
+                EnsureAdSimulationService();
+                adSimulation = context.AdSimulation;
+            }
             OfflineRewardModal modal = context.OfflineRewardModal != null
                 ? context.OfflineRewardModal
                 : FindOfflineRewardModalInScene();
@@ -158,7 +183,7 @@ namespace WizardGrower.Core
             if (entryPanel == null)
                 entryPanel = CreateGoldDungeonEntryPanel();
 
-            entryPanel.Bind();
+            entryPanel.Bind(context.GoldDungeonService);
             context.SetGoldDungeonEntryPanel(entryPanel);
         }
 

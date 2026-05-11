@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using WizardGrower.Attendance;
+using WizardGrower.Dungeons;
 using WizardGrower.Missions;
 using WizardGrower.Skills;
 using WizardGrower.Weapons;
@@ -37,7 +38,8 @@ namespace WizardGrower.Save
                 RepeatMissions = ToRepeatMissionDocs(data.repeatMissions),
                 Attendance = ToAttendanceDoc(data.attendance),
                 LastSeenAtUtcMs = data.lastSeenAtUtcMs,
-                OfflineRewardPending = Math.Max(0, data.offlineRewardPending)
+                OfflineRewardPending = Math.Max(0, data.offlineRewardPending),
+                GoldDungeon = ToGoldDungeonDoc(data.goldDungeon)
             };
         }
 
@@ -69,7 +71,8 @@ namespace WizardGrower.Save
                 repeatMissions = FromRepeatMissionDocs(doc.RepeatMissions),
                 attendance = FromAttendanceDoc(doc.Attendance),
                 lastSeenAtUtcMs = Math.Max(0, doc.LastSeenAtUtcMs),
-                offlineRewardPending = Math.Max(0, doc.OfflineRewardPending)
+                offlineRewardPending = Math.Max(0, doc.OfflineRewardPending),
+                goldDungeon = FromGoldDungeonDoc(doc.GoldDungeon)
             };
         }
 
@@ -322,6 +325,30 @@ namespace WizardGrower.Save
                 currentDayIndex = Mathf.Clamp(doc.CurrentDayIndex <= 0 ? 1 : doc.CurrentDayIndex, 1, 10),
                 lastClaimedUtcMs = doc.LastClaimedUtcMs,
                 totalCheckIns = Mathf.Max(0, doc.TotalCheckIns)
+            };
+        }
+
+        private static GoldDungeonStateDoc ToGoldDungeonDoc(GoldDungeonState state)
+        {
+            state ??= new GoldDungeonState();
+            return new GoldDungeonStateDoc
+            {
+                LastEntryDateUtcMs = Math.Max(0, state.lastEntryDateUtcMs),
+                TodayEntryCount = Mathf.Max(0, state.todayEntryCount),
+                BestScore = Math.Max(0, state.bestScore)
+            };
+        }
+
+        private static GoldDungeonState FromGoldDungeonDoc(GoldDungeonStateDoc doc)
+        {
+            if (doc == null)
+                return new GoldDungeonState();
+
+            return new GoldDungeonState
+            {
+                lastEntryDateUtcMs = Math.Max(0, doc.LastEntryDateUtcMs),
+                todayEntryCount = Mathf.Max(0, doc.TodayEntryCount),
+                bestScore = Math.Max(0, doc.BestScore)
             };
         }
     }
