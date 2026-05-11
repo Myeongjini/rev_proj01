@@ -41,6 +41,7 @@ namespace WizardGrower.UI
         [SerializeField] private GachaPanel gachaPanel;
         [SerializeField] private MainUI01Bar mainUI01Bar;
         [SerializeField] private MainUI01Coordinator mainUI01Coordinator;
+        [SerializeField] private GoldDungeonEntryPanel goldDungeonEntryPanel;
         [SerializeField] private SkillBarView skillBarView;
         [SerializeField] private SkillTabPanel skillTabPanel;
         [SerializeField] private AchievementButton achievementButton;
@@ -81,12 +82,15 @@ namespace WizardGrower.UI
             WeaponFusionService weaponFusionService = null,
             SkillCastOrchestrator skillCastOrchestrator = null,
             MissionService missionService = null,
-            AttendanceService attendanceService = null)
+            AttendanceService attendanceService = null,
+            GoldDungeonEntryPanel goldDungeonEntryPanel = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
             this.movementController = movementController;
             this.combatPowerService = combatPowerService;
+            if (goldDungeonEntryPanel != null)
+                this.goldDungeonEntryPanel = goldDungeonEntryPanel;
             boundWizard = wizard;
 
             wallet.GoldChanged += gold => goldLabel.text = $"Gold {gold}";
@@ -139,7 +143,7 @@ namespace WizardGrower.UI
                 attendanceButton.Bind(attendancePanel);
             BindSecondaryPanelCoordinator();
             if (mainUI01Coordinator != null)
-                mainUI01Coordinator.Initialize(mainUI01Bar, upgradeDrawer, weaponInventoryPanel, gachaPanel, skillTabPanel);
+                mainUI01Coordinator.Initialize(mainUI01Bar, upgradeDrawer, weaponInventoryPanel, gachaPanel, skillTabPanel, this.goldDungeonEntryPanel);
 
             BindUpgradeButtons(upgradeSystem);
             RefreshAttack(wizard);

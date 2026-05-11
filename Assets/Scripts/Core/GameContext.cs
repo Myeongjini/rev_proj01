@@ -64,6 +64,7 @@ namespace WizardGrower.Core
         [field: SerializeField] public OfflineRewardModal OfflineRewardModal { get; private set; }
         [field: SerializeField] public GameStartupPopupQueue StartupPopupQueue { get; private set; }
         [field: SerializeField] public AdSimulationService AdSimulation { get; private set; }
+        [field: SerializeField] public GoldDungeonEntryPanel GoldDungeonEntryPanel { get; private set; }
         [field: SerializeField] public CombatPowerPopupView CombatPowerPopup { get; private set; }
         public CombatPowerService CombatPower { get; private set; }
         public WeaponFusionService WeaponFusion { get; private set; }
@@ -113,6 +114,12 @@ namespace WizardGrower.Core
                 OfflineRewardModal = offlineRewardModal;
             if (adSimulation != null)
                 AdSimulation = adSimulation;
+        }
+
+        public void SetGoldDungeonEntryPanel(GoldDungeonEntryPanel entryPanel)
+        {
+            if (entryPanel != null)
+                GoldDungeonEntryPanel = entryPanel;
         }
 
         public void SetAuthenticationServices(AuthService authService, UserProfileService userProfileService, AuthConfig authConfig, CloudSyncService cloudSyncService = null)

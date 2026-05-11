@@ -7,7 +7,7 @@ namespace WizardGrower.UI
 {
     public class MainUI01Bar : MonoBehaviour
     {
-        public enum NavTab { Upgrade, Weapon, Summon, Skill, Reserved5 }
+        public enum NavTab { Upgrade, Weapon, Summon, Skill, GoldDungeon }
 
         [SerializeField] private Button upgradeButton;
         [SerializeField] private Button weaponButton;
@@ -15,6 +15,7 @@ namespace WizardGrower.UI
         [SerializeField] private Button skillButton;
         [SerializeField] private Button reserved4Button;
         [SerializeField] private Button reserved5Button;
+        [SerializeField] private Button goldDungeonButton;
 
         public event Action<NavTab> TabRequested;
 
@@ -22,9 +23,11 @@ namespace WizardGrower.UI
         {
             if (skillButton == null)
                 skillButton = reserved4Button;
+            if (goldDungeonButton == null)
+                goldDungeonButton = reserved5Button;
             Bind();
             ConfigureSkill(skillButton);
-            ConfigureReserved(reserved5Button);
+            ConfigureGoldDungeon(goldDungeonButton);
             SetActiveTab(null);
         }
 
@@ -35,8 +38,12 @@ namespace WizardGrower.UI
             Wire(summonButton, NavTab.Summon);
             if (skillButton == null)
                 skillButton = reserved4Button;
+            if (goldDungeonButton == null)
+                goldDungeonButton = reserved5Button;
             ConfigureSkill(skillButton);
             Wire(skillButton, NavTab.Skill);
+            ConfigureGoldDungeon(goldDungeonButton);
+            Wire(goldDungeonButton, NavTab.GoldDungeon);
         }
 
         public void SetActiveTab(NavTab? activeTab)
@@ -45,6 +52,7 @@ namespace WizardGrower.UI
             SetButtonState(weaponButton, activeTab.HasValue && activeTab.Value == NavTab.Weapon);
             SetButtonState(summonButton, activeTab.HasValue && activeTab.Value == NavTab.Summon);
             SetButtonState(skillButton != null ? skillButton : reserved4Button, activeTab.HasValue && activeTab.Value == NavTab.Skill);
+            SetButtonState(goldDungeonButton != null ? goldDungeonButton : reserved5Button, activeTab.HasValue && activeTab.Value == NavTab.GoldDungeon);
         }
 
         private void Wire(Button button, NavTab tab)
@@ -84,6 +92,21 @@ namespace WizardGrower.UI
             TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
             if (label != null)
                 label.text = "스킬";
+        }
+
+        private static void ConfigureGoldDungeon(Button button)
+        {
+            if (button == null)
+                return;
+
+            button.interactable = true;
+            Image image = button.GetComponent<Image>();
+            if (image != null)
+                image.color = new Color(0.10f, 0.12f, 0.16f, 0.92f);
+
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            if (label != null)
+                label.text = "골드던전";
         }
 
         private static void SetButtonState(Button button, bool active)

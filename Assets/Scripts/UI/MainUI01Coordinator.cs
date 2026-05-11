@@ -9,6 +9,7 @@ namespace WizardGrower.UI
         private WeaponInventoryPanel weapon;
         private GachaPanel summon;
         private SkillTabPanel skill;
+        private GoldDungeonEntryPanel goldDungeon;
         private MainUI01Bar.NavTab? activeTab;
         private bool suppressCallbacks;
 
@@ -18,6 +19,11 @@ namespace WizardGrower.UI
         }
 
         public void Initialize(MainUI01Bar bar, UpgradeDrawerView upgrade, WeaponInventoryPanel weapon, GachaPanel summon, SkillTabPanel skill)
+        {
+            Initialize(bar, upgrade, weapon, summon, skill, null);
+        }
+
+        public void Initialize(MainUI01Bar bar, UpgradeDrawerView upgrade, WeaponInventoryPanel weapon, GachaPanel summon, SkillTabPanel skill, GoldDungeonEntryPanel goldDungeon)
         {
             if (this.bar != null)
                 this.bar.TabRequested -= OnTabRequested;
@@ -29,12 +35,15 @@ namespace WizardGrower.UI
                 this.summon.OpenStateChanged -= OnSummonChanged;
             if (this.skill != null)
                 this.skill.OpenStateChanged -= OnSkillChanged;
+            if (this.goldDungeon != null)
+                this.goldDungeon.OpenStateChanged -= OnGoldDungeonChanged;
 
             this.bar = bar;
             this.upgrade = upgrade;
             this.weapon = weapon;
             this.summon = summon;
             this.skill = skill;
+            this.goldDungeon = goldDungeon;
 
             if (this.bar != null)
             {
@@ -49,6 +58,8 @@ namespace WizardGrower.UI
                 this.summon.OpenStateChanged += OnSummonChanged;
             if (this.skill != null)
                 this.skill.OpenStateChanged += OnSkillChanged;
+            if (this.goldDungeon != null)
+                this.goldDungeon.OpenStateChanged += OnGoldDungeonChanged;
 
             CloseAll();
         }
@@ -70,6 +81,8 @@ namespace WizardGrower.UI
                 summon.Close();
             if (skill != null)
                 skill.Close();
+            if (goldDungeon != null)
+                goldDungeon.Close();
 
             if (tab == MainUI01Bar.NavTab.Upgrade && upgrade != null)
                 upgrade.Open();
@@ -79,6 +92,8 @@ namespace WizardGrower.UI
                 summon.Open();
             else if (tab == MainUI01Bar.NavTab.Skill && skill != null)
                 skill.Open();
+            else if (tab == MainUI01Bar.NavTab.GoldDungeon && goldDungeon != null)
+                goldDungeon.Open();
 
             suppressCallbacks = false;
             activeTab = tab;
@@ -97,6 +112,8 @@ namespace WizardGrower.UI
                 summon.Close();
             if (skill != null)
                 skill.Close();
+            if (goldDungeon != null)
+                goldDungeon.Close();
             suppressCallbacks = false;
 
             activeTab = null;
@@ -106,9 +123,6 @@ namespace WizardGrower.UI
 
         private void OnTabRequested(MainUI01Bar.NavTab tab)
         {
-            if (tab == MainUI01Bar.NavTab.Reserved5)
-                return;
-
             Open(tab);
         }
 
@@ -134,6 +148,12 @@ namespace WizardGrower.UI
         {
             if (!suppressCallbacks)
                 SyncExternalClose(open, MainUI01Bar.NavTab.Skill);
+        }
+
+        private void OnGoldDungeonChanged(bool open)
+        {
+            if (!suppressCallbacks)
+                SyncExternalClose(open, MainUI01Bar.NavTab.GoldDungeon);
         }
 
         private void SyncExternalClose(bool open, MainUI01Bar.NavTab tab)

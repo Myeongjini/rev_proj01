@@ -52,7 +52,8 @@ namespace WizardGrower.Core
                 context.SkillCastOrchestrator.Initialize(context.SkillDatabase, context.Wizard, context.EnemySpawner, context.ProjectileFactory, context.Mana, calculator);
             if (context.MissionService != null)
                 context.MissionService.Initialize(context.MissionDatabase, context.Wallet, context.EnemySpawner, context.StageManager, context.GachaService, weaponFusion, context.MissionResetService);
-            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService, context.AttendanceService);
+            EnsureGoldDungeonEntryPanel();
+            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService, context.AttendanceService, context.GoldDungeonEntryPanel);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             if (context.OfflineTime != null)
@@ -147,6 +148,51 @@ namespace WizardGrower.Core
             modal.Bind(context.OfflineReward, adSimulation);
             popupQueue.Register(modal);
             context.SetStartupPopupServices(popupQueue, modal, adSimulation);
+        }
+
+        private void EnsureGoldDungeonEntryPanel()
+        {
+            GoldDungeonEntryPanel entryPanel = context.GoldDungeonEntryPanel != null
+                ? context.GoldDungeonEntryPanel
+                : FindGoldDungeonEntryPanelInScene();
+            if (entryPanel == null)
+                entryPanel = CreateGoldDungeonEntryPanel();
+
+            entryPanel.Bind();
+            context.SetGoldDungeonEntryPanel(entryPanel);
+        }
+
+        private GoldDungeonEntryPanel FindGoldDungeonEntryPanelInScene()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas != null)
+            {
+                GoldDungeonEntryPanel panel = canvas.GetComponentInChildren<GoldDungeonEntryPanel>(true);
+                if (panel != null)
+                    return panel;
+            }
+
+            GoldDungeonEntryPanel[] panels = FindObjectsByType<GoldDungeonEntryPanel>(FindObjectsInactive.Include);
+            return panels != null && panels.Length > 0 ? panels[0] : null;
+        }
+
+        private GoldDungeonEntryPanel CreateGoldDungeonEntryPanel()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas == null)
+                canvas = FindAnyObjectByType<Canvas>();
+
+            Transform parent = canvas != null ? canvas.transform : context.transform;
+            GameObject panelGo = new GameObject("GoldDungeonEntryPanel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(GoldDungeonEntryPanel));
+            panelGo.transform.SetParent(parent, false);
+            RectTransform rect = panelGo.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            panelGo.transform.SetAsLastSibling();
+            panelGo.SetActive(false);
+            return panelGo.GetComponent<GoldDungeonEntryPanel>();
         }
 
         private OfflineRewardModal FindOfflineRewardModalInScene()
