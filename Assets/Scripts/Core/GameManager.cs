@@ -5,6 +5,7 @@ using WizardGrower.Ads;
 using WizardGrower.Armor;
 using WizardGrower.Attendance;
 using WizardGrower.Auth;
+using WizardGrower.Cloud;
 using WizardGrower.Combat;
 using WizardGrower.Dungeons;
 using WizardGrower.Drops;
@@ -35,6 +36,9 @@ namespace WizardGrower.Core
             calculator = new CombatCalculator(context.Wizard.Stats);
             combatPower = new CombatPowerService();
             context.SetCombatPowerService(combatPower);
+            EnsureCloudFunctionsClient();
+            if (context.Wallet != null)
+                context.Wallet.InitializeAuthority(context.CloudFunctionsClient);
             weaponFusion = new WizardGrower.Weapons.WeaponFusionService();
             context.SetWeaponFusionService(weaponFusion);
             armorFusion = new ArmorFusionService();
@@ -55,7 +59,7 @@ namespace WizardGrower.Core
             if (context.ProjectileFactory != null)
                 context.ProjectileFactory.BindWeaponInventory(context.WeaponInventory);
             if (context.GachaService != null)
-                context.GachaService.Initialize(context.Wallet, context.WeaponInventory, context.GachaDefinition, context.SaveService);
+                context.GachaService.Initialize(context.Wallet, context.WeaponInventory, context.GachaDefinition, context.SaveService, context.CloudFunctionsClient);
             context.UpgradeSystem.Initialize(context.Wallet, context.Wizard, context.Mana);
             context.AutoAttack.Initialize(context.Wizard, context.Movement, context.EnemySpawner, context.ProjectileFactory, calculator);
             context.ClickAttack.Initialize(context.Wizard, context.EnemySpawner, context.ProjectileFactory, calculator);
@@ -599,6 +603,7 @@ namespace WizardGrower.Core
 
             try
             {
+                EnsureCloudFunctionsClient();
                 context.SetAuthenticationServices(holder.Auth, holder.Profile, holder.Config != null ? holder.Config : context.AuthConfig, holder.CloudSync);
                 string uid = context.AuthService.CurrentUid;
                 if (string.IsNullOrEmpty(uid))
@@ -624,6 +629,17 @@ namespace WizardGrower.Core
             {
                 Debug.LogError($"Bootstrapped auth consumption failed: {ex.Message}");
             }
+        }
+
+        private void EnsureCloudFunctionsClient()
+        {
+            CloudFunctionsClient client = context.CloudFunctionsClient != null
+                ? context.CloudFunctionsClient
+                : context.GetComponent<CloudFunctionsClient>();
+            if (client == null)
+                client = context.gameObject.AddComponent<CloudFunctionsClient>();
+            client.Initialize();
+            context.SetCloudFunctionsClient(client);
         }
 
         private async void OnUserChanged(string uid, AccountType type)

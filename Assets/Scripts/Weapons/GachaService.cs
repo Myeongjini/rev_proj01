@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using WizardGrower.Cloud;
 using WizardGrower.Economy;
 using WizardGrower.Save;
 
@@ -31,6 +32,7 @@ namespace WizardGrower.Weapons
         private WeaponInventory inventory;
         private GachaDefinition definition;
         private SaveService saveService;
+        private CloudFunctionsClient cloudFunctions;
         private IRandomSource random = new UnityRandomSource();
         private int currentPity;
         private readonly SummonLevelState summonState = new SummonLevelState();
@@ -49,6 +51,12 @@ namespace WizardGrower.Weapons
 
         public void Initialize(CurrencyWallet wallet, WeaponInventory inv, GachaDefinition definition, SaveService save)
         {
+            Initialize(wallet, inv, definition, save, new UnityRandomSource());
+        }
+
+        public void Initialize(CurrencyWallet wallet, WeaponInventory inv, GachaDefinition definition, SaveService save, CloudFunctionsClient cloudFunctions)
+        {
+            this.cloudFunctions = cloudFunctions;
             Initialize(wallet, inv, definition, save, new UnityRandomSource());
         }
 
@@ -207,6 +215,23 @@ namespace WizardGrower.Weapons
             if (definition == null || wallet == null || inventory == null || definition.pool == null)
                 return Fail("가챠 준비가 필요합니다.");
 
+            if (cloudFunctions != null && cloudFunctions.IsReady)
+            {
+                try
+                {
+                    pulled = PullFromServerAsync(count).GetAwaiter().GetResult();
+                    if (pulled.Count <= 0)
+                        return Fail("서버 뽑기 결과가 비어 있습니다.");
+                    StateChanged?.Invoke();
+                    PullCompleted?.Invoke(pulled.Count);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"Server gacha failed, using local fallback: {ex.GetBaseException().Message}");
+                }
+            }
+
             if (!wallet.TrySpendGems(cost))
                 return Fail("젬이 부족합니다.");
 
@@ -228,6 +253,65 @@ namespace WizardGrower.Weapons
             StateChanged?.Invoke();
             PullCompleted?.Invoke(pulled.Count);
             return true;
+        }
+
+        private async System.Threading.Tasks.Task<List<WeaponDefinition>> PullFromServerAsync(int count)
+        {
+            Dictionary<string, object> payload = new Dictionary<string, object>
+            {
+                { "count", count },
+                { "gachaId", definition != null && !string.IsNullOrEmpty(definition.gachaId) ? definition.gachaId : "standard" }
+            };
+
+            IDictionary<string, object> response = await cloudFunctions.CallAsync("rollGacha", payload);
+            if (response.TryGetValue("newGemBalance", out object gemBalance))
+                wallet.SetGems(ConvertToInt(gemBalance, wallet.Gems));
+            if (response.TryGetValue("newSummonLevel", out object summonLevel) || response.TryGetValue("newSummonPullsInLevel", out object pullsInLevel))
+            {
+                int nextLevel = response.TryGetValue("newSummonLevel", out summonLevel) ? ConvertToInt(summonLevel, CurrentSummonLevel) : CurrentSummonLevel;
+                int nextPulls = response.TryGetValue("newSummonPullsInLevel", out pullsInLevel) ? ConvertToInt(pullsInLevel, SummonPullsInLevel) : SummonPullsInLevel;
+                LoadState(nextLevel, nextPulls, currentPity);
+            }
+
+            List<WeaponDefinition> results = new List<WeaponDefinition>();
+            if (!response.TryGetValue("pulls", out object pullsObject))
+                return results;
+
+            if (pullsObject is System.Collections.IEnumerable enumerable)
+            {
+                foreach (object entry in enumerable)
+                {
+                    string weaponId = ExtractWeaponId(entry);
+                    WeaponDefinition weapon = definition.pool.GetById(weaponId);
+                    if (weapon == null)
+                        continue;
+                    inventory.Add(weapon.weaponId);
+                    results.Add(weapon);
+                }
+            }
+            return results;
+        }
+
+        private static string ExtractWeaponId(object entry)
+        {
+            if (entry is IDictionary<string, object> dictionary && dictionary.TryGetValue("weaponId", out object weaponId))
+                return weaponId?.ToString();
+            if (entry is System.Collections.IDictionary raw && raw.Contains("weaponId"))
+                return raw["weaponId"]?.ToString();
+            return entry?.GetType().GetProperty("weaponId")?.GetValue(entry)?.ToString();
+        }
+
+        private static int ConvertToInt(object value, int fallback)
+        {
+            if (value == null)
+                return fallback;
+            if (value is int typed)
+                return typed;
+            if (value is long longValue)
+                return (int)longValue;
+            if (value is double doubleValue)
+                return Mathf.RoundToInt((float)doubleValue);
+            return int.TryParse(value.ToString(), out int parsed) ? parsed : fallback;
         }
 
         private WeaponDefinition PullOne()

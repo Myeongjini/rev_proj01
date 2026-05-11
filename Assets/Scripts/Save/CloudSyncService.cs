@@ -80,6 +80,31 @@ namespace WizardGrower.Save
             await PushAsync(localService.CurrentData);
         }
 
+        public async Task ReconcileWalletAsync(string uid, SaveData data)
+        {
+            Initialize();
+            if (string.IsNullOrEmpty(uid) || data == null)
+                return;
+
+            DocumentReference walletRef = GetUserDocument(uid).Collection("wallet").Document("main");
+            DocumentSnapshot snapshot = await walletRef.GetSnapshotAsync();
+            if (snapshot.Exists)
+            {
+                if (snapshot.TryGetValue("gold", out int serverGold))
+                    data.gold = Mathf.Max(0, serverGold);
+                if (snapshot.TryGetValue("gem", out int serverGem))
+                    data.gems = Mathf.Max(0, serverGem);
+                return;
+            }
+
+            await walletRef.SetAsync(new
+            {
+                gold = Mathf.Max(0, data.gold),
+                gem = Mathf.Max(0, data.gems),
+                lastUpdatedMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            }, SetOptions.MergeAll);
+        }
+
         public Task FlushPendingAsync()
         {
             Initialize();

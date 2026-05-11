@@ -1,0 +1,65 @@
+{
+  "id": "standard",
+  "costs": {
+    "1": 100,
+    "10": 1000,
+    "30": 3000
+  },
+  "summonLevels": [
+    {
+      "level": 1,
+      "pullsToNextLevel": 30,
+      "maxUpperGrade": "Advanced",
+      "upperGradeWeights": [
+        {"upperGrade": "Common", "weight": 70},
+        {"upperGrade": "Normal", "weight": 25},
+        {"upperGrade": "Advanced", "weight": 5}
+      ]
+    },
+    {
+      "level": 2,
+      "pullsToNextLevel": 60,
+      "maxUpperGrade": "Epic",
+      "upperGradeWeights": [
+        {"upperGrade": "Common", "weight": 55},
+        {"upperGrade": "Normal", "weight": 30},
+        {"upperGrade": "Advanced", "weight": 12},
+        {"upperGrade": "Epic", "weight": 3}
+      ]
+    },
+    {
+      "level": 3,
+      "pullsToNextLevel": 0,
+      "maxUpperGrade": "Unique",
+      "upperGradeWeights": [
+        {"upperGrade": "Common", "weight": 45},
+        {"upperGrade": "Normal", "weight": 32},
+        {"upperGrade": "Advanced", "weight": 16},
+        {"upperGrade": "Epic", "weight": 6},
+        {"upperGrade": "Unique", "weight": 1}
+      ]
+    }
+  ],
+  "weapons": [
+    {"weaponId": "common_beginner_staff", "upperGrade": "Common", "lowerGrade": "Beginner"},
+    {"weaponId": "common_intermediate_staff", "upperGrade": "Common", "lowerGrade": "Intermediate"},
+    {"weaponId": "common_upper_staff", "upperGrade": "Common", "lowerGrade": "Upper"},
+    {"weaponId": "common_supreme_staff", "upperGrade": "Common", "lowerGrade": "Supreme"},
+    {"weaponId": "normal_beginner_staff", "upperGrade": "Normal", "lowerGrade": "Beginner"},
+    {"weaponId": "normal_intermediate_staff", "upperGrade": "Normal", "lowerGrade": "Intermediate"},
+    {"weaponId": "normal_upper_staff", "upperGrade": "Normal", "lowerGrade": "Upper"},
+    {"weaponId": "normal_supreme_staff", "upperGrade": "Normal", "lowerGrade": "Supreme"},
+    {"weaponId": "advanced_beginner_staff", "upperGrade": "Advanced", "lowerGrade": "Beginner"},
+    {"weaponId": "advanced_intermediate_staff", "upperGrade": "Advanced", "lowerGrade": "Intermediate"},
+    {"weaponId": "advanced_upper_staff", "upperGrade": "Advanced", "lowerGrade": "Upper"},
+    {"weaponId": "advanced_supreme_staff", "upperGrade": "Advanced", "lowerGrade": "Supreme"},
+    {"weaponId": "epic_beginner_staff", "upperGrade": "Epic", "lowerGrade": "Beginner"},
+    {"weaponId": "epic_intermediate_staff", "upperGrade": "Epic", "lowerGrade": "Intermediate"},
+    {"weaponId": "epic_upper_staff", "upperGrade": "Epic", "lowerGrade": "Upper"},
+    {"weaponId": "epic_supreme_staff", "upperGrade": "Epic", "lowerGrade": "Supreme"},
+    {"weaponId": "unique_beginner_staff", "upperGrade": "Unique", "lowerGrade": "Beginner"},
+    {"weaponId": "unique_intermediate_staff", "upperGrade": "Unique", "lowerGrade": "Intermediate"},
+    {"weaponId": "unique_upper_staff", "upperGrade": "Unique", "lowerGrade": "Upper"},
+    {"weaponId": "unique_supreme_staff", "upperGrade": "Unique", "lowerGrade": "Supreme"}
+  ]
+}

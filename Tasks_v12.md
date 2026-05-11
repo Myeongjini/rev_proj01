@@ -44,10 +44,10 @@ AQ:  Save Schema v8 Migration + Server Reconciliation + Cross-Feature Regression
 
 | Bundle | ID | Title | Status | Depends On |
 |---|---|---|---|---|
-| 12 | AN | Firebase Functions Project Setup | ⚠️ BLOCKED | v11 baseline + 사용자 prework |
-| 12 | AO | Server-Authoritative Gacha Roll | 🔴 TODO | AN ✅ |
-| 12 | AP | Server-Authoritative Currency + Transaction Log | 🔴 TODO | AO ✅ |
-| 12 | AQ | Save Schema v8 + Server Reconciliation + Regression | 🔴 TODO | AP ✅ |
+| 12 | AN | Firebase Functions Project Setup | ⚠️ BLOCKED | local ✅ / live deploy pending |
+| 12 | AO | Server-Authoritative Gacha Roll | 🟡 IN REVIEW | AN local ✅ |
+| 12 | AP | Server-Authoritative Currency + Transaction Log | 🟡 IN REVIEW | AO local ✅ |
+| 12 | AQ | Save Schema v8 + Server Reconciliation + Regression | 🟡 IN REVIEW | AP local ✅ |
 
 Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · ⚠️ BLOCKED
 
@@ -90,7 +90,7 @@ Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · �
 
 ## Task AN — Firebase Functions Project Setup + Local Emulator
 
-**Status:** ⚠️ BLOCKED
+**Status:** ⚠️ BLOCKED — local implementation complete, live deploy verification pending
 **Depends On:** v11 baseline + 사용자 prework (Blaze 요금제 + functions init 완료)
 
 ### 🎯 Goal
@@ -168,7 +168,7 @@ Cloud Functions 인프라 셋업. TypeScript 환경 + Firebase Admin SDK + 로�
 
 ## Task AO — Server-Authoritative Gacha Roll
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** AN ✅
 
 ### 🎯 Goal
@@ -224,7 +224,7 @@ Cloud Functions 인프라 셋업. TypeScript 환경 + Firebase Admin SDK + 로�
 
 ## Task AP — Server-Authoritative Currency + Transaction Log
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** AO ✅
 
 ### 🎯 Goal
@@ -245,7 +245,7 @@ Cloud Functions 인프라 셋업. TypeScript 환경 + Firebase Admin SDK + 로�
   - 던전 보상 (Bundle 10/11) — `grantCurrency(reason: "gold_dungeon" / "exp_dungeon")`
   - 오프라인 보상 (Bundle 9/11) — `grantCurrency(reason: "offline_reward")`
   - 업그레이드 구매 (Bundle 2 F) — `spendCurrency(reason: "upgrade_<id>")`
-- [ ] grantCurrency 의 source 필드: 클라이언트 호출은 거부. 모든 grant 는 서버 측 다른 함수가 호출 (예: rollGacha → grantCurrency 내부 호출)
+- [x] grantCurrency 의 source 필드: 클라이언트 호출은 거부. 모든 grant 는 서버 측 다른 함수가 호출 (예: rollGacha → grantCurrency 내부 호출)
 - [ ] 사용자가 클라이언트 메모리 조작 후 spendCurrency 호출 시 → 서버 잔액 검사로 거부
 
 ### 📂 Files to Add
@@ -280,7 +280,7 @@ Cloud Functions 인프라 셋업. TypeScript 환경 + Firebase Admin SDK + 로�
 
 ## Task AQ — Save Schema v8 Migration + Server Reconciliation + Cross-Feature Regression
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** AP ✅
 
 ### 🎯 Goal
@@ -346,6 +346,8 @@ When Tasks AN~AQ are all `✅ DONE`:
 | Date | Task | Entry |
 |------|------|-------|
 | 2026-05-11 | Task AN | BLOCKED before implementation per Bundle 12 prework rule. Local check found no `functions/` directory, no `firebase.json`, and Firebase CLI unavailable on PATH (`firebase not found`); Node/npm are present (`node v25.9.0`, `npm 11.12.1`). No project code was changed for AN. User prework required: Blaze plan, `firebase init functions` TypeScript setup, `firebase login`, and emulator availability. |
+| 2026-05-11 | Task AN~AQ | Resumed after user setup. Added TypeScript Cloud Functions (`getServerInfo`, `rollGacha`, `spendCurrency`, `grantCurrency`), server gacha data, transaction helpers, `.gitignore` entries, Unity `CloudFunctionsClient`, server-backed gacha/currency hooks, and wallet reconciliation. Validation: `npm run lint` PASS, `npm run build` PASS, Firebase Emulator PASS with all functions loaded in `asia-northeast3`, `dotnet build Assembly-CSharp.csproj --no-restore` PASS with 0 errors / 4 pre-existing Firebase config warnings. Live `firebase deploy --only functions` was not executed by Codex because the production deploy escalation was rejected by the approval reviewer due usage-limit policy; user must run it locally to complete AN live validation. Existing saveVersion is v9 from Bundle 13, so v12 wallet reconciliation was applied without downgrading saveVersion to v8. |
+| 2026-05-11 | Task AP | Corrected grant policy after review: `grantCurrency` callable now rejects normal client calls unless a server-internal custom claim is present, while server code should use `grantCurrencyInternal`. Unity `CurrencyWallet.AddGold/AddGems` no longer calls `grantCurrency` directly; local grant remains cache/offline behavior until each reward source is migrated to a server function. |
 
 | Date | Author | Change |
 |---|---|---|

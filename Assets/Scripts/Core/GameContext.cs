@@ -4,6 +4,7 @@ using WizardGrower.Armor;
 using WizardGrower.Attendance;
 using WizardGrower.Auth;
 using WizardGrower.Chat;
+using WizardGrower.Cloud;
 using WizardGrower.Combat;
 using WizardGrower.Dungeons;
 using WizardGrower.Drops;
@@ -41,6 +42,7 @@ namespace WizardGrower.Core
         [field: SerializeField] public SaveService SaveService { get; private set; }
         [field: SerializeField] public SaveBinder SaveBinder { get; private set; }
         [field: SerializeField] public CloudSyncService CloudSyncService { get; private set; }
+        [field: SerializeField] public CloudFunctionsClient CloudFunctionsClient { get; private set; }
         [field: SerializeField] public SyncCoordinator SyncCoordinator { get; private set; }
         [field: SerializeField] public PresenceService PresenceService { get; private set; }
         [field: SerializeField] public PresenceCoordinator PresenceCoordinator { get; private set; }
@@ -189,6 +191,12 @@ namespace WizardGrower.Core
                 PlayerExpBar = expBar;
             if (skillUnlockPopup != null)
                 SkillUnlockPopup = skillUnlockPopup;
+        }
+
+        public void SetCloudFunctionsClient(CloudFunctionsClient client)
+        {
+            if (client != null)
+                CloudFunctionsClient = client;
         }
 
         public void SetAuthenticationServices(AuthService authService, UserProfileService userProfileService, AuthConfig authConfig, CloudSyncService cloudSyncService = null)

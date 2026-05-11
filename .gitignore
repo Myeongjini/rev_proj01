@@ -127,3 +127,7 @@ crashlytics-build.properties
 # ----------------------------------------------------------------------------
 .DS_Store
 **/.DS_Store
+
+# Firebase Cloud Functions generated output
+/functions/node_modules/
+/functions/lib/

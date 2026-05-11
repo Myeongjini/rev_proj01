@@ -91,6 +91,7 @@ namespace WizardGrower.Save
                 }
 
                 await context.CloudSyncService.ResolveAndApply(context.SaveService, uid);
+                await context.CloudSyncService.ReconcileWalletAsync(uid, context.SaveService.CurrentData);
                 context.SaveBinder.SetUserId(uid);
                 context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             }
