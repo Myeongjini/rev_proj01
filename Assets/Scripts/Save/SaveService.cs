@@ -99,7 +99,10 @@ namespace WizardGrower.Save
             if (data.saveVersion < 5)
                 MigrateOfflineRewardToV5(data);
 
-            data.saveVersion = Mathf.Max(data.saveVersion, 5);
+            if (data.saveVersion < 6)
+                MigrateGoldDungeonToV6(data);
+
+            data.saveVersion = Mathf.Max(data.saveVersion, 6);
 
             if (data.ownedWeapons.Count == 0)
                 data.ownedWeapons.Add(new OwnedWeaponEntry(WeaponInventory.StarterWeaponId, 1));
@@ -127,13 +130,23 @@ namespace WizardGrower.Save
                 data.attendance = new WizardGrower.Attendance.AttendanceState();
             data.lastSeenAtUtcMs = System.Math.Max(0, data.lastSeenAtUtcMs);
             data.offlineRewardPending = System.Math.Max(0, data.offlineRewardPending);
+            NormalizeGoldDungeon(data);
+
+            return data;
+        }
+
+        private static void MigrateGoldDungeonToV6(SaveData data)
+        {
+            NormalizeGoldDungeon(data);
+        }
+
+        private static void NormalizeGoldDungeon(SaveData data)
+        {
             if (data.goldDungeon == null)
                 data.goldDungeon = new WizardGrower.Dungeons.GoldDungeonState();
             data.goldDungeon.lastEntryDateUtcMs = System.Math.Max(0, data.goldDungeon.lastEntryDateUtcMs);
             data.goldDungeon.todayEntryCount = Mathf.Max(0, data.goldDungeon.todayEntryCount);
             data.goldDungeon.bestScore = System.Math.Max(0, data.goldDungeon.bestScore);
-
-            return data;
         }
 
         private static void MigrateOfflineRewardToV5(SaveData data)
