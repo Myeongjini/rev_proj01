@@ -44,6 +44,7 @@ namespace WizardGrower.UI
         [SerializeField] private GoldDungeonEntryPanel goldDungeonEntryPanel;
         [SerializeField] private SkillBarView skillBarView;
         [SerializeField] private SkillTabPanel skillTabPanel;
+        [SerializeField] private PlayerExpBarView playerExpBarView;
         [SerializeField] private AchievementButton achievementButton;
         [SerializeField] private AchievementPanel achievementPanel;
         [SerializeField] private AttendanceButton attendanceButton;
@@ -83,7 +84,9 @@ namespace WizardGrower.UI
             SkillCastOrchestrator skillCastOrchestrator = null,
             MissionService missionService = null,
             AttendanceService attendanceService = null,
-            GoldDungeonEntryPanel goldDungeonEntryPanel = null)
+            GoldDungeonEntryPanel goldDungeonEntryPanel = null,
+            PlayerLevelService playerLevelService = null,
+            PlayerExpBarView playerExpBarView = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
@@ -91,6 +94,8 @@ namespace WizardGrower.UI
             this.combatPowerService = combatPowerService;
             if (goldDungeonEntryPanel != null)
                 this.goldDungeonEntryPanel = goldDungeonEntryPanel;
+            if (playerExpBarView != null)
+                this.playerExpBarView = playerExpBarView;
             boundWizard = wizard;
 
             wallet.GoldChanged += gold => goldLabel.text = $"Gold {gold}";
@@ -141,6 +146,9 @@ namespace WizardGrower.UI
                 attendancePanel.Bind(attendanceService);
             if (attendanceButton != null)
                 attendanceButton.Bind(attendancePanel);
+            EnsurePlayerExpUi(playerLevelService);
+            if (this.playerExpBarView != null)
+                this.playerExpBarView.Bind(playerLevelService);
             BindSecondaryPanelCoordinator();
             if (mainUI01Coordinator != null)
                 mainUI01Coordinator.Initialize(mainUI01Bar, upgradeDrawer, weaponInventoryPanel, gachaPanel, skillTabPanel, this.goldDungeonEntryPanel);
@@ -371,6 +379,36 @@ namespace WizardGrower.UI
                 label.fontStyle = FontStyles.Bold;
                 attendanceButton = buttonGo.GetComponent<AttendanceButton>();
             }
+        }
+
+        private void EnsurePlayerExpUi(PlayerLevelService playerLevelService)
+        {
+            if (playerLevelService == null || playerExpBarView != null)
+                return;
+
+            Transform parent = manaBar != null ? manaBar.transform.parent : transform;
+            GameObject expGo = new GameObject("PlayerExpBar", typeof(RectTransform), typeof(PlayerExpBarView));
+            expGo.transform.SetParent(parent, false);
+            RectTransform rect = expGo.GetComponent<RectTransform>();
+            RectTransform manaRect = manaBar != null ? manaBar.transform as RectTransform : null;
+            if (manaRect != null)
+            {
+                rect.anchorMin = manaRect.anchorMin;
+                rect.anchorMax = manaRect.anchorMax;
+                rect.pivot = manaRect.pivot;
+                rect.anchoredPosition = manaRect.anchoredPosition + new Vector2(0f, 30f);
+                rect.sizeDelta = manaRect.sizeDelta;
+            }
+            else
+            {
+                rect.anchorMin = new Vector2(0.5f, 0f);
+                rect.anchorMax = new Vector2(0.5f, 0f);
+                rect.pivot = new Vector2(0.5f, 0f);
+                rect.anchoredPosition = new Vector2(0f, 162f);
+                rect.sizeDelta = new Vector2(360f, 22f);
+            }
+
+            playerExpBarView = expGo.GetComponent<PlayerExpBarView>();
         }
 
         private void BindSecondaryPanelCoordinator()

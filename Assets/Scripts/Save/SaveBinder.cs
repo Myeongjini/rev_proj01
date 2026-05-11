@@ -28,6 +28,8 @@ namespace WizardGrower.Save
             ctx.Wallet.SetGems(data.gems);
             if (ctx.GachaService != null)
                 ctx.GachaService.LoadState(data.summonLevel, data.summonPullsInLevel, data.pityCounter);
+            if (ctx.PlayerLevelService != null)
+                ctx.PlayerLevelService.LoadState(data.playerLevel, data.playerCurrentExp);
             if (ctx.SkillCastOrchestrator != null)
             {
                 ctx.SkillCastOrchestrator.LoadOwnedSkills(data.ownedSkillIds);
@@ -55,6 +57,8 @@ namespace WizardGrower.Save
             data.pityCounter = ctx.GachaService != null ? ctx.GachaService.CurrentPity : 0;
             data.summonLevel = ctx.GachaService != null ? ctx.GachaService.CurrentSummonLevel : 1;
             data.summonPullsInLevel = ctx.GachaService != null ? ctx.GachaService.SummonPullsInLevel : 0;
+            data.playerLevel = ctx.PlayerLevelService != null ? ctx.PlayerLevelService.CurrentLevel : 1;
+            data.playerCurrentExp = ctx.PlayerLevelService != null ? ctx.PlayerLevelService.CurrentExp : 0;
             if (ctx.SkillCastOrchestrator != null)
             {
                 data.ownedSkillIds = ctx.SkillCastOrchestrator.CaptureOwnedSkillIds();
@@ -111,6 +115,8 @@ namespace WizardGrower.Save
                 context.AttendanceService.StateChanged += QueueSave;
             if (context.GoldDungeonService != null)
                 context.GoldDungeonService.StateChanged += QueueSave;
+            if (context.PlayerLevelService != null)
+                context.PlayerLevelService.StateChanged += QueueSave;
         }
 
         public void SetUserId(string uid)

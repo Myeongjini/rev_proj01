@@ -120,6 +120,8 @@ namespace WizardGrower.Save
             data.pityCounter = Mathf.Max(0, data.pityCounter);
             data.summonLevel = Mathf.Max(1, data.summonLevel);
             data.summonPullsInLevel = Mathf.Max(0, data.summonPullsInLevel);
+            data.playerLevel = Mathf.Clamp(data.playerLevel <= 0 ? 1 : data.playerLevel, 1, 50);
+            data.playerCurrentExp = Mathf.Max(0, data.playerCurrentExp);
             data.ownedSkillIds = SaveDataMapper.NormalizeOwnedSkills(data.ownedSkillIds);
             data.equippedSkillSlots = SaveDataMapper.NormalizeEquippedSkills(data.equippedSkillSlots);
             if (data.dailyMissions == null)

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using WizardGrower.Ads;
 using WizardGrower.Attendance;
 using WizardGrower.Auth;
@@ -38,6 +39,7 @@ namespace WizardGrower.Core
             EnsureOfflineTimeTracker();
             EnsureAdSimulationService();
             EnsureGoldDungeonService();
+            EnsurePlayerLevelServices();
 
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
             if (context.WeaponInventory != null)
@@ -56,7 +58,7 @@ namespace WizardGrower.Core
             if (context.MissionService != null)
                 context.MissionService.Initialize(context.MissionDatabase, context.Wallet, context.EnemySpawner, context.StageManager, context.GachaService, weaponFusion, context.MissionResetService);
             EnsureGoldDungeonEntryPanel();
-            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService, context.AttendanceService, context.GoldDungeonEntryPanel);
+            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService, context.AttendanceService, context.GoldDungeonEntryPanel, context.PlayerLevelService, context.PlayerExpBar);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             if (context.OfflineTime != null)
@@ -71,6 +73,10 @@ namespace WizardGrower.Core
             combatPower.Initialize(context.Wizard.Stats, context.Mana);
             if (context.CombatPowerPopup != null)
                 context.CombatPowerPopup.Bind(combatPower);
+            if (context.LevelUpPopup != null)
+                context.LevelUpPopup.Bind(context.PlayerLevelService);
+            if (context.PlayerLevelService != null)
+                context.PlayerLevelService.Initialize(context.Wizard.Stats, context.EnemySpawner, combatPower);
             context.HUD.BindCombatPower(combatPower);
             context.Progression.RecordCombatPower(combatPower.CurrentPower);
             context.SaveBinder.RegisterAutoSaveTriggers(context, context.SaveService);
@@ -150,6 +156,67 @@ namespace WizardGrower.Core
                 service = context.gameObject.AddComponent<GoldDungeonService>();
             service.Initialize(context.SaveService, context.MissionResetService, context.Wallet, context.StageManager, context.AdSimulation);
             context.SetGoldDungeonService(service);
+        }
+
+        private void EnsurePlayerLevelServices()
+        {
+            PlayerLevelService service = context.PlayerLevelService != null
+                ? context.PlayerLevelService
+                : context.GetComponent<PlayerLevelService>();
+            if (service == null)
+                service = context.gameObject.AddComponent<PlayerLevelService>();
+
+            LevelUpPopupView popup = context.LevelUpPopup != null
+                ? context.LevelUpPopup
+                : FindLevelUpPopupInScene();
+            if (popup == null)
+                popup = CreateLevelUpPopup();
+
+            context.SetPlayerLevelServices(service, popup, context.PlayerExpBar);
+        }
+
+        private LevelUpPopupView FindLevelUpPopupInScene()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas != null)
+            {
+                LevelUpPopupView popup = canvas.GetComponentInChildren<LevelUpPopupView>(true);
+                if (popup != null)
+                    return popup;
+            }
+
+            LevelUpPopupView[] popups = FindObjectsByType<LevelUpPopupView>(FindObjectsInactive.Include);
+            return popups != null && popups.Length > 0 ? popups[0] : null;
+        }
+
+        private LevelUpPopupView CreateLevelUpPopup()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas == null)
+                canvas = FindAnyObjectByType<Canvas>();
+
+            Transform parent = canvas != null ? canvas.transform : context.transform;
+            GameObject popupGo = new GameObject("LevelUpPopup", typeof(RectTransform), typeof(CanvasGroup), typeof(LevelUpPopupView));
+            popupGo.transform.SetParent(parent, false);
+            RectTransform rect = popupGo.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, 160f);
+            rect.sizeDelta = new Vector2(420f, 120f);
+            TMP_Text label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
+            label.transform.SetParent(popupGo.transform, false);
+            RectTransform labelRect = label.transform as RectTransform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            label.alignment = TextAlignmentOptions.Center;
+            label.fontSize = 28f;
+            label.fontStyle = FontStyles.Bold;
+            label.color = new Color(1f, 0.92f, 0.35f, 1f);
+            popupGo.SetActive(false);
+            return popupGo.GetComponent<LevelUpPopupView>();
         }
 
         private void EnsureStartupPopupServices()

@@ -20,6 +20,8 @@ namespace WizardGrower.Save
         public int pityCounter;
         public int summonLevel = 1;
         public int summonPullsInLevel;
+        public int playerLevel = 1;
+        public int playerCurrentExp;
         public int currentChapter = 1;
         public int currentStage = 1;
 
