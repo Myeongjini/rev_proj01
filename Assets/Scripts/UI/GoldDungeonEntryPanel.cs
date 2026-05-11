@@ -354,6 +354,8 @@ namespace WizardGrower.UI
         {
             if (activeTab == DungeonTab.Exp && expService != null)
                 return expService.IsDifficultyUnlocked(index);
+            if (activeTab == DungeonTab.Gold && service != null)
+                return service.IsDifficultyUnlocked(index);
             return difficulty != null && difficulty.unlockPlayerLevel <= 0;
         }
 

@@ -32,6 +32,7 @@ namespace WizardGrower.Save
         [FirestoreProperty("attendance")] public AttendanceStateDoc Attendance { get; set; }
         [FirestoreProperty("lastSeenAtUtcMs")] public long LastSeenAtUtcMs { get; set; }
         [FirestoreProperty("offlineRewardPending")] public long OfflineRewardPending { get; set; }
+        [FirestoreProperty("offlineRewardPendingExp")] public long OfflineRewardPendingExp { get; set; }
         [FirestoreProperty("goldDungeon")] public GoldDungeonStateDoc GoldDungeon { get; set; }
         [FirestoreProperty("expDungeon")] public EXPDungeonStateDoc ExpDungeon { get; set; }
     }

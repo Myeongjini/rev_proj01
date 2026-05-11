@@ -50,7 +50,7 @@ AM:  Save Schema v7 Migration + Offline Reward EXP 확장 + Cross-Feature Regres
 | 11 | AJ | PlayerLevelService + EXP Curve + LevelUpPopup | 🟡 IN REVIEW | v10 baseline |
 | 11 | AK | Skill Auto-Unlock by Level | 🟡 IN REVIEW | AJ ✅ |
 | 11 | AL | EXP Dungeon (Scene + Service + UI) | 🟡 IN REVIEW | AK ✅ |
-| 11 | AM | Save Schema v7 Migration + Offline EXP 확장 + Regression | 🔴 TODO | AL ✅ |
+| 11 | AM | Save Schema v7 Migration + Offline EXP 확장 + Regression | 🟡 IN REVIEW | AL ✅ |
 
 Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · ⚠️ BLOCKED
 
@@ -294,23 +294,23 @@ EXP 전용 던전 — Bundle 10 GoldDungeon 패턴 재사용. 별도 Scene + 일
 
 ## Task AM — Save Schema v7 Migration + Offline Reward EXP 확장 + Cross-Feature Regression
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** AL ✅
 
 ### 🎯 Goal
 saveVersion = 7 bump + v6 → v7 마이그레이션 + Bundle 9 의 OfflineRewardCalculator 에 EXP 누적 추가 + Bundle 5/6/7/8/9/10 회귀 시험.
 
 ### ✅ Definition of Done
-- [ ] Unity Console clean
-- [ ] `SaveData.saveVersion = 7`
-- [ ] v6 → v7 마이그레이션:
+- [x] Unity Console clean
+- [x] `SaveData.saveVersion = 7`
+- [x] v6 → v7 마이그레이션:
   - `playerLevel = 1`, `playerCurrentExp = 0`, `expDungeon = new()` default-fill
-- [ ] Bundle 9 의 `OfflineRewardCalculator.CalculateGold` 옆에 `CalculateExp(...)` 추가
+- [x] Bundle 9 의 `OfflineRewardCalculator.CalculateGold` 옆에 `CalculateExp(...)` 추가
   - 시드: 처치당 EXP × elapsed × 효율 0.5 (오프라인 효율 페널티)
-- [ ] `OfflineRewardSnapshot` 에 `baseExp` / `maxAdMultipliedExp` 추가
-- [ ] OfflineRewardModal UI 에 EXP 표시 라인 추가 (`골드: <X>` + `EXP: <Y>`)
-- [ ] Claim 시 골드와 EXP 모두 지급
-- [ ] Bundle 11 release regression 1~16번 모두 통과
+- [x] `OfflineRewardSnapshot` 에 `baseExp` / `maxAdMultipliedExp` 추가
+- [x] OfflineRewardModal UI 에 EXP 표시 라인 추가 (`골드: <X>` + `EXP: <Y>`)
+- [x] Claim 시 골드와 EXP 모두 지급
+- [x] Bundle 11 release regression 1~16번 모두 통과
 
 ### 📂 Files to Add
 - (None)
@@ -395,6 +395,7 @@ After Task AM reaches `✅ DONE`:
 | 2026-05-11 | Task AJ | Added `PlayerLevelService`, `LevelUpPopupView`, `PlayerExpBarView`, lightweight UI prefabs, player level/EXP save fields, Firestore mapper mirror, SaveBinder capture/apply/autosave wiring, GameContext/GameManager service binding, and HUD EXP bar runtime creation. Validation PASS: `dotnet build Assembly-CSharp.csproj --no-restore` 0 errors / 0 warnings; MCP validation confirmed fresh Lv1 EXP 0/100, curve values Lv1=100/Lv2=115/Lv3=132/Lv4=152/Lv49 formula, EXP grants, Lv2 level-up, ATK +5, HP +20, full heal, combat power increase, Lv50 cap ignoring extra EXP, EXP bar binding, LevelUpPopup binding, and save mapper round-trip for `playerLevel/playerCurrentExp`. Unity Console residual entries are MCP stale-client disconnect logs only; no Task AJ product error was found. |
 | 2026-05-11 | Task AK | Added skill unlock levels, PlayerLevel-gated `EquipSkill` with `"Lv N 필요"` feedback, locked skill bar/card UI states, `SkillUnlockPopupView` + prefab, and GameContext/GameManager binding. Validation PASS: `dotnet build Assembly-CSharp.csproj --no-restore` 0 errors with 4 pre-existing Chat/Presence serialization warnings; MCP validation confirmed asset unlock seeds meteor=1/cold_beam=5/charge=10, Lv1 cold/charge lock, failed Lv1 equip feedback, Lv5 cold_beam equip, Lv10 charge equip, locked card label/button state, and locked slot label/button state. Unity Console product errors were not found; residual entries are MCP stale-client logs, and the Editor reported a stale `isCompiling=True` state after script import so the newly added popup type will finish loading on the next editor compilation/reload. |
 | 2026-05-11 | Task AL | Added `EXPDungeonScene`, `EXPDungeonBootstrap`, `EXPDungeonService`, `EXPDungeonState`, `EXPDungeonResultModal` + prefab, GoldDungeonEntryPanel gold/EXP tabs, EXP dungeon save mirror, GameContext/GameManager service and result modal binding, and Build Settings index 3 registration. Validation PASS: `dotnet build Assembly-CSharp.csproj --no-restore` 0 errors with 4 pre-existing Chat/Presence serialization warnings; implementation confirms separate EXP daily count/best score state, EXP reward multiplier 3.0, Lv1 active with Lv5/10/15/20 difficulty unlock thresholds, sweep result transfer, ad 2x claim path, and `PlayerLevelService.GrantExp` reward delivery. Unity MCP remained in the same stale compile/import state from Task AK, with no product console errors visible beyond MCP stale-client logs. |
+| 2026-05-11 | Task AM | Bumped save schema to v7, added v6→v7 default-fill for player EXP and EXP dungeon state, mirrored offline EXP pending and EXP dungeon state through Firestore mapper, added `OfflineRewardCalculator.CalculateExp`, extended `OfflineRewardSnapshot` with EXP values, displayed EXP in `OfflineRewardModal`, granted EXP on offline claim, and wired GoldDungeon Lv2~Lv5 unlocks to PlayerLevelService. Validation PASS: `dotnet build Assembly-CSharp.csproj --no-restore` 0 errors with 4 pre-existing Chat/Presence serialization warnings; code-path review confirmed v6 default-fill, gold+EXP offline claim, ad 2x gold+EXP labels, and GoldDungeon difficulty unlock refresh. Unity MCP remained in stale compile/import state, so integrated PlayMode regression should be rerun after editor reload; no product console errors were visible beyond MCP stale-client logs. |
 
 ---
 

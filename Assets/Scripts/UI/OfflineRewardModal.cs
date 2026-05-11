@@ -15,6 +15,7 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text titleLabel;
         [SerializeField] private TMP_Text elapsedLabel;
         [SerializeField] private TMP_Text goldLabel;
+        [SerializeField] private TMP_Text expLabel;
         [SerializeField] private Button claimButton;
         [SerializeField] private TMP_Text claimButtonLabel;
         [SerializeField] private Button claimAdButton;
@@ -52,7 +53,7 @@ namespace WizardGrower.UI
                 return;
 
             OfflineRewardSnapshot resolved = await service.ResolvePendingAsync();
-            if (resolved.baseGold <= 0)
+            if (resolved.baseGold <= 0 && resolved.baseExp <= 0)
                 return;
 
             closeCompletion = new TaskCompletionSource<bool>();
@@ -71,8 +72,9 @@ namespace WizardGrower.UI
             canvasGroup.blocksRaycasts = true;
             elapsedLabel.text = $"경과 시간: {FormatElapsed(snapshot.elapsedSeconds)}";
             goldLabel.text = $"누적 골드: {snapshot.baseGold:N0}";
+            expLabel.text = $"누적 EXP: {snapshot.baseExp:N0}";
             claimButtonLabel.text = "받기";
-            claimAdButtonLabel.text = $"광고 보고 2배 ({snapshot.maxAdMultipliedGold:N0})";
+            claimAdButtonLabel.text = $"광고 보고 2배 (골드 {snapshot.maxAdMultipliedGold:N0} / EXP {snapshot.maxAdMultipliedExp:N0})";
         }
 
         public void Hide()
@@ -151,7 +153,9 @@ namespace WizardGrower.UI
             if (elapsedLabel == null)
                 elapsedLabel = CreateText(panel, "Elapsed", "경과 시간: 0분", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 70f), new Vector2(-80f, 50f), 22f, FontStyles.Normal);
             if (goldLabel == null)
-                goldLabel = CreateText(panel, "Gold", "누적 골드: 0", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 18f), new Vector2(-80f, 50f), 24f, FontStyles.Bold);
+                goldLabel = CreateText(panel, "Gold", "누적 골드: 0", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 36f), new Vector2(-80f, 42f), 24f, FontStyles.Bold);
+            if (expLabel == null)
+                expLabel = CreateText(panel, "EXP", "누적 EXP: 0", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, -10f), new Vector2(-80f, 42f), 22f, FontStyles.Bold);
             if (closeButton == null)
                 closeButton = CreateButton(panel, "CloseButton", "X", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-34f, -32f), new Vector2(48f, 44f), new Color(0.16f, 0.18f, 0.22f, 1f), out _);
             if (claimButton == null)

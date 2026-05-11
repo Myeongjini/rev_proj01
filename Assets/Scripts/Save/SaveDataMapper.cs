@@ -41,6 +41,7 @@ namespace WizardGrower.Save
                 Attendance = ToAttendanceDoc(data.attendance),
                 LastSeenAtUtcMs = data.lastSeenAtUtcMs,
                 OfflineRewardPending = Math.Max(0, data.offlineRewardPending),
+                OfflineRewardPendingExp = Math.Max(0, data.offlineRewardPendingExp),
                 GoldDungeon = ToGoldDungeonDoc(data.goldDungeon),
                 ExpDungeon = ToEXPDungeonDoc(data.expDungeon)
             };
@@ -77,6 +78,7 @@ namespace WizardGrower.Save
                 attendance = FromAttendanceDoc(doc.Attendance),
                 lastSeenAtUtcMs = Math.Max(0, doc.LastSeenAtUtcMs),
                 offlineRewardPending = Math.Max(0, doc.OfflineRewardPending),
+                offlineRewardPendingExp = Math.Max(0, doc.OfflineRewardPendingExp),
                 goldDungeon = FromGoldDungeonDoc(doc.GoldDungeon),
                 expDungeon = FromEXPDungeonDoc(doc.ExpDungeon)
             };

@@ -102,7 +102,10 @@ namespace WizardGrower.Save
             if (data.saveVersion < 6)
                 MigrateGoldDungeonToV6(data);
 
-            data.saveVersion = Mathf.Max(data.saveVersion, 6);
+            if (data.saveVersion < 7)
+                MigratePlayerExpAndEXPDungeonToV7(data);
+
+            data.saveVersion = Mathf.Max(data.saveVersion, 7);
 
             if (data.ownedWeapons.Count == 0)
                 data.ownedWeapons.Add(new OwnedWeaponEntry(WeaponInventory.StarterWeaponId, 1));
@@ -132,9 +135,20 @@ namespace WizardGrower.Save
                 data.attendance = new WizardGrower.Attendance.AttendanceState();
             data.lastSeenAtUtcMs = System.Math.Max(0, data.lastSeenAtUtcMs);
             data.offlineRewardPending = System.Math.Max(0, data.offlineRewardPending);
+            data.offlineRewardPendingExp = System.Math.Max(0, data.offlineRewardPendingExp);
             NormalizeGoldDungeon(data);
+            NormalizeEXPDungeon(data);
 
             return data;
+        }
+
+        private static void MigratePlayerExpAndEXPDungeonToV7(SaveData data)
+        {
+            if (data.playerLevel <= 0)
+                data.playerLevel = 1;
+            data.playerCurrentExp = System.Math.Max(0, data.playerCurrentExp);
+            NormalizeEXPDungeon(data);
+            data.offlineRewardPendingExp = System.Math.Max(0, data.offlineRewardPendingExp);
         }
 
         private static void MigrateGoldDungeonToV6(SaveData data)
@@ -149,6 +163,15 @@ namespace WizardGrower.Save
             data.goldDungeon.lastEntryDateUtcMs = System.Math.Max(0, data.goldDungeon.lastEntryDateUtcMs);
             data.goldDungeon.todayEntryCount = Mathf.Max(0, data.goldDungeon.todayEntryCount);
             data.goldDungeon.bestScore = System.Math.Max(0, data.goldDungeon.bestScore);
+        }
+
+        private static void NormalizeEXPDungeon(SaveData data)
+        {
+            if (data.expDungeon == null)
+                data.expDungeon = new WizardGrower.Dungeons.EXPDungeonState();
+            data.expDungeon.lastEntryDateUtcMs = System.Math.Max(0, data.expDungeon.lastEntryDateUtcMs);
+            data.expDungeon.todayEntryCount = Mathf.Max(0, data.expDungeon.todayEntryCount);
+            data.expDungeon.bestScore = System.Math.Max(0, data.expDungeon.bestScore);
         }
 
         private static void MigrateOfflineRewardToV5(SaveData data)

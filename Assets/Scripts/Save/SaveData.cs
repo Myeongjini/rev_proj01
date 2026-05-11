@@ -11,7 +11,7 @@ namespace WizardGrower.Save
     [Serializable]
     public class SaveData
     {
-        public int saveVersion = 6;
+        public int saveVersion = 7;
         public string userId = "local";
         public long updatedAtUnixMs;
 
@@ -37,6 +37,7 @@ namespace WizardGrower.Save
         public AttendanceState attendance = new AttendanceState();
         public long lastSeenAtUtcMs;
         public long offlineRewardPending;
+        public long offlineRewardPendingExp;
         public GoldDungeonState goldDungeon = new GoldDungeonState();
         public EXPDungeonState expDungeon = new EXPDungeonState();
     }

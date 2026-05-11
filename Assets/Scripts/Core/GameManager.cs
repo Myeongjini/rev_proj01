@@ -40,6 +40,8 @@ namespace WizardGrower.Core
             EnsureAdSimulationService();
             EnsureGoldDungeonService();
             EnsurePlayerLevelServices();
+            if (context.GoldDungeonService != null)
+                context.GoldDungeonService.AttachPlayerLevel(context.PlayerLevelService);
             EnsureEXPDungeonService();
 
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
@@ -137,7 +139,7 @@ namespace WizardGrower.Core
             OfflineRewardService reward = context.OfflineReward != null
                 ? context.OfflineReward
                 : context.gameObject.AddComponent<OfflineRewardService>();
-            reward.Initialize(context.OfflineTime, context.Wallet, context.StageManager, context.Wizard, context.SaveService);
+            reward.Initialize(context.OfflineTime, context.Wallet, context.StageManager, context.Wizard, context.SaveService, context.PlayerLevelService);
             context.SetOfflineServices(context.OfflineTime, reward);
         }
 

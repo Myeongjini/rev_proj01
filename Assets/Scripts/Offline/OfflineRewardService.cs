@@ -15,6 +15,8 @@ namespace WizardGrower.Offline
         public bool isCapped;
         public long baseGold;
         public long maxAdMultipliedGold;
+        public long baseExp;
+        public long maxAdMultipliedExp;
     }
 
     public class OfflineRewardService : MonoBehaviour
@@ -23,20 +25,22 @@ namespace WizardGrower.Offline
         private CurrencyWallet wallet;
         private StageManager stageManager;
         private PlayerWizard wizard;
+        private PlayerLevelService playerLevel;
         private SaveService save;
         private OfflineRewardSnapshot lastSnapshot;
         private bool hasSnapshot;
 
         public event Action<OfflineRewardSnapshot> PendingResolved;
-        public event Action<long, bool> Claimed;
+        public event Action<long, long, bool> Claimed;
 
-        public void Initialize(IOfflineTimeProvider time, CurrencyWallet wallet, StageManager stageMgr, PlayerWizard wizard, SaveService save)
+        public void Initialize(IOfflineTimeProvider time, CurrencyWallet wallet, StageManager stageMgr, PlayerWizard wizard, SaveService save, PlayerLevelService playerLevel = null)
         {
             this.time = time;
             this.wallet = wallet;
             stageManager = stageMgr;
             this.wizard = wizard;
             this.save = save;
+            this.playerLevel = playerLevel;
             hasSnapshot = false;
         }
 
@@ -47,10 +51,15 @@ namespace WizardGrower.Offline
 
             OfflineWindow window = await time.ResolveOfflineWindowAsync();
             long pendingGold = Math.Max(0, save.CurrentData.offlineRewardPending);
-            if (pendingGold <= 0 && time.ShouldTriggerOfflineFlow(window))
+            long pendingExp = Math.Max(0, save.CurrentData.offlineRewardPendingExp);
+            if ((pendingGold <= 0 || pendingExp <= 0) && time.ShouldTriggerOfflineFlow(window))
             {
-                pendingGold = OfflineRewardCalculator.CalculateGold(window, stageManager != null ? stageManager.CurrentChapter : null, stageManager != null ? stageManager.CurrentStage : null, wizard != null ? wizard.Stats : null);
+                if (pendingGold <= 0)
+                    pendingGold = OfflineRewardCalculator.CalculateGold(window, stageManager != null ? stageManager.CurrentChapter : null, stageManager != null ? stageManager.CurrentStage : null, wizard != null ? wizard.Stats : null);
+                if (pendingExp <= 0)
+                    pendingExp = OfflineRewardCalculator.CalculateExp(window, stageManager != null ? stageManager.CurrentChapter : null, stageManager != null ? stageManager.CurrentStage : null, wizard != null ? wizard.Stats : null);
                 save.CurrentData.offlineRewardPending = pendingGold;
+                save.CurrentData.offlineRewardPendingExp = pendingExp;
                 save.Save();
             }
 
@@ -59,7 +68,9 @@ namespace WizardGrower.Offline
                 elapsedSeconds = window.elapsedSeconds,
                 isCapped = window.isCapped,
                 baseGold = pendingGold,
-                maxAdMultipliedGold = SafeMultiply(pendingGold, 2)
+                maxAdMultipliedGold = SafeMultiply(pendingGold, 2),
+                baseExp = pendingExp,
+                maxAdMultipliedExp = SafeMultiply(pendingExp, 2)
             };
             hasSnapshot = true;
             PendingResolved?.Invoke(lastSnapshot);
@@ -70,13 +81,17 @@ namespace WizardGrower.Offline
         {
             OfflineRewardSnapshot snapshot = hasSnapshot ? lastSnapshot : await ResolvePendingAsync();
             long baseGold = Math.Max(0, save != null ? save.CurrentData.offlineRewardPending : snapshot.baseGold);
-            if (baseGold <= 0 || wallet == null || save == null)
+            long baseExp = Math.Max(0, save != null ? save.CurrentData.offlineRewardPendingExp : snapshot.baseExp);
+            if ((baseGold <= 0 && baseExp <= 0) || wallet == null || save == null)
                 return;
 
             long totalGold = watchedAd ? SafeMultiply(baseGold, 2) : baseGold;
+            long totalExp = watchedAd ? SafeMultiply(baseExp, 2) : baseExp;
             wallet.AddGold(ToWalletAmount(totalGold));
+            playerLevel?.GrantExp(ToWalletAmount(totalExp));
             save.CurrentData.gold = wallet.Gold;
             save.CurrentData.offlineRewardPending = 0;
+            save.CurrentData.offlineRewardPendingExp = 0;
 
             OfflineWindow window = time != null ? await time.ResolveOfflineWindowAsync() : default;
             if (window.currentServerNowMs > 0)
@@ -84,7 +99,7 @@ namespace WizardGrower.Offline
 
             save.Save();
             hasSnapshot = false;
-            Claimed?.Invoke(totalGold, watchedAd);
+            Claimed?.Invoke(totalGold, totalExp, watchedAd);
         }
 
         private static int ToWalletAmount(long amount)

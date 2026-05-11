@@ -5,6 +5,7 @@ using UnityEngine;
 using WizardGrower.Ads;
 using WizardGrower.Economy;
 using WizardGrower.Missions;
+using WizardGrower.Player;
 using WizardGrower.Save;
 using WizardGrower.Stages;
 
@@ -29,6 +30,7 @@ namespace WizardGrower.Dungeons
         private CurrencyWallet wallet;
         private StageManager stageManager;
         private IRewardedAdProvider adProvider;
+        private PlayerLevelService playerLevel;
 
         public event Action<int> EntryCountChanged;
         public event Action<long> BestScoreChanged;
@@ -100,6 +102,12 @@ namespace WizardGrower.Dungeons
             return Task.FromResult(total);
         }
 
+        public void AttachPlayerLevel(PlayerLevelService playerLevel)
+        {
+            this.playerLevel = playerLevel;
+            StateChanged?.Invoke();
+        }
+
         public long GetBestScore()
         {
             EnsureDefaults();
@@ -159,10 +167,10 @@ namespace WizardGrower.Dungeons
             }
         }
 
-        private bool IsDifficultyUnlocked(int difficultyIndex)
+        public bool IsDifficultyUnlocked(int difficultyIndex)
         {
             GoldDungeonDifficulty difficulty = GetDifficulty(difficultyIndex);
-            return difficulty != null && difficulty.unlockPlayerLevel <= 0;
+            return difficulty != null && (difficulty.unlockPlayerLevel <= 0 || playerLevel == null || playerLevel.CurrentLevel >= difficulty.unlockPlayerLevel);
         }
 
         private GoldDungeonDifficulty GetDifficulty(int index)
