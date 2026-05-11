@@ -22,9 +22,14 @@ namespace WizardGrower.UI
 
         public void Bind(int index, GoldDungeonDifficulty difficulty, bool selected)
         {
+            bool unlocked = difficulty != null && difficulty.unlockPlayerLevel <= 0;
+            Bind(index, difficulty, selected, unlocked);
+        }
+
+        public void Bind(int index, GoldDungeonDifficulty difficulty, bool selected, bool unlocked)
+        {
             EnsureUi();
             this.index = index;
-            bool unlocked = difficulty != null && difficulty.unlockPlayerLevel <= 0;
             if (label != null)
                 label.text = unlocked ? $"Lv{difficulty.level}" : $"Lv{difficulty?.level ?? index + 1}\nLv {difficulty?.unlockPlayerLevel ?? 5} 필요";
             if (button != null)

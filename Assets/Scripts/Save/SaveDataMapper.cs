@@ -41,7 +41,8 @@ namespace WizardGrower.Save
                 Attendance = ToAttendanceDoc(data.attendance),
                 LastSeenAtUtcMs = data.lastSeenAtUtcMs,
                 OfflineRewardPending = Math.Max(0, data.offlineRewardPending),
-                GoldDungeon = ToGoldDungeonDoc(data.goldDungeon)
+                GoldDungeon = ToGoldDungeonDoc(data.goldDungeon),
+                ExpDungeon = ToEXPDungeonDoc(data.expDungeon)
             };
         }
 
@@ -76,7 +77,8 @@ namespace WizardGrower.Save
                 attendance = FromAttendanceDoc(doc.Attendance),
                 lastSeenAtUtcMs = Math.Max(0, doc.LastSeenAtUtcMs),
                 offlineRewardPending = Math.Max(0, doc.OfflineRewardPending),
-                goldDungeon = FromGoldDungeonDoc(doc.GoldDungeon)
+                goldDungeon = FromGoldDungeonDoc(doc.GoldDungeon),
+                expDungeon = FromEXPDungeonDoc(doc.ExpDungeon)
             };
         }
 
@@ -349,6 +351,30 @@ namespace WizardGrower.Save
                 return new GoldDungeonState();
 
             return new GoldDungeonState
+            {
+                lastEntryDateUtcMs = Math.Max(0, doc.LastEntryDateUtcMs),
+                todayEntryCount = Mathf.Max(0, doc.TodayEntryCount),
+                bestScore = Math.Max(0, doc.BestScore)
+            };
+        }
+
+        private static EXPDungeonStateDoc ToEXPDungeonDoc(EXPDungeonState state)
+        {
+            state ??= new EXPDungeonState();
+            return new EXPDungeonStateDoc
+            {
+                LastEntryDateUtcMs = Math.Max(0, state.lastEntryDateUtcMs),
+                TodayEntryCount = Mathf.Max(0, state.todayEntryCount),
+                BestScore = Math.Max(0, state.bestScore)
+            };
+        }
+
+        private static EXPDungeonState FromEXPDungeonDoc(EXPDungeonStateDoc doc)
+        {
+            if (doc == null)
+                return new EXPDungeonState();
+
+            return new EXPDungeonState
             {
                 lastEntryDateUtcMs = Math.Max(0, doc.LastEntryDateUtcMs),
                 todayEntryCount = Mathf.Max(0, doc.TodayEntryCount),

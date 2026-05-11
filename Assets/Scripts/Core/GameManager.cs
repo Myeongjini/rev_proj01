@@ -40,6 +40,7 @@ namespace WizardGrower.Core
             EnsureAdSimulationService();
             EnsureGoldDungeonService();
             EnsurePlayerLevelServices();
+            EnsureEXPDungeonService();
 
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
             if (context.WeaponInventory != null)
@@ -66,6 +67,7 @@ namespace WizardGrower.Core
             EnsureOfflineRewardService();
             EnsureStartupPopupServices();
             EnsureGoldDungeonResultModal();
+            EnsureEXPDungeonResultModal();
             if (context.WeaponVisual != null)
                 context.WeaponVisual.Bind(context.Wizard, context.WeaponInventory, context.ProjectileFactory);
             if (context.WeaponInventory != null)
@@ -158,6 +160,17 @@ namespace WizardGrower.Core
                 service = context.gameObject.AddComponent<GoldDungeonService>();
             service.Initialize(context.SaveService, context.MissionResetService, context.Wallet, context.StageManager, context.AdSimulation);
             context.SetGoldDungeonService(service);
+        }
+
+        private void EnsureEXPDungeonService()
+        {
+            EXPDungeonService service = context.EXPDungeonService != null
+                ? context.EXPDungeonService
+                : context.GetComponent<EXPDungeonService>();
+            if (service == null)
+                service = context.gameObject.AddComponent<EXPDungeonService>();
+            service.Initialize(context.SaveService, context.MissionResetService, context.PlayerLevelService, context.AdSimulation);
+            context.SetEXPDungeonService(service);
         }
 
         private void EnsurePlayerLevelServices()
@@ -303,7 +316,7 @@ namespace WizardGrower.Core
             if (entryPanel == null)
                 entryPanel = CreateGoldDungeonEntryPanel();
 
-            entryPanel.Bind(context.GoldDungeonService);
+            entryPanel.Bind(context.GoldDungeonService, context.EXPDungeonService);
             context.SetGoldDungeonEntryPanel(entryPanel);
         }
 
@@ -352,6 +365,53 @@ namespace WizardGrower.Core
             if (context.StartupPopupQueue != null)
                 context.StartupPopupQueue.Register(resultModal);
             context.SetGoldDungeonResultModal(resultModal);
+        }
+
+        private void EnsureEXPDungeonResultModal()
+        {
+            EXPDungeonResultModal resultModal = context.EXPDungeonResultModal != null
+                ? context.EXPDungeonResultModal
+                : FindEXPDungeonResultModalInScene();
+            if (resultModal == null)
+                resultModal = CreateEXPDungeonResultModal();
+
+            resultModal.Bind(context.EXPDungeonService, context.AdSimulation);
+            if (context.StartupPopupQueue != null)
+                context.StartupPopupQueue.Register(resultModal);
+            context.SetEXPDungeonResultModal(resultModal);
+        }
+
+        private EXPDungeonResultModal FindEXPDungeonResultModalInScene()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas != null)
+            {
+                EXPDungeonResultModal modal = canvas.GetComponentInChildren<EXPDungeonResultModal>(true);
+                if (modal != null)
+                    return modal;
+            }
+
+            EXPDungeonResultModal[] modals = FindObjectsByType<EXPDungeonResultModal>(FindObjectsInactive.Include);
+            return modals != null && modals.Length > 0 ? modals[0] : null;
+        }
+
+        private EXPDungeonResultModal CreateEXPDungeonResultModal()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas == null)
+                canvas = FindAnyObjectByType<Canvas>();
+
+            Transform parent = canvas != null ? canvas.transform : context.transform;
+            GameObject modalGo = new GameObject("EXPDungeonResultModal", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(EXPDungeonResultModal));
+            modalGo.transform.SetParent(parent, false);
+            RectTransform rect = modalGo.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            modalGo.transform.SetAsLastSibling();
+            modalGo.SetActive(false);
+            return modalGo.GetComponent<EXPDungeonResultModal>();
         }
 
         private GoldDungeonResultModal FindGoldDungeonResultModalInScene()

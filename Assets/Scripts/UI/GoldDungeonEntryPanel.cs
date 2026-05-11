@@ -16,11 +16,22 @@ namespace WizardGrower.UI
         [SerializeField] private Button enterButton;
         [SerializeField] private Button sweepButton;
         [SerializeField] private Button cancelButton;
+        [SerializeField] private Button goldTabButton;
+        [SerializeField] private Button expTabButton;
         [SerializeField] private string dungeonSceneName = "GoldDungeonScene";
+        [SerializeField] private string expDungeonSceneName = "EXPDungeonScene";
 
         private GoldDungeonService service;
+        private EXPDungeonService expService;
         private readonly System.Collections.Generic.List<GoldDungeonDifficultySlotView> difficultySlots = new System.Collections.Generic.List<GoldDungeonDifficultySlotView>();
         private int selectedDifficultyIndex;
+        private DungeonTab activeTab;
+
+        private enum DungeonTab
+        {
+            Gold,
+            Exp
+        }
 
         public event Action<bool> OpenStateChanged;
 
@@ -30,7 +41,7 @@ namespace WizardGrower.UI
             Close();
         }
 
-        public void Bind(GoldDungeonService service = null)
+        public void Bind(GoldDungeonService service = null, EXPDungeonService expService = null)
         {
             if (service != null)
             {
@@ -38,6 +49,13 @@ namespace WizardGrower.UI
                     this.service.EntryCountChanged -= OnEntryCountChanged;
                 this.service = service;
                 this.service.EntryCountChanged += OnEntryCountChanged;
+            }
+            if (expService != null)
+            {
+                if (this.expService != null)
+                    this.expService.EntryCountChanged -= OnEntryCountChanged;
+                this.expService = expService;
+                this.expService.EntryCountChanged += OnEntryCountChanged;
             }
 
             EnsureUi();
@@ -73,21 +91,42 @@ namespace WizardGrower.UI
             EnsureUi();
             if (remainingLabel != null)
                 remainingLabel.text = $"잔여 입장 {Mathf.Max(0, remainingEntries)}/{Mathf.Max(1, dailyLimit)}";
+            if (titleLabel != null)
+                titleLabel.text = activeTab == DungeonTab.Gold ? "골드 던전" : "EXP 던전";
             if (feedbackLabel != null)
-                feedbackLabel.text = "난이도 Lv1";
+                feedbackLabel.text = activeTab == DungeonTab.Gold ? "골드 보상 던전" : "EXP 보상 던전";
             if (enterButton != null)
                 enterButton.interactable = remainingEntries > 0;
             if (sweepButton != null)
-                sweepButton.interactable = remainingEntries > 0 && service != null && service.GetBestScore() > 0;
+                sweepButton.interactable = remainingEntries > 0 && GetActiveBestScore() > 0;
             RefreshDifficultySlots();
+            RefreshTabs();
         }
 
         private async void Enter()
         {
+            if (activeTab == DungeonTab.Exp)
+            {
+                if (expService != null)
+                {
+                    bool expEntered = await expService.BeginEntryAsync(selectedDifficultyIndex);
+                    if (!expEntered)
+                    {
+                        if (feedbackLabel != null)
+                            feedbackLabel.text = "입장 조건을 확인해주세요";
+                        RefreshFromService();
+                        return;
+                    }
+                }
+
+                _ = SceneManager.LoadSceneAsync(expDungeonSceneName, LoadSceneMode.Single);
+                return;
+            }
+
             if (service != null)
             {
-                bool entered = await service.BeginEntryAsync(selectedDifficultyIndex);
-                if (!entered)
+                bool goldEntered = await service.BeginEntryAsync(selectedDifficultyIndex);
+                if (!goldEntered)
                 {
                     if (feedbackLabel != null)
                         feedbackLabel.text = "오늘 입장 횟수를 모두 사용했습니다";
@@ -96,20 +135,47 @@ namespace WizardGrower.UI
                 }
             }
 
-            AsyncOperation operation = SceneManager.LoadSceneAsync(dungeonSceneName, LoadSceneMode.Single);
+            _ = SceneManager.LoadSceneAsync(dungeonSceneName, LoadSceneMode.Single);
         }
 
         private async void Sweep()
         {
+            if (activeTab == DungeonTab.Exp)
+            {
+                if (expService == null)
+                    return;
+
+                long bestExp = expService.GetBestScore();
+                if (bestExp <= 0)
+                    return;
+
+                bool expSweepEntered = await expService.BeginEntryAsync(selectedDifficultyIndex);
+                if (!expSweepEntered)
+                {
+                    if (feedbackLabel != null)
+                        feedbackLabel.text = "입장 조건을 확인해주세요";
+                    RefreshFromService();
+                    return;
+                }
+
+                EXPDungeonSceneTransfer.SetPending(new EXPDungeonResult
+                {
+                    killCount = 0,
+                    earnedExp = bestExp,
+                    difficulty = selectedDifficultyIndex + 1
+                });
+                Close();
+                return;
+            }
+
             if (service == null)
                 return;
-
             long bestScore = service.GetBestScore();
             if (bestScore <= 0)
                 return;
 
-            bool entered = await service.BeginEntryAsync(selectedDifficultyIndex);
-            if (!entered)
+            bool goldSweepEntered = await service.BeginEntryAsync(selectedDifficultyIndex);
+            if (!goldSweepEntered)
             {
                 if (feedbackLabel != null)
                     feedbackLabel.text = "오늘 입장 횟수를 모두 사용했습니다";
@@ -128,14 +194,27 @@ namespace WizardGrower.UI
 
         private async void RefreshFromService()
         {
+            if (activeTab == DungeonTab.Exp)
+            {
+                if (expService == null)
+                {
+                    Refresh(3, 3);
+                    return;
+                }
+
+                int expUsed = await expService.GetTodayEntryCountAsync();
+                Refresh(expService.DailyEntryLimit - expUsed, expService.DailyEntryLimit);
+                return;
+            }
+
             if (service == null)
             {
                 Refresh(3, 3);
                 return;
             }
 
-            int used = await service.GetTodayEntryCountAsync();
-            Refresh(service.DailyEntryLimit - used, service.DailyEntryLimit);
+            int goldUsed = await service.GetTodayEntryCountAsync();
+            Refresh(service.DailyEntryLimit - goldUsed, service.DailyEntryLimit);
         }
 
         private void OnEntryCountChanged(int _)
@@ -176,6 +255,10 @@ namespace WizardGrower.UI
 
             if (titleLabel == null)
                 titleLabel = CreateText(panel, "Title", "골드던전", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -52f), new Vector2(-120f, 58f), 30f, FontStyles.Bold);
+            if (goldTabButton == null)
+                goldTabButton = CreateButton(panel, "GoldTabButton", "골드", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(90f, -50f), new Vector2(96f, 42f), new Color(0.78f, 0.48f, 0.12f, 1f));
+            if (expTabButton == null)
+                expTabButton = CreateButton(panel, "EXPTabButton", "EXP", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(196f, -50f), new Vector2(96f, 42f), new Color(0.12f, 0.36f, 0.92f, 1f));
             if (remainingLabel == null)
                 remainingLabel = CreateText(panel, "Remaining", "잔여 입장 3/3", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 74f), new Vector2(-90f, 48f), 22f, FontStyles.Bold);
             if (feedbackLabel == null)
@@ -191,9 +274,13 @@ namespace WizardGrower.UI
             enterButton.onClick.RemoveAllListeners();
             sweepButton.onClick.RemoveAllListeners();
             cancelButton.onClick.RemoveAllListeners();
+            goldTabButton.onClick.RemoveAllListeners();
+            expTabButton.onClick.RemoveAllListeners();
             enterButton.onClick.AddListener(Enter);
             sweepButton.onClick.AddListener(Sweep);
             cancelButton.onClick.AddListener(Close);
+            goldTabButton.onClick.AddListener(() => SelectTab(DungeonTab.Gold));
+            expTabButton.onClick.AddListener(() => SelectTab(DungeonTab.Exp));
         }
 
         private void EnsureDifficultySlots(Transform panel)
@@ -228,13 +315,54 @@ namespace WizardGrower.UI
 
             for (int i = 0; i < difficultySlots.Count; i++)
             {
-                GoldDungeonDifficulty difficulty = null;
-                if (service != null && service.Difficulties != null && i < service.Difficulties.Count)
-                    difficulty = service.Difficulties[i];
-                else
-                    difficulty = new GoldDungeonDifficulty { level = i + 1, unlockPlayerLevel = i == 0 ? 0 : (i + 1) * 5 };
-                difficultySlots[i].Bind(i, difficulty, i == selectedDifficultyIndex);
+                GoldDungeonDifficulty difficulty = GetActiveDifficulty(i);
+                bool unlocked = IsActiveDifficultyUnlocked(i, difficulty);
+                difficultySlots[i].Bind(i, difficulty, i == selectedDifficultyIndex, unlocked);
             }
+        }
+
+        private void SelectTab(DungeonTab tab)
+        {
+            activeTab = tab;
+            selectedDifficultyIndex = 0;
+            RefreshFromService();
+        }
+
+        private long GetActiveBestScore()
+        {
+            return activeTab == DungeonTab.Exp
+                ? expService != null ? expService.GetBestScore() : 0
+                : service != null ? service.GetBestScore() : 0;
+        }
+
+        private GoldDungeonDifficulty GetActiveDifficulty(int index)
+        {
+            if (activeTab == DungeonTab.Exp)
+            {
+                if (expService != null && expService.Difficulties != null && index < expService.Difficulties.Count)
+                    return expService.Difficulties[index];
+            }
+            else if (service != null && service.Difficulties != null && index < service.Difficulties.Count)
+            {
+                return service.Difficulties[index];
+            }
+
+            return new GoldDungeonDifficulty { level = index + 1, unlockPlayerLevel = index == 0 ? 0 : (index + 1) * 5 };
+        }
+
+        private bool IsActiveDifficultyUnlocked(int index, GoldDungeonDifficulty difficulty)
+        {
+            if (activeTab == DungeonTab.Exp && expService != null)
+                return expService.IsDifficultyUnlocked(index);
+            return difficulty != null && difficulty.unlockPlayerLevel <= 0;
+        }
+
+        private void RefreshTabs()
+        {
+            if (goldTabButton != null)
+                goldTabButton.GetComponent<Image>().color = activeTab == DungeonTab.Gold ? new Color(0.78f, 0.48f, 0.12f, 1f) : new Color(0.18f, 0.18f, 0.20f, 1f);
+            if (expTabButton != null)
+                expTabButton.GetComponent<Image>().color = activeTab == DungeonTab.Exp ? new Color(0.12f, 0.36f, 0.92f, 1f) : new Color(0.18f, 0.18f, 0.20f, 1f);
         }
 
         private TMP_Text CreateText(Transform parent, string name, string text, Vector2 min, Vector2 max, Vector2 pos, Vector2 size, float fontSize, FontStyles style)

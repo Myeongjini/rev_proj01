@@ -38,6 +38,7 @@ namespace WizardGrower.Save
         public long lastSeenAtUtcMs;
         public long offlineRewardPending;
         public GoldDungeonState goldDungeon = new GoldDungeonState();
+        public EXPDungeonState expDungeon = new EXPDungeonState();
     }
 
     [Serializable]

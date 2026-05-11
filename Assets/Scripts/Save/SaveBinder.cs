@@ -83,6 +83,9 @@ namespace WizardGrower.Save
             data.goldDungeon = ctx.GoldDungeonService != null && ctx.SaveService != null && ctx.SaveService.CurrentData.goldDungeon != null
                 ? ctx.SaveService.CurrentData.goldDungeon
                 : new WizardGrower.Dungeons.GoldDungeonState();
+            data.expDungeon = ctx.EXPDungeonService != null && ctx.SaveService != null && ctx.SaveService.CurrentData.expDungeon != null
+                ? ctx.SaveService.CurrentData.expDungeon
+                : new WizardGrower.Dungeons.EXPDungeonState();
             return data;
         }
 
@@ -115,6 +118,8 @@ namespace WizardGrower.Save
                 context.AttendanceService.StateChanged += QueueSave;
             if (context.GoldDungeonService != null)
                 context.GoldDungeonService.StateChanged += QueueSave;
+            if (context.EXPDungeonService != null)
+                context.EXPDungeonService.StateChanged += QueueSave;
             if (context.PlayerLevelService != null)
                 context.PlayerLevelService.StateChanged += QueueSave;
         }

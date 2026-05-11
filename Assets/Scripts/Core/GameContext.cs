@@ -68,6 +68,8 @@ namespace WizardGrower.Core
         [field: SerializeField] public GoldDungeonEntryPanel GoldDungeonEntryPanel { get; private set; }
         [field: SerializeField] public GoldDungeonResultModal GoldDungeonResultModal { get; private set; }
         [field: SerializeField] public GoldDungeonService GoldDungeonService { get; private set; }
+        [field: SerializeField] public EXPDungeonService EXPDungeonService { get; private set; }
+        [field: SerializeField] public EXPDungeonResultModal EXPDungeonResultModal { get; private set; }
         [field: SerializeField] public PlayerLevelService PlayerLevelService { get; private set; }
         [field: SerializeField] public LevelUpPopupView LevelUpPopup { get; private set; }
         [field: SerializeField] public PlayerExpBarView PlayerExpBar { get; private set; }
@@ -139,6 +141,18 @@ namespace WizardGrower.Core
         {
             if (service != null)
                 GoldDungeonService = service;
+        }
+
+        public void SetEXPDungeonService(EXPDungeonService service)
+        {
+            if (service != null)
+                EXPDungeonService = service;
+        }
+
+        public void SetEXPDungeonResultModal(EXPDungeonResultModal resultModal)
+        {
+            if (resultModal != null)
+                EXPDungeonResultModal = resultModal;
         }
 
         public void SetPlayerLevelServices(PlayerLevelService service, LevelUpPopupView popup = null, PlayerExpBarView expBar = null, SkillUnlockPopupView skillUnlockPopup = null)
