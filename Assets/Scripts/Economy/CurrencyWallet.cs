@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Firebase.Firestore;
 using UnityEngine;
 using WizardGrower.Cloud;
@@ -11,13 +13,16 @@ namespace WizardGrower.Economy
         [SerializeField] private int gems = 300;
 
         private ICurrencyAuthority authority = new LocalCurrencyAuthority();
+        private readonly SemaphoreSlim authorityLock = new SemaphoreSlim(1, 1);
         private ListenerRegistration walletListener;
+        private bool authorityMutationInFlight;
 
         public event Action<int> GoldChanged;
         public event Action<int> GemsChanged;
         public event Action<int> GoldGained;
         public int Gold => gold;
         public int Gems => gems;
+        public bool IsAuthorityBusy => authorityMutationInFlight || (authority != null && authority.IsBusy);
 
         public void InitializeAuthority(CloudFunctionsClient client)
         {
@@ -26,28 +31,40 @@ namespace WizardGrower.Economy
                 : new LocalCurrencyAuthority();
         }
 
+        [Obsolete("Use AddGoldAsync — sync API is no-op in server-authority mode", false)]
         public void AddGold(int amount, string reason = "reward", string source = "gameplay")
         {
             int gained = Mathf.Max(0, amount);
             if (gained <= 0)
                 return;
 
-            if (!TryGrant("gold", gained, reason, source, gold, SetGold))
+            if (!TryGrantLocalOnly("gold", gained, reason, source, gold, SetGold))
                 return;
 
             GoldGained?.Invoke(gained);
         }
 
+        public Task<bool> AddGoldAsync(int amount, string reason = "reward", string source = "gameplay", CancellationToken ct = default)
+        {
+            return TryGrantAsync("gold", amount, reason, source, Gold, SetGold, GoldGained, ct);
+        }
+
+        [Obsolete("Use TrySpendGoldAsync — sync API is no-op in server-authority mode", false)]
         public bool TrySpendGold(int amount, string reason = "spend_gold")
         {
             int cost = Mathf.Max(0, amount);
             if (cost <= 0)
                 return true;
 
-            if (!TrySpend("gold", cost, reason, gold, SetGold))
+            if (!TrySpendLocalOnly("gold", cost, reason, gold, SetGold))
                 return false;
 
             return true;
+        }
+
+        public Task<bool> TrySpendGoldAsync(int amount, string reason = "spend_gold", CancellationToken ct = default)
+        {
+            return TrySpendAsync("gold", amount, reason, Gold, SetGold, ct);
         }
 
         public void SetGold(int amount)
@@ -56,25 +73,37 @@ namespace WizardGrower.Economy
             GoldChanged?.Invoke(gold);
         }
 
+        [Obsolete("Use AddGemsAsync — sync API is no-op in server-authority mode", false)]
         public void AddGems(int amount, string reason = "reward", string source = "gameplay")
         {
             int gained = Mathf.Max(0, amount);
             if (gained <= 0)
                 return;
 
-            TryGrant("gem", gained, reason, source, gems, SetGems);
+            TryGrantLocalOnly("gem", gained, reason, source, gems, SetGems);
         }
 
+        public Task<bool> AddGemsAsync(int amount, string reason = "reward", string source = "gameplay", CancellationToken ct = default)
+        {
+            return TryGrantAsync("gem", amount, reason, source, Gems, SetGems, null, ct);
+        }
+
+        [Obsolete("Use TrySpendGemsAsync — sync API is no-op in server-authority mode", false)]
         public bool TrySpendGems(int amount, string reason = "spend_gem")
         {
             int cost = Mathf.Max(0, amount);
             if (cost <= 0)
                 return true;
 
-            if (!TrySpend("gem", cost, reason, gems, SetGems))
+            if (!TrySpendLocalOnly("gem", cost, reason, gems, SetGems))
                 return false;
 
             return true;
+        }
+
+        public Task<bool> TrySpendGemsAsync(int amount, string reason = "spend_gem", CancellationToken ct = default)
+        {
+            return TrySpendAsync("gem", amount, reason, Gems, SetGems, ct);
         }
 
         public void SetGems(int amount)
@@ -101,6 +130,9 @@ namespace WizardGrower.Economy
                     if (snapshot == null || !snapshot.Exists)
                         return;
 
+                    if (authorityMutationInFlight)
+                        return;
+
                     if (snapshot.TryGetValue("gold", out int serverGold))
                         SetGold(serverGold);
                     if (snapshot.TryGetValue("gem", out int serverGems))
@@ -119,7 +151,7 @@ namespace WizardGrower.Economy
             walletListener = null;
         }
 
-        private bool TryGrant(string kind, int amount, string reason, string source, int currentBalance, Action<int> applyBalance)
+        private bool TryGrantLocalOnly(string kind, int amount, string reason, string source, int currentBalance, Action<int> applyBalance)
         {
             if (authority == null || !authority.IsServerAuthoritative)
             {
@@ -127,23 +159,11 @@ namespace WizardGrower.Economy
                 return true;
             }
 
-            try
-            {
-                CurrencyAuthorityResult result = authority.GrantAsync(kind, amount, reason, source).GetAwaiter().GetResult();
-                if (!result.Success)
-                    return false;
-
-                applyBalance(result.BalanceAfter >= 0 ? result.BalanceAfter : currentBalance + amount);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"Server grantCurrency path failed ({source}/{reason}): {ex.GetBaseException().Message}");
-                return false;
-            }
+            Debug.LogWarning($"Use async API in server-authority mode: {kind} grant ({source}/{reason}).");
+            return false;
         }
 
-        private bool TrySpend(string kind, int amount, string reason, int currentBalance, Action<int> applyBalance)
+        private bool TrySpendLocalOnly(string kind, int amount, string reason, int currentBalance, Action<int> applyBalance)
         {
             if (currentBalance < amount)
                 return false;
@@ -154,13 +174,87 @@ namespace WizardGrower.Economy
                 return true;
             }
 
+            Debug.LogWarning($"Use async API in server-authority mode: {kind} spend ({reason}).");
+            return false;
+        }
+
+        private async Task<bool> TryGrantAsync(
+            string kind,
+            int amount,
+            string reason,
+            string source,
+            int currentBalance,
+            Action<int> applyBalance,
+            Action<int> gainedEvent,
+            CancellationToken ct)
+        {
+            int gained = Mathf.Max(0, amount);
+            if (gained <= 0)
+                return true;
+
+            await authorityLock.WaitAsync(ct);
+            authorityMutationInFlight = true;
             try
             {
-                CurrencyAuthorityResult result = authority.SpendAsync(kind, amount, reason).GetAwaiter().GetResult();
+                int latestBalance = kind == "gold" ? gold : gems;
+                if (authority == null || !authority.IsServerAuthoritative)
+                {
+                    applyBalance(latestBalance + gained);
+                    gainedEvent?.Invoke(gained);
+                    return true;
+                }
+
+                CurrencyAuthorityResult result = await authority.GrantAsync(kind, gained, reason, source);
                 if (!result.Success)
                     return false;
 
-                applyBalance(result.BalanceAfter >= 0 ? result.BalanceAfter : currentBalance - amount);
+                applyBalance(result.BalanceAfter >= 0 ? result.BalanceAfter : latestBalance + gained);
+                gainedEvent?.Invoke(gained);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Server grantCurrency path failed ({source}/{reason}): {ex.GetBaseException().Message}");
+                return false;
+            }
+            finally
+            {
+                authorityMutationInFlight = false;
+                authorityLock.Release();
+            }
+        }
+
+        private async Task<bool> TrySpendAsync(
+            string kind,
+            int amount,
+            string reason,
+            int currentBalance,
+            Action<int> applyBalance,
+            CancellationToken ct)
+        {
+            int cost = Mathf.Max(0, amount);
+            if (cost <= 0)
+                return true;
+
+            await authorityLock.WaitAsync(ct);
+            authorityMutationInFlight = true;
+            try
+            {
+                int latestBalance = kind == "gold" ? gold : gems;
+                if (latestBalance < cost)
+                    return false;
+
+                if (authority == null || !authority.IsServerAuthoritative)
+                {
+                    applyBalance(latestBalance - cost);
+                    return true;
+                }
+
+                CurrencyAuthorityResult result = await authority.SpendAsync(kind, cost, reason);
+                if (!result.Success)
+                    return false;
+
+                applyBalance(result.BalanceAfter >= 0 ? result.BalanceAfter : latestBalance - cost);
                 return true;
             }
             catch (Exception ex)
@@ -168,11 +262,17 @@ namespace WizardGrower.Economy
                 Debug.LogWarning($"Server spendCurrency failed ({reason}): {ex.GetBaseException().Message}");
                 return false;
             }
+            finally
+            {
+                authorityMutationInFlight = false;
+                authorityLock.Release();
+            }
         }
 
         private void OnDestroy()
         {
             StopServerWalletListener();
+            authorityLock.Dispose();
         }
     }
 }

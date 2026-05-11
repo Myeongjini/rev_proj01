@@ -5,6 +5,7 @@ namespace WizardGrower.Economy
     public sealed class LocalCurrencyAuthority : ICurrencyAuthority
     {
         public bool IsServerAuthoritative => false;
+        public bool IsBusy => false;
 
         public Task<CurrencyAuthorityResult> GrantAsync(string kind, int amount, string reason, string source)
         {

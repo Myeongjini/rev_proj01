@@ -16,6 +16,7 @@ namespace WizardGrower.Economy
         }
 
         public bool IsServerAuthoritative => client != null && client.IsReady;
+        public bool IsBusy => false;
 
         public async Task<CurrencyAuthorityResult> GrantAsync(string kind, int amount, string reason, string source)
         {
