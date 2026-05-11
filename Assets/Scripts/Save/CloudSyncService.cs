@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Firebase.Firestore;
 using UnityEngine;
+using WizardGrower.Cloud;
 
 namespace WizardGrower.Save
 {
@@ -80,7 +82,7 @@ namespace WizardGrower.Save
             await PushAsync(localService.CurrentData);
         }
 
-        public async Task ReconcileWalletAsync(string uid, SaveData data)
+        public async Task ReconcileWalletAsync(string uid, SaveData data, CloudFunctionsClient cloudFunctions = null)
         {
             Initialize();
             if (string.IsNullOrEmpty(uid) || data == null)
@@ -97,12 +99,21 @@ namespace WizardGrower.Save
                 return;
             }
 
-            await walletRef.SetAsync(new
+            if (cloudFunctions == null || !cloudFunctions.IsReady)
             {
-                gold = Mathf.Max(0, data.gold),
-                gem = Mathf.Max(0, data.gems),
-                lastUpdatedMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-            }, SetOptions.MergeAll);
+                Debug.LogWarning("Wallet migration skipped because Cloud Functions is unavailable.");
+                return;
+            }
+
+            IDictionary<string, object> result = await cloudFunctions.CallAsync("migrateWallet", new Dictionary<string, object>
+            {
+                { "gold", Mathf.Max(0, data.gold) },
+                { "gem", Mathf.Max(0, data.gems) }
+            });
+            if (result.TryGetValue("gold", out object migratedGold))
+                data.gold = ConvertToInt(migratedGold, data.gold);
+            if (result.TryGetValue("gem", out object migratedGem))
+                data.gems = ConvertToInt(migratedGem, data.gems);
         }
 
         public Task FlushPendingAsync()
@@ -114,6 +125,19 @@ namespace WizardGrower.Save
         private DocumentReference GetUserDocument(string uid)
         {
             return db.Collection("users").Document(uid);
+        }
+
+        private static int ConvertToInt(object value, int fallback)
+        {
+            if (value == null)
+                return fallback;
+            if (value is int typed)
+                return typed;
+            if (value is long longValue)
+                return (int)longValue;
+            if (value is double doubleValue)
+                return Mathf.RoundToInt((float)doubleValue);
+            return int.TryParse(value.ToString(), out int parsed) ? parsed : fallback;
         }
     }
 }

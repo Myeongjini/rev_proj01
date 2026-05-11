@@ -94,7 +94,9 @@ namespace WizardGrower.Stages
 
         private void OnEnemyKilled(EnemyBase enemy)
         {
-            wallet.AddGold(enemy.RewardGold);
+            string source = enemy is BossEnemy ? "boss_reward" : "enemy_reward";
+            string reason = enemy is BossEnemy ? $"boss_stage_{currentStageNumber}" : $"enemy_stage_{currentStageNumber}";
+            wallet.AddGold(enemy.RewardGold, reason, source);
 
             if (mode == StageMode.BossRoom)
             {

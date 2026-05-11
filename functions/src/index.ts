@@ -3,7 +3,16 @@ import {setGlobalOptions} from "firebase-functions/v2";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 
 export {rollGacha} from "./gacha";
-export {spendCurrency, grantCurrency} from "./currency";
+export {
+  spendCurrency,
+  grantCurrency,
+  claimMissionReward,
+  claimAttendanceReward,
+  claimDungeonReward,
+  claimOfflineReward,
+  claimEnemyReward,
+  migrateWallet,
+} from "./currency";
 
 admin.initializeApp();
 setGlobalOptions({region: "asia-northeast3", maxInstances: 10});

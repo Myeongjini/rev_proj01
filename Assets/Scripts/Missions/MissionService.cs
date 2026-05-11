@@ -194,7 +194,7 @@ namespace WizardGrower.Missions
         private void Grant(MissionDefinition definition)
         {
             if (definition.rewardKind == RewardKind.Gem && wallet != null)
-                wallet.AddGems(definition.rewardAmount);
+                wallet.AddGems(definition.rewardAmount, $"mission_{definition.missionId}", "mission");
         }
 
         private static int CountFusion(IReadOnlyList<WeaponFusionResult> results)

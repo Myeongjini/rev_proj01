@@ -105,6 +105,9 @@ namespace WizardGrower.Save
             if (data.saveVersion < 7)
                 MigratePlayerExpAndEXPDungeonToV7(data);
 
+            if (data.saveVersion < 8)
+                MigrateWalletAuthorityToV8(data);
+
             if (data.saveVersion < 9)
                 MigrateArmorAndDefenseToV9(data);
 
@@ -150,6 +153,13 @@ namespace WizardGrower.Save
         {
             NormalizeArmor(data);
             data.eliteSpawnCounter = Mathf.Max(0, data.eliteSpawnCounter);
+        }
+
+        private static void MigrateWalletAuthorityToV8(SaveData data)
+        {
+            data.gold = Mathf.Max(0, data.gold);
+            data.gems = Mathf.Max(0, data.gems);
+            data.saveVersion = 8;
         }
 
         private static void NormalizeArmor(SaveData data)

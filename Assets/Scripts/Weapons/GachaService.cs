@@ -228,11 +228,13 @@ namespace WizardGrower.Weapons
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"Server gacha failed, using local fallback: {ex.GetBaseException().Message}");
+                    Debug.LogWarning($"Server gacha failed: {ex.GetBaseException().Message}");
+                    return Fail("서버 뽑기에 실패했습니다.");
                 }
             }
 
-            if (!wallet.TrySpendGems(cost))
+            int gemsBeforePull = wallet.Gems;
+            if (!wallet.TrySpendGems(cost, $"gacha_local_{count}"))
                 return Fail("젬이 부족합니다.");
 
             for (int i = 0; i < count; i++)
@@ -240,7 +242,7 @@ namespace WizardGrower.Weapons
                 WeaponDefinition weapon = PullOne();
                 if (weapon == null)
                 {
-                    wallet.AddGems(cost);
+                    wallet.SetGems(gemsBeforePull);
                     pulled.Clear();
                     return Fail("뽑기 풀에 무기가 없습니다.");
                 }

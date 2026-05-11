@@ -87,7 +87,7 @@ namespace WizardGrower.Offline
 
             long totalGold = watchedAd ? SafeMultiply(baseGold, 2) : baseGold;
             long totalExp = watchedAd ? SafeMultiply(baseExp, 2) : baseExp;
-            wallet.AddGold(ToWalletAmount(totalGold));
+            wallet.AddGold(ToWalletAmount(totalGold), "offline_reward", "offline");
             playerLevel?.GrantExp(ToWalletAmount(totalExp));
             save.CurrentData.gold = wallet.Gold;
             save.CurrentData.offlineRewardPending = 0;

@@ -86,7 +86,7 @@ namespace WizardGrower.Dungeons
             long total = watchedAd ? SafeMultiply(baseGold, 2) : baseGold;
             if (wallet != null)
             {
-                wallet.AddGold(ToWalletAmount(total));
+                wallet.AddGold(ToWalletAmount(total), "gold_dungeon", "dungeon");
                 if (save != null)
                     save.CurrentData.gold = wallet.Gold;
             }

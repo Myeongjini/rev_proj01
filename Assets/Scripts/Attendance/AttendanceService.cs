@@ -147,7 +147,7 @@ namespace WizardGrower.Attendance
         private void Grant(AttendanceDayReward reward)
         {
             if (reward.kind == RewardKind.Gem && wallet != null)
-                wallet.AddGems(reward.amount);
+                wallet.AddGems(reward.amount, $"attendance_day{state.currentDayIndex}", "attendance");
         }
     }
 }

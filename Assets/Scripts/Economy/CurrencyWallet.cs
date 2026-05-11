@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using Firebase.Firestore;
 using UnityEngine;
 using WizardGrower.Cloud;
 
@@ -10,7 +10,8 @@ namespace WizardGrower.Economy
         [SerializeField] private int gold;
         [SerializeField] private int gems = 300;
 
-        private CloudFunctionsClient cloudFunctions;
+        private ICurrencyAuthority authority = new LocalCurrencyAuthority();
+        private ListenerRegistration walletListener;
 
         public event Action<int> GoldChanged;
         public event Action<int> GemsChanged;
@@ -20,26 +21,32 @@ namespace WizardGrower.Economy
 
         public void InitializeAuthority(CloudFunctionsClient client)
         {
-            cloudFunctions = client;
+            authority = client != null && client.IsReady
+                ? new ServerCurrencyAuthority(client)
+                : new LocalCurrencyAuthority();
         }
 
-        public void AddGold(int amount)
+        public void AddGold(int amount, string reason = "reward", string source = "gameplay")
         {
             int gained = Mathf.Max(0, amount);
-            gold += gained;
-            GoldChanged?.Invoke(gold);
-            if (gained > 0)
-                GoldGained?.Invoke(gained);
+            if (gained <= 0)
+                return;
+
+            if (!TryGrant("gold", gained, reason, source, gold, SetGold))
+                return;
+
+            GoldGained?.Invoke(gained);
         }
 
-        public bool TrySpendGold(int amount)
+        public bool TrySpendGold(int amount, string reason = "spend_gold")
         {
-            if (gold < amount)
+            int cost = Mathf.Max(0, amount);
+            if (cost <= 0)
+                return true;
+
+            if (!TrySpend("gold", cost, reason, gold, SetGold))
                 return false;
 
-            gold -= amount;
-            GoldChanged?.Invoke(gold);
-            QueueSpend("gold", amount, "local_spend");
             return true;
         }
 
@@ -49,20 +56,24 @@ namespace WizardGrower.Economy
             GoldChanged?.Invoke(gold);
         }
 
-        public void AddGems(int amount)
+        public void AddGems(int amount, string reason = "reward", string source = "gameplay")
         {
-            gems += Mathf.Max(0, amount);
-            GemsChanged?.Invoke(gems);
+            int gained = Mathf.Max(0, amount);
+            if (gained <= 0)
+                return;
+
+            TryGrant("gem", gained, reason, source, gems, SetGems);
         }
 
-        public bool TrySpendGems(int amount)
+        public bool TrySpendGems(int amount, string reason = "spend_gem")
         {
-            if (gems < amount)
+            int cost = Mathf.Max(0, amount);
+            if (cost <= 0)
+                return true;
+
+            if (!TrySpend("gem", cost, reason, gems, SetGems))
                 return false;
 
-            gems -= amount;
-            GemsChanged?.Invoke(gems);
-            QueueSpend("gem", amount, "local_spend");
             return true;
         }
 
@@ -72,48 +83,96 @@ namespace WizardGrower.Economy
             GemsChanged?.Invoke(gems);
         }
 
-        private async void QueueSpend(string kind, int amount, string reason)
+        public void StartServerWalletListener(string uid)
         {
-            if (cloudFunctions == null || !cloudFunctions.IsReady || amount <= 0)
+            StopServerWalletListener();
+            if (string.IsNullOrEmpty(uid))
                 return;
 
             try
             {
-                IDictionary<string, object> result = await cloudFunctions.CallAsync("spendCurrency", new Dictionary<string, object>
+                DocumentReference walletRef = FirebaseFirestore.DefaultInstance
+                    .Collection("users")
+                    .Document(uid)
+                    .Collection("wallet")
+                    .Document("main");
+                walletListener = walletRef.Listen(snapshot =>
                 {
-                    { "kind", kind },
-                    { "amount", amount },
-                    { "reason", reason }
+                    if (snapshot == null || !snapshot.Exists)
+                        return;
+
+                    if (snapshot.TryGetValue("gold", out int serverGold))
+                        SetGold(serverGold);
+                    if (snapshot.TryGetValue("gem", out int serverGems))
+                        SetGems(serverGems);
                 });
-                ApplyServerBalance(kind, result);
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"Server spendCurrency failed: {ex.GetBaseException().Message}");
+                Debug.LogWarning($"Wallet listener failed to start: {ex.GetBaseException().Message}");
             }
         }
 
-        private void ApplyServerBalance(string kind, IDictionary<string, object> result)
+        public void StopServerWalletListener()
         {
-            if (result == null || !result.TryGetValue("balanceAfter", out object balance))
-                return;
-
-            int value = ConvertToInt(balance, kind == "gem" ? gems : gold);
-            if (kind == "gem")
-                SetGems(value);
-            else
-                SetGold(value);
+            walletListener?.Stop();
+            walletListener = null;
         }
 
-        private static int ConvertToInt(object value, int fallback)
+        private bool TryGrant(string kind, int amount, string reason, string source, int currentBalance, Action<int> applyBalance)
         {
-            if (value is int typed)
-                return typed;
-            if (value is long longValue)
-                return (int)longValue;
-            if (value is double doubleValue)
-                return Mathf.RoundToInt((float)doubleValue);
-            return value != null && int.TryParse(value.ToString(), out int parsed) ? parsed : fallback;
+            if (authority == null || !authority.IsServerAuthoritative)
+            {
+                applyBalance(currentBalance + amount);
+                return true;
+            }
+
+            try
+            {
+                CurrencyAuthorityResult result = authority.GrantAsync(kind, amount, reason, source).GetAwaiter().GetResult();
+                if (!result.Success)
+                    return false;
+
+                applyBalance(result.BalanceAfter >= 0 ? result.BalanceAfter : currentBalance + amount);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Server grantCurrency path failed ({source}/{reason}): {ex.GetBaseException().Message}");
+                return false;
+            }
+        }
+
+        private bool TrySpend(string kind, int amount, string reason, int currentBalance, Action<int> applyBalance)
+        {
+            if (currentBalance < amount)
+                return false;
+
+            if (authority == null || !authority.IsServerAuthoritative)
+            {
+                applyBalance(currentBalance - amount);
+                return true;
+            }
+
+            try
+            {
+                CurrencyAuthorityResult result = authority.SpendAsync(kind, amount, reason).GetAwaiter().GetResult();
+                if (!result.Success)
+                    return false;
+
+                applyBalance(result.BalanceAfter >= 0 ? result.BalanceAfter : currentBalance - amount);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Server spendCurrency failed ({reason}): {ex.GetBaseException().Message}");
+                return false;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            StopServerWalletListener();
         }
     }
 }

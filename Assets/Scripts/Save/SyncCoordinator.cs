@@ -91,7 +91,8 @@ namespace WizardGrower.Save
                 }
 
                 await context.CloudSyncService.ResolveAndApply(context.SaveService, uid);
-                await context.CloudSyncService.ReconcileWalletAsync(uid, context.SaveService.CurrentData);
+                await context.CloudSyncService.ReconcileWalletAsync(uid, context.SaveService.CurrentData, context.CloudFunctionsClient);
+                context.Wallet.StartServerWalletListener(uid);
                 context.SaveBinder.SetUserId(uid);
                 context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             }
@@ -118,6 +119,8 @@ namespace WizardGrower.Save
                 context.SaveService.SetCurrentData(local);
                 context.SaveService.Save();
                 context.SaveBinder.SetUserId(uid);
+                await context.CloudSyncService.ReconcileWalletAsync(uid, context.SaveService.CurrentData, context.CloudFunctionsClient);
+                context.Wallet.StartServerWalletListener(uid);
                 context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
                 await context.CloudSyncService.PushAsync(context.SaveService.CurrentData);
             }
@@ -126,6 +129,8 @@ namespace WizardGrower.Save
                 SaveData remote = SaveDataMapper.FromDocument(remoteDocument);
                 context.SaveService.OverwriteFromServer(remote);
                 context.SaveBinder.SetUserId(uid);
+                await context.CloudSyncService.ReconcileWalletAsync(uid, context.SaveService.CurrentData, context.CloudFunctionsClient);
+                context.Wallet.StartServerWalletListener(uid);
                 context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             }
             else

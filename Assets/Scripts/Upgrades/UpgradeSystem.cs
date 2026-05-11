@@ -96,7 +96,7 @@ namespace WizardGrower.Upgrades
                 return false;
 
             int cost = GetCost(definition);
-            if (!wallet.TrySpendGold(cost))
+            if (!wallet.TrySpendGold(cost, $"upgrade_{definition.id}"))
                 return false;
 
             Apply(definition);
