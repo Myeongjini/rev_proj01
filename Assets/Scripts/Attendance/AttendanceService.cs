@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using UnityEngine;
 using WizardGrower.Economy;
 using WizardGrower.Missions;
@@ -79,13 +80,21 @@ namespace WizardGrower.Attendance
 
         public bool TryClaimToday()
         {
+            Debug.LogWarning("Use TryClaimTodayAsync for attendance rewards.");
+            return false;
+        }
+
+        public async Task<bool> TryClaimTodayAsync()
+        {
             NormalizeState();
             if (!CanClaimToday())
                 return false;
 
             int claimedDay = state.currentDayIndex;
             AttendanceDayReward reward = config.GetReward(claimedDay);
-            Grant(reward);
+            if (!await GrantAsync(reward))
+                return false;
+
             state.lastClaimedUtcMs = NowUtcMs();
             state.totalCheckIns += 1;
             if (claimedDay < 10)
@@ -144,10 +153,11 @@ namespace WizardGrower.Attendance
             return resetService != null ? resetService.CurrentServerUtcMs : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-        private void Grant(AttendanceDayReward reward)
+        private async Task<bool> GrantAsync(AttendanceDayReward reward)
         {
             if (reward.kind == RewardKind.Gem && wallet != null)
-                wallet.AddGems(reward.amount, $"attendance_day{state.currentDayIndex}", "attendance");
+                return await wallet.AddGemsAsync(reward.amount, $"attendance_day{state.currentDayIndex}", "attendance");
+            return true;
         }
     }
 }

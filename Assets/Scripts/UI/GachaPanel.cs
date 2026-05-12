@@ -28,6 +28,7 @@ namespace WizardGrower.UI
         private GachaDefinition definition;
         private float feedbackTimer;
         private bool isOpen;
+        private bool pullInFlight;
         public bool IsOpen => isOpen;
         public event Action<bool> OpenStateChanged;
 
@@ -141,37 +142,59 @@ namespace WizardGrower.UI
                 feedbackLabel.text = string.Empty;
         }
 
-        private void PullSingle()
+        private async void PullSingle()
         {
-            if (service == null)
+            if (service == null || pullInFlight)
                 return;
 
-            WeaponDefinition pulled;
-            if (service.TrySinglePull(out pulled) && resultPanel != null)
-                resultPanel.Show(new[] { pulled });
-            Refresh();
+            await PullAsync(1);
         }
 
-        private void PullTen()
+        private async void PullTen()
         {
-            if (service == null)
+            if (service == null || pullInFlight)
                 return;
 
-            List<WeaponDefinition> pulled;
-            if (service.TryTenPull(out pulled) && resultPanel != null)
-                resultPanel.Show(pulled);
-            Refresh();
+            await PullAsync(10);
         }
 
-        private void PullThirty()
+        private async void PullThirty()
         {
-            if (service == null)
+            if (service == null || pullInFlight)
                 return;
 
-            IReadOnlyList<WeaponDefinition> pulled = service.PullThirty();
-            if (pulled.Count > 0 && resultPanel != null)
-                resultPanel.Show(pulled);
+            await PullAsync(30);
+        }
+
+        private async System.Threading.Tasks.Task PullAsync(int count)
+        {
+            pullInFlight = true;
             Refresh();
+            try
+            {
+                GachaPullResult result = count switch
+                {
+                    1 => await service.TrySinglePullAsync(),
+                    10 => await service.TryTenPullAsync(),
+                    30 => await service.TryThirtyPullAsync(),
+                    _ => GachaPullResult.Fail("지원하지 않는 소환 횟수입니다.")
+                };
+
+                if (result.Success && result.PulledList.Count > 0 && resultPanel != null)
+                    resultPanel.Show(result.PulledList);
+                else if (!result.Success && !string.IsNullOrEmpty(result.FailureMessage))
+                    ShowFeedback(result.FailureMessage);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Gacha pull failed: {ex.GetBaseException().Message}");
+                ShowFeedback("서버 뽑기에 실패했습니다.");
+            }
+            finally
+            {
+                pullInFlight = false;
+                Refresh();
+            }
         }
 
         private void Refresh()
@@ -188,13 +211,15 @@ namespace WizardGrower.UI
             if (thirtyPullLabel != null)
                 thirtyPullLabel.text = definition != null ? FormatPullLabel(30, definition.costThirty) : "30회";
             if (singlePullButton != null)
-                singlePullButton.interactable = service != null && service.CanSinglePull();
+                singlePullButton.interactable = !pullInFlight && service != null && service.CanSinglePull();
             if (tenPullButton != null)
-                tenPullButton.interactable = service != null && service.CanTenPull();
+                tenPullButton.interactable = !pullInFlight && service != null && service.CanTenPull();
             if (thirtyPullButton != null)
-                thirtyPullButton.interactable = service != null && service.CanThirtyPull();
+                thirtyPullButton.interactable = !pullInFlight && service != null && service.CanThirtyPull();
             if (probabilityButton != null)
-                probabilityButton.interactable = service != null && service.CurrentLevelDefinition != null;
+                probabilityButton.interactable = !pullInFlight && service != null && service.CurrentLevelDefinition != null;
+            if (pullInFlight && feedbackLabel != null)
+                feedbackLabel.text = "서버 처리 중...";
             RefreshInsufficientFeedback();
             RefreshPity();
         }
@@ -273,7 +298,7 @@ namespace WizardGrower.UI
 
         private void RefreshInsufficientFeedback()
         {
-            if (!isOpen || feedbackLabel == null || feedbackTimer > 0f || service == null || definition == null)
+            if (!isOpen || pullInFlight || feedbackLabel == null || feedbackTimer > 0f || service == null || definition == null)
                 return;
 
             bool anyDisabled = !service.CanSinglePull() || !service.CanTenPull() || !service.CanThirtyPull();

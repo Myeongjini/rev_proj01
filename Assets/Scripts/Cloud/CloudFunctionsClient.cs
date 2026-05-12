@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ namespace WizardGrower.Cloud
         private object functionsInstance;
         private bool initialized;
         private bool functionsSdkAvailable;
+        [SerializeField] private int timeoutMilliseconds = 8000;
 
         public bool IsReady => initialized && functionsSdkAvailable && functionsInstance != null;
 
@@ -43,8 +45,13 @@ namespace WizardGrower.Cloud
 
         public async Task<IDictionary<string, object>> CallAsync(string functionName, object payload)
         {
+            return await CallAsync(functionName, payload, CancellationToken.None);
+        }
+
+        public async Task<IDictionary<string, object>> CallAsync(string functionName, object payload, CancellationToken ct = default)
+        {
             if (!IsReady)
-                throw new InvalidOperationException("Firebase Functions SDK is unavailable.");
+                throw new InvalidOperationException("Cloud Functions is not initialized.");
 
             object callable = GetHttpsCallable(functionsInstance, functionName);
             if (callable == null)
@@ -61,6 +68,12 @@ namespace WizardGrower.Cloud
             Task task = taskObj as Task;
             if (task == null)
                 throw new InvalidOperationException("Firebase Functions CallAsync did not return a Task.");
+
+            int timeout = Mathf.Max(1000, timeoutMilliseconds);
+            Task timeoutTask = Task.Delay(timeout, ct);
+            Task winner = await Task.WhenAny(task, timeoutTask);
+            if (winner == timeoutTask)
+                throw new TimeoutException($"Cloud Function '{functionName}' timed out after {timeout}ms.");
 
             await task;
             object result = task.GetType().GetProperty("Result")?.GetValue(task);

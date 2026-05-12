@@ -32,7 +32,8 @@ namespace WizardGrower.UI
 
         private void Awake()
         {
-            EnsureUi();
+            ResolveReferences();
+            WireButtons();
             Hide();
         }
 
@@ -56,25 +57,35 @@ namespace WizardGrower.UI
             if (resolved.baseGold <= 0 && resolved.baseExp <= 0)
                 return;
 
-            closeCompletion = new TaskCompletionSource<bool>();
+            TaskCompletionSource<bool> completion = new TaskCompletionSource<bool>();
+            closeCompletion = completion;
             Show(resolved);
-            await closeCompletion.Task;
+            await completion.Task;
         }
 
         public void Show(OfflineRewardSnapshot snapshot)
         {
-            EnsureUi();
+            ResolveReferences();
             this.snapshot = snapshot;
             busy = false;
             gameObject.SetActive(true);
-            canvasGroup.alpha = 1f;
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-            elapsedLabel.text = $"경과 시간: {FormatElapsed(snapshot.elapsedSeconds)}";
-            goldLabel.text = $"누적 골드: {snapshot.baseGold:N0}";
-            expLabel.text = $"누적 EXP: {snapshot.baseExp:N0}";
-            claimButtonLabel.text = "받기";
-            claimAdButtonLabel.text = $"광고 보고 2배 (골드 {snapshot.maxAdMultipliedGold:N0} / EXP {snapshot.maxAdMultipliedExp:N0})";
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 1f;
+                canvasGroup.interactable = true;
+                canvasGroup.blocksRaycasts = true;
+            }
+
+            if (elapsedLabel != null)
+                elapsedLabel.text = $"경과 시간: {FormatElapsed(snapshot.elapsedSeconds)}";
+            if (goldLabel != null)
+                goldLabel.text = $"누적 골드: {snapshot.baseGold:N0}";
+            if (expLabel != null)
+                expLabel.text = $"누적 EXP: {snapshot.baseExp:N0}";
+            if (claimButtonLabel != null)
+                claimButtonLabel.text = "받기";
+            if (claimAdButtonLabel != null)
+                claimAdButtonLabel.text = $"광고 보고 2배 (골드 {snapshot.maxAdMultipliedGold:N0} / EXP {snapshot.maxAdMultipliedExp:N0})";
         }
 
         public void Hide()
@@ -96,6 +107,7 @@ namespace WizardGrower.UI
             if (busy || service == null)
                 return;
             busy = true;
+            SetButtonsInteractable(false);
             await service.ClaimAsync(false);
             Hide();
         }
@@ -105,105 +117,93 @@ namespace WizardGrower.UI
             if (busy || service == null)
                 return;
             busy = true;
+            SetButtonsInteractable(false);
             bool watched = ad != null && await ad.WatchRewardedAdAsync();
             if (watched)
                 await service.ClaimAsync(true);
             busy = false;
+            SetButtonsInteractable(true);
             if (watched)
                 Hide();
         }
 
-        private void EnsureUi()
+        private void SetButtonsInteractable(bool interactable)
+        {
+            if (claimButton != null)
+                claimButton.interactable = interactable;
+            if (claimAdButton != null)
+                claimAdButton.interactable = interactable;
+        }
+
+        private void ResolveReferences()
         {
             if (canvasGroup == null)
                 canvasGroup = GetComponent<CanvasGroup>();
-            if (canvasGroup == null)
-                canvasGroup = gameObject.AddComponent<CanvasGroup>();
-
-            Image overlay = GetComponent<Image>();
-            if (overlay == null)
-                overlay = gameObject.AddComponent<Image>();
-            overlay.color = new Color(0f, 0f, 0f, 0.72f);
-
-            RectTransform rect = transform as RectTransform;
-            if (rect != null)
-            {
-                rect.anchorMin = Vector2.zero;
-                rect.anchorMax = Vector2.one;
-                rect.offsetMin = Vector2.zero;
-                rect.offsetMax = Vector2.zero;
-            }
-
-            Transform panel = transform.Find("Panel");
-            if (panel == null)
-            {
-                GameObject panelGo = new GameObject("Panel", typeof(RectTransform), typeof(Image));
-                panelGo.transform.SetParent(transform, false);
-                RectTransform panelRect = panelGo.GetComponent<RectTransform>();
-                panelRect.anchorMin = new Vector2(0.5f, 0.5f);
-                panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-                panelRect.sizeDelta = new Vector2(620f, 420f);
-                panelRect.anchoredPosition = Vector2.zero;
-                panelGo.GetComponent<Image>().color = new Color(0.05f, 0.06f, 0.09f, 0.98f);
-                panel = panelGo.transform;
-            }
-
-            if (titleLabel == null)
-                titleLabel = CreateText(panel, "Title", "오프라인 보상", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -54f), new Vector2(-120f, 58f), 30f, FontStyles.Bold);
-            if (elapsedLabel == null)
-                elapsedLabel = CreateText(panel, "Elapsed", "경과 시간: 0분", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 70f), new Vector2(-80f, 50f), 22f, FontStyles.Normal);
-            if (goldLabel == null)
-                goldLabel = CreateText(panel, "Gold", "누적 골드: 0", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 36f), new Vector2(-80f, 42f), 24f, FontStyles.Bold);
-            if (expLabel == null)
-                expLabel = CreateText(panel, "EXP", "누적 EXP: 0", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, -10f), new Vector2(-80f, 42f), 22f, FontStyles.Bold);
-            if (closeButton == null)
-                closeButton = CreateButton(panel, "CloseButton", "X", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-34f, -32f), new Vector2(48f, 44f), new Color(0.16f, 0.18f, 0.22f, 1f), out _);
-            if (claimButton == null)
-                claimButton = CreateButton(panel, "ClaimButton", "받기", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-150f, 70f), new Vector2(220f, 62f), new Color(0.12f, 0.32f, 0.82f, 1f), out claimButtonLabel);
-            if (claimAdButton == null)
-                claimAdButton = CreateButton(panel, "ClaimAdButton", "광고 보고 2배", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(150f, 70f), new Vector2(250f, 62f), new Color(0.92f, 0.48f, 0.08f, 1f), out claimAdButtonLabel);
-
-            closeButton.onClick.RemoveAllListeners();
-            claimButton.onClick.RemoveAllListeners();
-            claimAdButton.onClick.RemoveAllListeners();
-            closeButton.onClick.AddListener(Hide);
-            claimButton.onClick.AddListener(Claim);
-            claimAdButton.onClick.AddListener(ClaimWithAd);
+            titleLabel = titleLabel != null ? titleLabel : FindText("Title");
+            elapsedLabel = elapsedLabel != null ? elapsedLabel : FindText("Elapsed");
+            goldLabel = goldLabel != null ? goldLabel : FindText("Gold");
+            expLabel = expLabel != null ? expLabel : FindText("EXP");
+            closeButton = closeButton != null ? closeButton : FindButton("CloseButton");
+            claimButton = claimButton != null ? claimButton : FindButton("ClaimButton");
+            claimAdButton = claimAdButton != null ? claimAdButton : FindButton("ClaimAdButton");
+            claimButtonLabel = claimButtonLabel != null ? claimButtonLabel : FindButtonLabel(claimButton);
+            claimAdButtonLabel = claimAdButtonLabel != null ? claimAdButtonLabel : FindButtonLabel(claimAdButton);
         }
 
-        private TMP_Text CreateText(Transform parent, string name, string value, Vector2 min, Vector2 max, Vector2 pos, Vector2 size, float fontSize, FontStyles style)
+        private void WireButtons()
         {
-            GameObject go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-            go.transform.SetParent(parent, false);
-            RectTransform rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = min;
-            rect.anchorMax = max;
-            rect.anchoredPosition = pos;
-            rect.sizeDelta = size;
-            TMP_Text text = go.GetComponent<TMP_Text>();
-            text.text = value;
-            text.alignment = TextAlignmentOptions.Center;
-            text.fontSize = fontSize;
-            text.fontStyle = style;
-            text.color = Color.white;
-            return text;
+            if (closeButton != null)
+            {
+                closeButton.onClick.RemoveAllListeners();
+                closeButton.onClick.AddListener(Hide);
+            }
+            if (claimButton != null)
+            {
+                claimButton.onClick.RemoveAllListeners();
+                claimButton.onClick.AddListener(Claim);
+            }
+            if (claimAdButton != null)
+            {
+                claimAdButton.onClick.RemoveAllListeners();
+                claimAdButton.onClick.AddListener(ClaimWithAd);
+            }
         }
 
-        private Button CreateButton(Transform parent, string name, string text, Vector2 min, Vector2 max, Vector2 pos, Vector2 size, Color color, out TMP_Text label)
+        private TMP_Text FindText(string objectName)
         {
-            GameObject go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(parent, false);
-            RectTransform rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = min;
-            rect.anchorMax = max;
-            rect.anchoredPosition = pos;
-            rect.sizeDelta = size;
-            go.GetComponent<Image>().color = color;
-            label = CreateText(go.transform, "Label", text, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, 17f, FontStyles.Bold);
-            RectTransform labelRect = label.transform as RectTransform;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            return go.GetComponent<Button>();
+            TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
+            for (int i = 0; i < texts.Length; i++)
+            {
+                if (texts[i] != null && texts[i].name == objectName)
+                    return texts[i];
+            }
+            return null;
+        }
+
+        private Button FindButton(string objectName)
+        {
+            Button[] buttons = GetComponentsInChildren<Button>(true);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] != null && buttons[i].name == objectName)
+                    return buttons[i];
+            }
+            return null;
+        }
+
+        private TMP_Text FindButtonLabel(Button button)
+        {
+            return button != null ? button.GetComponentInChildren<TMP_Text>(true) : null;
+        }
+
+        private void Reset()
+        {
+            ResolveReferences();
+        }
+
+        private void OnValidate()
+        {
+            ResolveReferences();
         }
 
         private string FormatElapsed(long seconds)

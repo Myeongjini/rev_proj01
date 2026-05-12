@@ -26,7 +26,8 @@ namespace WizardGrower.UI
 
         private void Awake()
         {
-            EnsureUi();
+            ResolveReferences();
+            WireButtons();
             Hide(false);
         }
 
@@ -60,17 +61,22 @@ namespace WizardGrower.UI
 
         public void Show(EXPDungeonResult result)
         {
-            EnsureUi();
+            ResolveReferences();
             currentResult = result;
             busy = false;
             gameObject.SetActive(true);
-            group.alpha = 1f;
-            group.interactable = true;
-            group.blocksRaycasts = true;
+            if (group != null)
+            {
+                group.alpha = 1f;
+                group.interactable = true;
+                group.blocksRaycasts = true;
+            }
             long best = service != null ? service.GetBestScore() : 0;
             bool newRecord = result.earnedExp > best;
-            resultLabel.text = $"처치 {result.killCount} / 획득 EXP {result.earnedExp:N0}";
-            bestLabel.text = newRecord ? $"Best EXP: {result.earnedExp:N0}  신기록!" : $"Best EXP: {best:N0}";
+            if (resultLabel != null)
+                resultLabel.text = $"처치 {result.killCount} / 획득 EXP {result.earnedExp:N0}";
+            if (bestLabel != null)
+                bestLabel.text = newRecord ? $"Best EXP: {result.earnedExp:N0}  신기록!" : $"Best EXP: {best:N0}";
         }
 
         public void Hide(bool clearPending)
@@ -94,6 +100,7 @@ namespace WizardGrower.UI
             if (busy || service == null)
                 return;
             busy = true;
+            SetButtonsInteractable(false);
             await service.CompleteEntryAsync(currentResult, false);
             Hide(true);
         }
@@ -103,12 +110,22 @@ namespace WizardGrower.UI
             if (busy || service == null)
                 return;
             busy = true;
+            SetButtonsInteractable(false);
             bool watched = adProvider != null && await adProvider.WatchRewardedAdAsync();
             if (watched)
                 await service.CompleteEntryAsync(currentResult, true);
             busy = false;
+            SetButtonsInteractable(true);
             if (watched)
                 Hide(true);
+        }
+
+        private void SetButtonsInteractable(bool interactable)
+        {
+            if (claimButton != null)
+                claimButton.interactable = interactable;
+            if (claimAdButton != null)
+                claimAdButton.interactable = interactable;
         }
 
         private void OnPendingResultChanged()
@@ -117,106 +134,67 @@ namespace WizardGrower.UI
                 Show(EXPDungeonSceneTransfer.PendingResult.Value);
         }
 
-        private void EnsureUi()
+        private void ResolveReferences()
         {
             if (group == null)
-                group = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
-            Image overlay = GetComponent<Image>() ?? gameObject.AddComponent<Image>();
-            overlay.color = new Color(0f, 0f, 0f, 0.62f);
-            RectTransform rootRect = transform as RectTransform;
-            if (rootRect != null)
-            {
-                rootRect.anchorMin = Vector2.zero;
-                rootRect.anchorMax = Vector2.one;
-                rootRect.offsetMin = Vector2.zero;
-                rootRect.offsetMax = Vector2.zero;
-            }
-
-            Transform panel = transform.Find("Panel");
-            if (panel == null)
-            {
-                GameObject panelGo = new GameObject("Panel", typeof(RectTransform), typeof(Image));
-                panelGo.transform.SetParent(transform, false);
-                RectTransform rect = panelGo.GetComponent<RectTransform>();
-                rect.anchorMin = new Vector2(0.5f, 0.5f);
-                rect.anchorMax = new Vector2(0.5f, 0.5f);
-                rect.sizeDelta = new Vector2(620f, 430f);
-                panelGo.GetComponent<Image>().color = new Color(0.05f, 0.06f, 0.09f, 0.98f);
-                panel = panelGo.transform;
-            }
-
-            if (titleLabel == null)
-                titleLabel = CreateText(panel, "Title", "EXP 던전 결과", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -54f), new Vector2(-120f, 58f), 30f, FontStyles.Bold);
-            if (resultLabel == null)
-                resultLabel = CreateText(panel, "Result", "처치 0 / 획득 EXP 0", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 66f), new Vector2(-90f, 52f), 23f, FontStyles.Bold);
-            if (bestLabel == null)
-                bestLabel = CreateText(panel, "Best", "Best EXP: 0", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 14f), new Vector2(-90f, 48f), 20f, FontStyles.Normal);
-            if (closeButton == null)
-                closeButton = CreateButton(panel, "CloseButton", "X", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-34f, -32f), new Vector2(48f, 44f), new Color(0.16f, 0.18f, 0.22f, 1f));
-            if (claimButton == null)
-                claimButton = CreateButton(panel, "ClaimButton", "받기", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-140f, 70f), new Vector2(210f, 60f), new Color(0.12f, 0.36f, 0.92f, 1f));
-            if (claimAdButton == null)
-                claimAdButton = CreateButton(panel, "ClaimAdButton", "광고 보고 2배", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(140f, 70f), new Vector2(230f, 60f), new Color(0.92f, 0.48f, 0.08f, 1f));
-
-            closeButton.onClick.RemoveAllListeners();
-            claimButton.onClick.RemoveAllListeners();
-            claimAdButton.onClick.RemoveAllListeners();
-            closeButton.onClick.AddListener(() => Hide(false));
-            claimButton.onClick.AddListener(Claim);
-            claimAdButton.onClick.AddListener(ClaimAd);
+                group = GetComponent<CanvasGroup>();
+            titleLabel = titleLabel != null ? titleLabel : FindText("Title");
+            resultLabel = resultLabel != null ? resultLabel : FindText("Result");
+            bestLabel = bestLabel != null ? bestLabel : FindText("Best");
+            closeButton = closeButton != null ? closeButton : FindButton("CloseButton");
+            claimButton = claimButton != null ? claimButton : FindButton("ClaimButton");
+            claimAdButton = claimAdButton != null ? claimAdButton : FindButton("ClaimAdButton");
         }
 
-        private TMP_Text CreateText(Transform parent, string name, string text, Vector2 min, Vector2 max, Vector2 pos, Vector2 size, float fontSize, FontStyles style)
+        private void WireButtons()
         {
-            GameObject go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-            go.transform.SetParent(parent, false);
-            RectTransform rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = min;
-            rect.anchorMax = max;
-            rect.anchoredPosition = pos;
-            rect.sizeDelta = size;
-            TMP_Text label = go.GetComponent<TMP_Text>();
-            label.alignment = TextAlignmentOptions.Center;
-            label.fontSize = fontSize;
-            label.fontStyle = style;
-            label.color = Color.white;
-            ApplyProjectFont(label);
-            label.text = text;
-            return label;
-        }
-
-        private Button CreateButton(Transform parent, string name, string text, Vector2 min, Vector2 max, Vector2 pos, Vector2 size, Color color)
-        {
-            GameObject go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(parent, false);
-            RectTransform rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = min;
-            rect.anchorMax = max;
-            rect.anchoredPosition = pos;
-            rect.sizeDelta = size;
-            go.GetComponent<Image>().color = color;
-            CreateText(go.transform, "Label", text, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, 17f, FontStyles.Bold);
-            return go.GetComponent<Button>();
-        }
-
-        private void ApplyProjectFont(TMP_Text text)
-        {
-            if (text == null)
-                return;
-
-            Canvas canvas = GetComponentInParent<Canvas>(true);
-            if (canvas == null)
-                return;
-
-            TMP_Text[] labels = canvas.GetComponentsInChildren<TMP_Text>(true);
-            for (int i = 0; i < labels.Length; i++)
+            if (closeButton != null)
             {
-                if (labels[i] != null && labels[i].font != null && labels[i].font.name.Contains("Nanum"))
-                {
-                    text.font = labels[i].font;
-                    return;
-                }
+                closeButton.onClick.RemoveAllListeners();
+                closeButton.onClick.AddListener(() => Hide(false));
             }
+            if (claimButton != null)
+            {
+                claimButton.onClick.RemoveAllListeners();
+                claimButton.onClick.AddListener(Claim);
+            }
+            if (claimAdButton != null)
+            {
+                claimAdButton.onClick.RemoveAllListeners();
+                claimAdButton.onClick.AddListener(ClaimAd);
+            }
+        }
+
+        private TMP_Text FindText(string objectName)
+        {
+            TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
+            for (int i = 0; i < texts.Length; i++)
+            {
+                if (texts[i] != null && texts[i].name == objectName)
+                    return texts[i];
+            }
+            return null;
+        }
+
+        private Button FindButton(string objectName)
+        {
+            Button[] buttons = GetComponentsInChildren<Button>(true);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] != null && buttons[i].name == objectName)
+                    return buttons[i];
+            }
+            return null;
+        }
+
+        private void Reset()
+        {
+            ResolveReferences();
+        }
+
+        private void OnValidate()
+        {
+            ResolveReferences();
         }
     }
 }

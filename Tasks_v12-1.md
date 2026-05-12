@@ -42,10 +42,10 @@ B12.1-D: Timeout/Cancellation + Startup Popup Safety + Graceful Offline UX
 
 | Bundle | ID | Title | Status | Depends On |
 |---|---|---|---|---|
-| 12.1 | B12.1-A | CurrencyWallet Async API | 🔴 TODO | v12 AP ✅ |
-| 12.1 | B12.1-B | GachaService Async Pull Pipeline | 🔴 TODO | B12.1-A ✅ |
-| 12.1 | B12.1-C | Reward/Spend Call-Site Migration + UI Pending Guards | 🔴 TODO | B12.1-A ✅ + B12.1-B ✅ |
-| 12.1 | B12.1-D | Timeout/Cancellation + Startup Popup Safety | 🔴 TODO | B12.1-C ✅ |
+| 12.1 | B12.1-A | CurrencyWallet Async API | 🟡 IN REVIEW | v12 AP ✅ |
+| 12.1 | B12.1-B | GachaService Async Pull Pipeline | 🟡 IN REVIEW | B12.1-A ✅ |
+| 12.1 | B12.1-C | Reward/Spend Call-Site Migration + UI Pending Guards | 🟡 IN REVIEW | B12.1-A ✅ + B12.1-B ✅ |
+| 12.1 | B12.1-D | Timeout/Cancellation + Startup Popup Safety | 🟡 IN REVIEW | B12.1-C ✅ |
 
 Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · ⚠️ BLOCKED
 
@@ -80,7 +80,7 @@ Status legend: 🔴 TODO · 🟢 IN PROGRESS · 🟡 IN REVIEW · ✅ DONE · �
 
 ## Task B12.1-A — CurrencyWallet Async API
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** v12 Task AP ✅
 
 ### 🎯 Goal
@@ -162,7 +162,7 @@ public async Task<bool> AddGoldAsync(int amount, string reason, string source, C
 
 ## Task B12.1-B — GachaService Async Pull Pipeline
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** B12.1-A ✅
 
 ### 🎯 Goal
@@ -231,7 +231,7 @@ public readonly struct GachaPullResult
 
 ## Task B12.1-C — Reward/Spend Call-Site Migration + UI Pending Guards
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** B12.1-A ✅ + B12.1-B ✅
 
 ### 🎯 Goal
@@ -327,7 +327,7 @@ Or 단순 `async void` wrapper. Race / 누락은 SemaphoreSlim 이 막아 줌.
 
 ## Task B12.1-D — Timeout/Cancellation + Startup Popup Safety + Graceful Offline UX
 
-**Status:** 🔴 TODO
+**Status:** 🟡 IN REVIEW
 **Depends On:** B12.1-C ✅
 
 ### 🎯 Goal
@@ -454,6 +454,10 @@ Task B12.1-D `✅ DONE` 후:
 | Date | Task | Entry |
 |------|------|-------|
 | 2026-05-11 | Task B12.1-A | Added async `CurrencyWallet` spend/grant APIs with `SemaphoreSlim` serialization, removed Economy-layer `.GetAwaiter().GetResult()` sync waits, and changed legacy sync wallet APIs to local-only with server-authority warnings/obsolete markers. Validation: `rg` over `Assets/Scripts/Economy` found 0 `.GetAwaiter().GetResult()`/`.Wait(` hits; `npm --prefix functions run lint` PASS; `npm --prefix functions run build` PASS; `dotnet restore Assembly-CSharp.csproj` regenerated missing `Temp/obj`; `dotnet build Assembly-CSharp.csproj --no-restore` PASS with 0 errors. Build currently reports 7 expected `CS0618` wallet call-site warnings that are owned by B12.1-C plus 4 pre-existing Chat/Presence Firebase config warnings. |
+| 2026-05-12 | Task B12.1-A | Hardened `CurrencyWallet` local-authority async paths so local spend/grant mutate immediately before server semaphore wait; revalidated `Assets/Scripts` has 0 `.GetAwaiter().GetResult()`/`.Wait(` hits. |
+| 2026-05-12 | Task B12.1-B | Confirmed async gacha pull pipeline, passed cancellation token into `CloudFunctionsClient.CallAsync`, removed obsolete sync local wallet spend from `GachaService.TryPull`, and kept UI pending feedback in `GachaPanel`. |
+| 2026-05-12 | Task B12.1-C | Migrated mission, attendance, gold dungeon, offline reward, enemy reward, and upgrade UI spend/grant paths to async APIs; added pending guards to mission/attendance rows, dungeon/offline modals, and upgrade buttons. Validation: `rg "wallet\\.(AddGold|AddGems|TrySpendGold|TrySpendGems)\\(" Assets/Scripts` returned 0 call-site hits. |
+| 2026-05-12 | Task B12.1-D | Added `CloudFunctionsClient` 8s call timeout and `GameStartupPopupQueue` popup timeout/try-catch isolation. Validation: Unity console compile check showed no script errors; `dotnet build Assembly-CSharp.csproj --no-restore` PASS with 0 errors and 4 pre-existing Chat/Presence config warnings. |
 
 ---
 

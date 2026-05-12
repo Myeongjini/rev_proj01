@@ -12,16 +12,20 @@ namespace WizardGrower.UI
         [SerializeField] private Image cooldownFill;
         [SerializeField] private Image lockOverlay;
         [SerializeField] private TMP_Text label;
+        [SerializeField] private Image background;
 
         private SkillRuntime runtime;
         private System.Action<int> clicked;
         private int slotIndex;
         private bool locked;
         private int unlockLevel = 1;
+        private float currentMana;
+        private float cooldownRemaining;
+        private bool projectFontApplied;
 
         private void Awake()
         {
-            EnsureUi();
+            ResolveReferences();
         }
 
         public void Bind(int slotIndex, SkillRuntime runtime, System.Action<int> clicked, bool locked = false, int unlockLevel = 1)
@@ -29,12 +33,13 @@ namespace WizardGrower.UI
             if (this.runtime != null)
                 this.runtime.CooldownChanged -= OnCooldownChanged;
 
-            EnsureUi();
+            ResolveReferences();
             this.slotIndex = slotIndex;
             this.runtime = runtime;
             this.clicked = clicked;
             this.locked = locked;
             this.unlockLevel = Mathf.Max(1, unlockLevel);
+            cooldownRemaining = this.runtime != null ? this.runtime.CooldownRemaining : 0f;
 
             if (button != null)
             {
@@ -45,12 +50,13 @@ namespace WizardGrower.UI
             if (this.runtime != null)
                 this.runtime.CooldownChanged += OnCooldownChanged;
 
-            Refresh(0f);
+            Refresh(currentMana);
         }
 
         public void Refresh(float currentMana)
         {
-            EnsureUi();
+            ResolveReferences();
+            this.currentMana = currentMana;
             SkillDefinition skill = runtime != null ? runtime.Definition : null;
             bool hasSkill = skill != null;
 
@@ -61,96 +67,114 @@ namespace WizardGrower.UI
                 iconImage.color = hasSkill ? Color.white : new Color(1f, 1f, 1f, 0.18f);
             }
 
-            if (label != null)
-            {
-                ApplyProjectFont(label);
-                label.text = locked ? $"🔒\nLv {unlockLevel}" : (hasSkill ? skill.displayName : "-");
-            }
+            RefreshLabel();
 
             bool insufficient = hasSkill && currentMana < skill.manaCost;
             if (lockOverlay != null)
                 lockOverlay.enabled = locked || insufficient;
 
             if (button != null)
-                button.interactable = hasSkill && !locked;
+                button.interactable = hasSkill && !locked && !insufficient && cooldownRemaining <= 0f;
 
+            OnCooldownChanged(runtime != null ? runtime.CooldownRemaining : 0f);
+        }
+
+        public void RefreshCooldownState(float currentMana)
+        {
+            this.currentMana = currentMana;
             OnCooldownChanged(runtime != null ? runtime.CooldownRemaining : 0f);
         }
 
         private void OnCooldownChanged(float remaining)
         {
-            if (cooldownFill == null)
-                return;
+            cooldownRemaining = Mathf.Max(0f, remaining);
 
             float duration = runtime != null ? runtime.CooldownDuration : 1f;
-            cooldownFill.fillAmount = remaining > 0f ? Mathf.Clamp01(remaining / duration) : 0f;
-            cooldownFill.enabled = cooldownFill.fillAmount > 0f;
+            if (cooldownFill != null)
+            {
+                cooldownFill.fillAmount = cooldownRemaining > 0f ? Mathf.Clamp01(cooldownRemaining / duration) : 0f;
+                cooldownFill.enabled = cooldownFill.fillAmount > 0f;
+            }
+
+            SkillDefinition skill = runtime != null ? runtime.Definition : null;
+            bool insufficient = skill != null && currentMana < skill.manaCost;
+            if (button != null)
+                button.interactable = skill != null && !locked && !insufficient && cooldownRemaining <= 0f;
+            RefreshLabel();
         }
 
-        private void EnsureUi()
+        private void RefreshLabel()
+        {
+            if (label == null)
+                return;
+
+            if (!projectFontApplied)
+            {
+                ApplyProjectFont(label);
+                projectFontApplied = true;
+            }
+            SkillDefinition skill = runtime != null ? runtime.Definition : null;
+            if (locked)
+            {
+                label.text = $"잠금\nLv {unlockLevel}";
+                return;
+            }
+
+            if (skill == null)
+            {
+                label.text = "-";
+                return;
+            }
+
+            label.text = cooldownRemaining > 0f
+                ? $"{cooldownRemaining:0.0}s"
+                : skill.displayName;
+        }
+
+        private void ResolveReferences()
         {
             if (button == null)
                 button = GetComponent<Button>();
-            if (button == null)
-                button = gameObject.AddComponent<Button>();
 
-            Image background = GetComponent<Image>();
             if (background == null)
-                background = gameObject.AddComponent<Image>();
-            background.color = new Color(0.08f, 0.10f, 0.14f, 0.94f);
+                background = GetComponent<Image>();
+            if (background != null)
+                background.color = new Color(0.08f, 0.10f, 0.14f, 0.94f);
 
-            if (iconImage == null)
-                iconImage = CreateImage("Icon", new Color(0.2f, 0.35f, 0.5f, 0.6f));
-            if (cooldownFill == null)
+            Image[] images = GetComponentsInChildren<Image>(true);
+            for (int i = 0; i < images.Length; i++)
             {
-                cooldownFill = CreateImage("Cooldown", new Color(0f, 0f, 0f, 0.58f));
+                if (images[i] == null || images[i] == background)
+                    continue;
+                if (iconImage == null && images[i].name == "Icon")
+                    iconImage = images[i];
+                else if (cooldownFill == null && images[i].name == "Cooldown")
+                    cooldownFill = images[i];
+                else if (lockOverlay == null && images[i].name == "ManaLock")
+                    lockOverlay = images[i];
+            }
+
+            if (cooldownFill != null)
+            {
                 cooldownFill.type = Image.Type.Filled;
                 cooldownFill.fillMethod = Image.FillMethod.Radial360;
                 cooldownFill.fillOrigin = (int)Image.Origin360.Top;
                 cooldownFill.raycastTarget = false;
             }
-            if (lockOverlay == null)
-            {
-                lockOverlay = CreateImage("ManaLock", new Color(0f, 0f, 0f, 0.42f));
-                lockOverlay.raycastTarget = false;
-            }
             if (label == null)
-                label = CreateLabel();
+                label = GetComponentInChildren<TMP_Text>(true);
+            if (lockOverlay != null)
+                lockOverlay.raycastTarget = false;
         }
 
-        private Image CreateImage(string objectName, Color color)
+        private void Reset()
         {
-            GameObject go = new GameObject(objectName, typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(transform, false);
-            RectTransform rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            Image image = go.GetComponent<Image>();
-            image.color = color;
-            image.preserveAspect = true;
-            return image;
+            ResolveReferences();
         }
 
-        private TMP_Text CreateLabel()
+        private void OnValidate()
         {
-            GameObject go = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            go.transform.SetParent(transform, false);
-            RectTransform rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 0f);
-            rect.anchorMax = new Vector2(1f, 0f);
-            rect.anchoredPosition = new Vector2(0f, 10f);
-            rect.sizeDelta = new Vector2(0f, 24f);
-            TMP_Text text = go.GetComponent<TMP_Text>();
-            text.alignment = TextAlignmentOptions.Center;
-            text.fontSize = 11f;
-            text.enableAutoSizing = true;
-            text.fontSizeMin = 7f;
-            text.fontSizeMax = 11f;
-            text.color = Color.white;
-            ApplyProjectFont(text);
-            return text;
+            ResolveReferences();
         }
 
         private void ApplyProjectFont(TMP_Text text)

@@ -4,14 +4,21 @@ namespace WizardGrower.UI
 {
     public class MainUI01Coordinator : MonoBehaviour
     {
-        private MainUI01Bar bar;
-        private UpgradeDrawerView upgrade;
-        private WeaponInventoryPanel weapon;
-        private GachaPanel summon;
-        private SkillTabPanel skill;
-        private GoldDungeonEntryPanel goldDungeon;
+        [SerializeField] private MainUI01Bar bar;
+        [SerializeField] private UpgradeDrawerView upgrade;
+        [SerializeField] private WeaponInventoryPanel weapon;
+        [SerializeField] private GachaPanel summon;
+        [SerializeField] private SkillTabPanel skill;
+        [SerializeField] private GoldDungeonEntryPanel goldDungeon;
         private MainUI01Bar.NavTab? activeTab;
         private bool suppressCallbacks;
+
+        private void Awake()
+        {
+            AutoResolveReferences();
+            if (bar != null)
+                Initialize(bar, upgrade, weapon, summon, skill, goldDungeon);
+        }
 
         public void Initialize(MainUI01Bar bar, UpgradeDrawerView upgrade, WeaponInventoryPanel weapon, GachaPanel summon)
         {
@@ -62,6 +69,22 @@ namespace WizardGrower.UI
                 this.goldDungeon.OpenStateChanged += OnGoldDungeonChanged;
 
             CloseAll();
+        }
+
+        private void AutoResolveReferences()
+        {
+            if (bar == null)
+                bar = FindAnyObjectByType<MainUI01Bar>(FindObjectsInactive.Include);
+            if (upgrade == null)
+                upgrade = FindAnyObjectByType<UpgradeDrawerView>(FindObjectsInactive.Include);
+            if (weapon == null)
+                weapon = FindAnyObjectByType<WeaponInventoryPanel>(FindObjectsInactive.Include);
+            if (summon == null)
+                summon = FindAnyObjectByType<GachaPanel>(FindObjectsInactive.Include);
+            if (skill == null)
+                skill = FindAnyObjectByType<SkillTabPanel>(FindObjectsInactive.Include);
+            if (goldDungeon == null)
+                goldDungeon = FindAnyObjectByType<GoldDungeonEntryPanel>(FindObjectsInactive.Include);
         }
 
         public void Open(MainUI01Bar.NavTab tab)

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,7 +23,8 @@ namespace WizardGrower.UI
 
         private void Awake()
         {
-            EnsureUi();
+            ResolveReferences();
+            WireButtons();
             Close();
         }
 
@@ -46,11 +48,14 @@ namespace WizardGrower.UI
 
         public void Open()
         {
-            EnsureUi();
+            ResolveReferences();
             gameObject.SetActive(true);
-            group.alpha = 1f;
-            group.interactable = true;
-            group.blocksRaycasts = true;
+            if (group != null)
+            {
+                group.alpha = 1f;
+                group.interactable = true;
+                group.blocksRaycasts = true;
+            }
             Refresh();
             OpenStateChanged?.Invoke(true);
         }
@@ -92,7 +97,7 @@ namespace WizardGrower.UI
                     MissionDefinition definition = service.GetDefinition(state.missionId);
                     if (definition == null)
                         continue;
-                    AddRow(state.missionId, definition.FormatDescription(definition.initialTargetCount), state.progress, definition.initialTargetCount, service.IsComplete(state), id => service.ClaimDaily(id));
+                    AddRow(state.missionId, definition.FormatDescription(definition.initialTargetCount), state.progress, definition.initialTargetCount, service.IsComplete(state), id => service.ClaimDailyAsync(id));
                 }
             }
             else
@@ -103,90 +108,86 @@ namespace WizardGrower.UI
                     MissionDefinition definition = service.GetDefinition(state.missionId);
                     if (definition == null)
                         continue;
-                    AddRow(state.missionId, definition.FormatDescription(state.currentTargetN), state.runningCounter, state.currentTargetN, service.IsComplete(state), id => service.ClaimRepeat(id));
+                    AddRow(state.missionId, definition.FormatDescription(state.currentTargetN), state.runningCounter, state.currentTargetN, service.IsComplete(state), id => service.ClaimRepeatAsync(id));
                 }
             }
         }
 
-        private void AddRow(string id, string description, int progress, int target, bool complete, Action<string> claim)
+        private void AddRow(string id, string description, int progress, int target, bool complete, Func<string, Task<bool>> claim)
         {
-            MissionRowView row = rowPrefab != null
-                ? Instantiate(rowPrefab, rowContainer)
-                : new GameObject("MissionRow", typeof(RectTransform), typeof(Image), typeof(MissionRowView)).GetComponent<MissionRowView>();
-            if (row.transform.parent != rowContainer)
-                row.transform.SetParent(rowContainer, false);
+            if (rowPrefab == null)
+                return;
+
+            MissionRowView row = Instantiate(rowPrefab, rowContainer);
             RectTransform rect = row.transform as RectTransform;
             if (rect != null)
                 rect.sizeDelta = new Vector2(620f, 74f);
             row.Bind(id, description, progress, target, complete, claim);
         }
 
-        private void EnsureUi()
+        private void ResolveReferences()
         {
             if (group == null)
                 group = GetComponent<CanvasGroup>();
-            if (group == null)
-                group = gameObject.AddComponent<CanvasGroup>();
-            Image bg = GetComponent<Image>();
-            if (bg == null)
-                bg = gameObject.AddComponent<Image>();
-            bg.color = new Color(0.04f, 0.05f, 0.08f, 0.96f);
-
             if (closeButton == null)
-                closeButton = CreateButton("CloseButton", "X", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-34f, -30f), new Vector2(48f, 44f));
-            closeButton.onClick.RemoveAllListeners();
-            closeButton.onClick.AddListener(Close);
-
+                closeButton = FindButton("CloseButton");
             if (dailyTabButton == null)
-                dailyTabButton = CreateButton("DailyTab", "일일미션", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(130f, -34f), new Vector2(150f, 48f));
+                dailyTabButton = FindButton("DailyTab");
             if (repeatTabButton == null)
-                repeatTabButton = CreateButton("RepeatTab", "반복미션", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(292f, -34f), new Vector2(150f, 48f));
-            dailyTabButton.onClick.RemoveAllListeners();
-            repeatTabButton.onClick.RemoveAllListeners();
-            dailyTabButton.onClick.AddListener(() => { showingDaily = true; Refresh(); });
-            repeatTabButton.onClick.AddListener(() => { showingDaily = false; Refresh(); });
-
+                repeatTabButton = FindButton("RepeatTab");
             if (rowContainer == null)
+                rowContainer = FindChildTransform("Rows");
+        }
+
+        private void WireButtons()
+        {
+            if (closeButton != null)
             {
-                GameObject rows = new GameObject("Rows", typeof(RectTransform), typeof(VerticalLayoutGroup));
-                rows.transform.SetParent(transform, false);
-                RectTransform rect = rows.GetComponent<RectTransform>();
-                rect.anchorMin = new Vector2(0.5f, 0f);
-                rect.anchorMax = new Vector2(0.5f, 1f);
-                rect.anchoredPosition = new Vector2(0f, -54f);
-                rect.sizeDelta = new Vector2(660f, -82f);
-                VerticalLayoutGroup layout = rows.GetComponent<VerticalLayoutGroup>();
-                layout.spacing = 8f;
-                layout.childControlHeight = false;
-                layout.childControlWidth = false;
-                layout.childAlignment = TextAnchor.UpperCenter;
-                rowContainer = rows.transform;
+                closeButton.onClick.RemoveAllListeners();
+                closeButton.onClick.AddListener(Close);
+            }
+            if (dailyTabButton != null)
+            {
+                dailyTabButton.onClick.RemoveAllListeners();
+                dailyTabButton.onClick.AddListener(() => { showingDaily = true; Refresh(); });
+            }
+            if (repeatTabButton != null)
+            {
+                repeatTabButton.onClick.RemoveAllListeners();
+                repeatTabButton.onClick.AddListener(() => { showingDaily = false; Refresh(); });
             }
         }
 
-        private Button CreateButton(string name, string text, Vector2 min, Vector2 max, Vector2 pos, Vector2 size)
+        private Button FindButton(string objectName)
         {
-            GameObject go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(transform, false);
-            RectTransform rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = min;
-            rect.anchorMax = max;
-            rect.anchoredPosition = pos;
-            rect.sizeDelta = size;
-            go.GetComponent<Image>().color = new Color(0.14f, 0.22f, 0.36f, 0.96f);
-            GameObject labelGo = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            labelGo.transform.SetParent(go.transform, false);
-            RectTransform labelRect = labelGo.GetComponent<RectTransform>();
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            TMP_Text label = labelGo.GetComponent<TMP_Text>();
-            label.text = text;
-            label.alignment = TextAlignmentOptions.Center;
-            label.fontSize = 14f;
-            label.color = Color.white;
-            return go.GetComponent<Button>();
+            Button[] buttons = GetComponentsInChildren<Button>(true);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] != null && buttons[i].name == objectName)
+                    return buttons[i];
+            }
+            return null;
+        }
+
+        private Transform FindChildTransform(string objectName)
+        {
+            RectTransform[] rects = GetComponentsInChildren<RectTransform>(true);
+            for (int i = 0; i < rects.Length; i++)
+            {
+                if (rects[i] != null && rects[i].name == objectName)
+                    return rects[i];
+            }
+            return null;
+        }
+
+        private void Reset()
+        {
+            ResolveReferences();
+        }
+
+        private void OnValidate()
+        {
+            ResolveReferences();
         }
 
         private void OnDestroy()

@@ -192,18 +192,18 @@ namespace WizardGrower.Economy
             if (gained <= 0)
                 return true;
 
+            if (authority == null || !authority.IsServerAuthoritative)
+            {
+                applyBalance((kind == "gold" ? gold : gems) + gained);
+                gainedEvent?.Invoke(gained);
+                return true;
+            }
+
             await authorityLock.WaitAsync(ct);
             authorityMutationInFlight = true;
             try
             {
                 int latestBalance = kind == "gold" ? gold : gems;
-                if (authority == null || !authority.IsServerAuthoritative)
-                {
-                    applyBalance(latestBalance + gained);
-                    gainedEvent?.Invoke(gained);
-                    return true;
-                }
-
                 CurrencyAuthorityResult result = await authority.GrantAsync(kind, gained, reason, source);
                 if (!result.Success)
                     return false;
@@ -236,6 +236,16 @@ namespace WizardGrower.Economy
             if (cost <= 0)
                 return true;
 
+            if (authority == null || !authority.IsServerAuthoritative)
+            {
+                int localBalance = kind == "gold" ? gold : gems;
+                if (localBalance < cost)
+                    return false;
+
+                applyBalance(localBalance - cost);
+                return true;
+            }
+
             await authorityLock.WaitAsync(ct);
             authorityMutationInFlight = true;
             try
@@ -243,12 +253,6 @@ namespace WizardGrower.Economy
                 int latestBalance = kind == "gold" ? gold : gems;
                 if (latestBalance < cost)
                     return false;
-
-                if (authority == null || !authority.IsServerAuthoritative)
-                {
-                    applyBalance(latestBalance - cost);
-                    return true;
-                }
 
                 CurrencyAuthorityResult result = await authority.SpendAsync(kind, cost, reason);
                 if (!result.Success)

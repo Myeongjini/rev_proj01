@@ -77,7 +77,7 @@ namespace WizardGrower.Dungeons
             return Task.FromResult(true);
         }
 
-        public Task<long> CompleteEntryAsync(GoldDungeonResult result, bool watchedAd)
+        public async Task<long> CompleteEntryAsync(GoldDungeonResult result, bool watchedAd)
         {
             EnsureDefaults();
             long baseGold = result.earnedGold > 0
@@ -86,7 +86,9 @@ namespace WizardGrower.Dungeons
             long total = watchedAd ? SafeMultiply(baseGold, 2) : baseGold;
             if (wallet != null)
             {
-                wallet.AddGold(ToWalletAmount(total), "gold_dungeon", "dungeon");
+                bool granted = await wallet.AddGoldAsync(ToWalletAmount(total), "gold_dungeon", "dungeon");
+                if (!granted)
+                    return 0;
                 if (save != null)
                     save.CurrentData.gold = wallet.Gold;
             }
@@ -99,7 +101,7 @@ namespace WizardGrower.Dungeons
 
             save?.Save();
             StateChanged?.Invoke();
-            return Task.FromResult(total);
+            return total;
         }
 
         public void AttachPlayerLevel(PlayerLevelService playerLevel)

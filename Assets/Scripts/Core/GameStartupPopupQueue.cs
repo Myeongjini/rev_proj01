@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ namespace WizardGrower.Core
 
     public class GameStartupPopupQueue : MonoBehaviour
     {
+        [SerializeField] private int popupTimeoutMilliseconds = 15000;
+
         private readonly List<IGameStartupPopup> popups = new List<IGameStartupPopup>();
 
         public void Register(IGameStartupPopup popup)
@@ -26,7 +29,25 @@ namespace WizardGrower.Core
             {
                 IGameStartupPopup popup = popups[i];
                 if (popup != null && popup.ShouldShow())
-                    await popup.ShowAsync();
+                {
+                    try
+                    {
+                        Task popupTask = popup.ShowAsync();
+                        Task timeoutTask = Task.Delay(Mathf.Max(1000, popupTimeoutMilliseconds));
+                        Task winner = await Task.WhenAny(popupTask, timeoutTask);
+                        if (winner == timeoutTask)
+                        {
+                            Debug.LogWarning($"Startup popup timed out: {popup.GetType().Name}");
+                            continue;
+                        }
+
+                        await popupTask;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"Startup popup failed: {popup.GetType().Name} / {ex.GetBaseException().Message}");
+                    }
+                }
             }
         }
     }

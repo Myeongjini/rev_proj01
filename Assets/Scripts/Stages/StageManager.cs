@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
@@ -96,7 +97,7 @@ namespace WizardGrower.Stages
         {
             string source = enemy is BossEnemy ? "boss_reward" : "enemy_reward";
             string reason = enemy is BossEnemy ? $"boss_stage_{currentStageNumber}" : $"enemy_stage_{currentStageNumber}";
-            wallet.AddGold(enemy.RewardGold, reason, source);
+            _ = GrantEnemyGoldAsync(enemy.RewardGold, reason, source);
 
             if (mode == StageMode.BossRoom)
             {
@@ -109,6 +110,16 @@ namespace WizardGrower.Stages
 
             StartCoroutine(RespawnFieldEnemyAfterDelay(fieldSpawnVersion, CurrentStage));
             RaiseStateChanged();
+        }
+
+        private async Task GrantEnemyGoldAsync(int amount, string reason, string source)
+        {
+            if (wallet == null)
+                return;
+
+            bool granted = await wallet.AddGoldAsync(amount, reason, source);
+            if (!granted)
+                Debug.LogWarning($"Enemy gold grant failed: {source}/{reason}");
         }
 
         private void OnBossFailed()

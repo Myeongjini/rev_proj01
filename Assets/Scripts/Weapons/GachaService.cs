@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using WizardGrower.Cloud;
 using WizardGrower.Economy;
@@ -36,6 +38,7 @@ namespace WizardGrower.Weapons
         private IRandomSource random = new UnityRandomSource();
         private int currentPity;
         private readonly SummonLevelState summonState = new SummonLevelState();
+        [SerializeField] private bool useSimulationFallback;
 
         public int CurrentPity => currentPity;
         public int CurrentSummonLevel => Mathf.Max(1, summonState.summonLevel);
@@ -114,6 +117,22 @@ namespace WizardGrower.Weapons
             return CanSpend(definition != null ? definition.costThirty : 0);
         }
 
+        public Task<GachaPullResult> TrySinglePullAsync(CancellationToken ct = default)
+        {
+            return TryPullAsync(1, definition != null ? definition.costSingle : 0, ct);
+        }
+
+        public Task<GachaPullResult> TryTenPullAsync(CancellationToken ct = default)
+        {
+            return TryPullAsync(10, definition != null ? definition.costTen : 0, ct);
+        }
+
+        public Task<GachaPullResult> TryThirtyPullAsync(CancellationToken ct = default)
+        {
+            return TryPullAsync(30, definition != null ? definition.costThirty : 0, ct);
+        }
+
+        [Obsolete("Use TrySinglePullAsync — sync API is no-op in server-authority mode", false)]
         public bool TrySinglePull(out WeaponDefinition pulled)
         {
             pulled = null;
@@ -125,17 +144,20 @@ namespace WizardGrower.Weapons
             return pulled != null;
         }
 
+        [Obsolete("Use TryTenPullAsync — sync API is no-op in server-authority mode", false)]
         public bool TryTenPull(out List<WeaponDefinition> pulled)
         {
             return TryPull(10, definition != null ? definition.costTen : 0, out pulled);
         }
 
+        [Obsolete("Use TryThirtyPullAsync — sync API is no-op in server-authority mode", false)]
         public IReadOnlyList<WeaponDefinition> PullThirty()
         {
             List<WeaponDefinition> pulled;
             return TryThirtyPull(out pulled) ? pulled : Array.Empty<WeaponDefinition>();
         }
 
+        [Obsolete("Use TryThirtyPullAsync — sync API is no-op in server-authority mode", false)]
         public bool TryThirtyPull(out List<WeaponDefinition> pulled)
         {
             return TryPull(30, definition != null ? definition.costThirty : 0, out pulled);
@@ -209,37 +231,53 @@ namespace WizardGrower.Weapons
             return floor;
         }
 
+        private async Task<GachaPullResult> TryPullAsync(int count, int cost, CancellationToken ct)
+        {
+            if (definition == null || wallet == null || inventory == null || definition.pool == null)
+                return FailResult("가챠 준비가 필요합니다.");
+
+            if (cloudFunctions != null && cloudFunctions.IsReady)
+            {
+                try
+                {
+                    List<WeaponDefinition> serverPulled = await PullFromServerAsync(count, ct);
+                    if (serverPulled.Count <= 0)
+                        return FailResult("서버 뽑기 결과가 비어 있습니다.");
+
+                    StateChanged?.Invoke();
+                    PullCompleted?.Invoke(serverPulled.Count);
+                    return GachaPullResult.Ok(serverPulled);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"Server gacha failed: {ex.GetBaseException().Message}");
+                    return FailResult("서버 뽑기에 실패했습니다.");
+                }
+            }
+
+#if UNITY_EDITOR
+            if (useSimulationFallback)
+                return await TryPullLocalAsync(count, cost, ct);
+#endif
+
+            return FailResult("서버 연결이 필요합니다. 잠시 후 다시 시도해주세요.");
+        }
+
         private bool TryPull(int count, int cost, out List<WeaponDefinition> pulled)
         {
             pulled = new List<WeaponDefinition>();
             if (definition == null || wallet == null || inventory == null || definition.pool == null)
                 return Fail("가챠 준비가 필요합니다.");
 
-            if (cloudFunctions != null && cloudFunctions.IsReady)
-            {
-                try
-                {
-                    pulled = PullFromServerAsync(count).GetAwaiter().GetResult();
-                    if (pulled.Count <= 0)
-                        return Fail("서버 뽑기 결과가 비어 있습니다.");
-                    StateChanged?.Invoke();
-                    PullCompleted?.Invoke(pulled.Count);
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"Server gacha failed: {ex.GetBaseException().Message}");
-                    return Fail("서버 뽑기에 실패했습니다.");
-                }
-            }
+            return Fail("Use async gacha API.");
+        }
 
-#if !UNITY_EDITOR
-            return Fail("서버 연결이 필요합니다. 잠시 후 다시 시도해주세요.");
-#endif
-
+        private async Task<GachaPullResult> TryPullLocalAsync(int count, int cost, CancellationToken ct)
+        {
+            List<WeaponDefinition> pulled = new List<WeaponDefinition>();
             int gemsBeforePull = wallet.Gems;
-            if (!wallet.TrySpendGems(cost, $"gacha_local_{count}"))
-                return Fail("젬이 부족합니다.");
+            if (!await wallet.TrySpendGemsAsync(cost, $"gacha_local_{count}", ct))
+                return FailResult("젬이 부족합니다.");
 
             for (int i = 0; i < count; i++)
             {
@@ -247,8 +285,7 @@ namespace WizardGrower.Weapons
                 if (weapon == null)
                 {
                     wallet.SetGems(gemsBeforePull);
-                    pulled.Clear();
-                    return Fail("뽑기 풀에 무기가 없습니다.");
+                    return FailResult("뽑기 풀에 무기가 없습니다.");
                 }
 
                 inventory.Add(weapon.weaponId);
@@ -258,10 +295,10 @@ namespace WizardGrower.Weapons
 
             StateChanged?.Invoke();
             PullCompleted?.Invoke(pulled.Count);
-            return true;
+            return GachaPullResult.Ok(pulled);
         }
 
-        private async System.Threading.Tasks.Task<List<WeaponDefinition>> PullFromServerAsync(int count)
+        private async Task<List<WeaponDefinition>> PullFromServerAsync(int count, CancellationToken ct)
         {
             Dictionary<string, object> payload = new Dictionary<string, object>
             {
@@ -269,7 +306,7 @@ namespace WizardGrower.Weapons
                 { "gachaId", definition != null && !string.IsNullOrEmpty(definition.gachaId) ? definition.gachaId : "standard" }
             };
 
-            IDictionary<string, object> response = await cloudFunctions.CallAsync("rollGacha", payload);
+            IDictionary<string, object> response = await cloudFunctions.CallAsync("rollGacha", payload, ct);
             if (response.TryGetValue("newGemBalance", out object gemBalance))
                 wallet.SetGems(ConvertToInt(gemBalance, wallet.Gems));
             if (response.TryGetValue("newSummonLevel", out object summonLevel) || response.TryGetValue("newSummonPullsInLevel", out object pullsInLevel))
@@ -411,6 +448,13 @@ namespace WizardGrower.Weapons
             PullFailed?.Invoke(message);
             StateChanged?.Invoke();
             return false;
+        }
+
+        private GachaPullResult FailResult(string message)
+        {
+            PullFailed?.Invoke(message);
+            StateChanged?.Invoke();
+            return GachaPullResult.Fail(message);
         }
 
         private void OnGemsChanged(int _)

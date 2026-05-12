@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using WizardGrower.Economy;
 using WizardGrower.Enemies;
@@ -96,25 +97,41 @@ namespace WizardGrower.Missions
 
         public bool ClaimDaily(string missionId)
         {
+            Debug.LogWarning("Use ClaimDailyAsync for mission rewards.");
+            return false;
+        }
+
+        public async Task<bool> ClaimDailyAsync(string missionId)
+        {
             DailyMissionState state = dailyStates.Find(s => s != null && s.missionId == missionId);
             MissionDefinition definition = GetDefinition(missionId);
             if (state == null || definition == null || state.claimed || !IsComplete(state))
                 return false;
 
+            if (!await GrantAsync(definition))
+                return false;
+
             state.claimed = true;
-            Grant(definition);
             StateChanged?.Invoke();
             return true;
         }
 
         public bool ClaimRepeat(string missionId)
         {
+            Debug.LogWarning("Use ClaimRepeatAsync for mission rewards.");
+            return false;
+        }
+
+        public async Task<bool> ClaimRepeatAsync(string missionId)
+        {
             RepeatMissionState state = repeatStates.Find(s => s != null && s.missionId == missionId);
             MissionDefinition definition = GetDefinition(missionId);
             if (state == null || definition == null || !IsComplete(state))
                 return false;
 
-            Grant(definition);
+            if (!await GrantAsync(definition))
+                return false;
+
             state.currentTargetN += Mathf.Max(1, definition.repeatDelta);
             StateChanged?.Invoke();
             return true;
@@ -191,10 +208,11 @@ namespace WizardGrower.Missions
             StateChanged?.Invoke();
         }
 
-        private void Grant(MissionDefinition definition)
+        private async Task<bool> GrantAsync(MissionDefinition definition)
         {
             if (definition.rewardKind == RewardKind.Gem && wallet != null)
-                wallet.AddGems(definition.rewardAmount, $"mission_{definition.missionId}", "mission");
+                return await wallet.AddGemsAsync(definition.rewardAmount, $"mission_{definition.missionId}", "mission");
+            return true;
         }
 
         private static int CountFusion(IReadOnlyList<WeaponFusionResult> results)

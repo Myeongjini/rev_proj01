@@ -20,6 +20,15 @@ namespace WizardGrower.UI
             EnsureLayout();
         }
 
+        private void Update()
+        {
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] != null)
+                    slots[i].RefreshCooldownState(currentMana);
+            }
+        }
+
         public void Bind(SkillCastOrchestrator orchestrator, PlayerMana mana)
         {
             if (this.orchestrator != null)
@@ -46,13 +55,14 @@ namespace WizardGrower.UI
                 slotContainer = transform;
 
             GridLayoutGroup grid = slotContainer.GetComponent<GridLayoutGroup>();
-            if (grid == null)
-                grid = slotContainer.gameObject.AddComponent<GridLayoutGroup>();
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = SkillCastOrchestrator.SlotCount;
-            grid.cellSize = new Vector2(64f, 64f);
-            grid.spacing = new Vector2(8f, 0f);
-            grid.childAlignment = TextAnchor.MiddleCenter;
+            if (grid != null)
+            {
+                grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+                grid.constraintCount = SkillCastOrchestrator.SlotCount;
+                grid.cellSize = new Vector2(64f, 64f);
+                grid.spacing = new Vector2(8f, 0f);
+                grid.childAlignment = TextAnchor.MiddleCenter;
+            }
 
             for (int i = 0; i < slots.Length; i++)
             {
@@ -63,11 +73,12 @@ namespace WizardGrower.UI
                         slots[i] = existing.GetComponent<SkillBarSlotView>();
                     if (slots[i] == null)
                     {
-                        GameObject go = slotPrefab != null
-                            ? Instantiate(slotPrefab.gameObject, slotContainer)
-                            : new GameObject($"SkillSlot{i + 1}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(SkillBarSlotView));
-                        go.transform.SetParent(slotContainer, false);
-                        slots[i] = go.GetComponent<SkillBarSlotView>();
+                        if (slotPrefab == null)
+                            continue;
+
+                        SkillBarSlotView slot = Instantiate(slotPrefab, slotContainer);
+                        slot.name = $"SkillSlot{i + 1}";
+                        slots[i] = slot;
                     }
                 }
             }
@@ -81,6 +92,9 @@ namespace WizardGrower.UI
                 SkillDefinition skill = runtime != null ? runtime.Definition : null;
                 bool locked = orchestrator != null && skill != null && !orchestrator.IsSkillUnlocked(skill);
                 int unlockLevel = orchestrator != null ? orchestrator.GetUnlockLevel(skill) : 1;
+                if (slots[i] == null)
+                    continue;
+
                 slots[i].Bind(i, runtime, OnSlotClicked, locked, unlockLevel);
                 slots[i].Refresh(currentMana);
             }
@@ -95,6 +109,9 @@ namespace WizardGrower.UI
             SkillDefinition skill = runtime != null ? runtime.Definition : null;
             bool locked = orchestrator != null && skill != null && !orchestrator.IsSkillUnlocked(skill);
             int unlockLevel = orchestrator != null ? orchestrator.GetUnlockLevel(skill) : 1;
+            if (slots[slotIndex] == null)
+                return;
+
             slots[slotIndex].Bind(slotIndex, runtime, OnSlotClicked, locked, unlockLevel);
             slots[slotIndex].Refresh(currentMana);
         }
@@ -103,7 +120,10 @@ namespace WizardGrower.UI
         {
             currentMana = current;
             for (int i = 0; i < slots.Length; i++)
-                slots[i].Refresh(currentMana);
+            {
+                if (slots[i] != null)
+                    slots[i].Refresh(currentMana);
+            }
         }
 
         private void OnSlotClicked(int slotIndex)
