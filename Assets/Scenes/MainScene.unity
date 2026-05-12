@@ -10121,6 +10121,123 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1139447487
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1350138069}
+    m_Modifications:
+    - target: {fileID: 100000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_Name
+      value: ArmorAcquiredPopup
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 420
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 120
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 120
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+--- !u!224 &1139447488 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 22400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+  m_PrefabInstance: {fileID: 1139447487}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1139447489 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 11400000, guid: 9196d2e22cb149d593c7f8d2103aba09, type: 3}
+  m_PrefabInstance: {fileID: 1139447487}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a868474170d45f7a8bd667084a84bdc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.UI.ArmorAcquiredPopupView
 --- !u!1 &1176571450
 GameObject:
   m_ObjectHideFlags: 0
@@ -12112,6 +12229,7 @@ RectTransform:
   - {fileID: 774822784}
   - {fileID: 321904351}
   - {fileID: 418547463}
+  - {fileID: 1139447488}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -16262,6 +16380,8 @@ GameObject:
   - component: {fileID: 1819268697}
   - component: {fileID: 1819268696}
   - component: {fileID: 1819268698}
+  - component: {fileID: 1819268700}
+  - component: {fileID: 1819268699}
   m_Layer: 0
   m_Name: Runtime
   m_TagString: Untagged
@@ -16455,14 +16575,14 @@ MonoBehaviour:
   <WeaponDatabase>k__BackingField: {fileID: 11400000, guid: f6d725a9de01843209cc6dd9c248454f, type: 2}
   <WeaponInventory>k__BackingField: {fileID: 1819268693}
   <WeaponVisual>k__BackingField: {fileID: 1246713352}
-  <ArmorDatabase>k__BackingField: {fileID: 0}
-  <ArmorInventory>k__BackingField: {fileID: 0}
-  <ArmorDropTable>k__BackingField: {fileID: 0}
+  <ArmorDatabase>k__BackingField: {fileID: 11400000, guid: 210ba6e8b82c4805a80b4fee4a5c735e, type: 2}
+  <ArmorInventory>k__BackingField: {fileID: 1819268700}
+  <ArmorDropTable>k__BackingField: {fileID: 11400000, guid: b50e7f070daf48f987426b464b92042d, type: 2}
   <AccessoryDatabase>k__BackingField: {fileID: 11400000, guid: e139e43f03176412289daf57f4f121e1, type: 2}
   <AccessoryInventory>k__BackingField: {fileID: 1819268698}
   <LootDropTable>k__BackingField: {fileID: 11400000, guid: 08a1b1c003055450a90bda18459fe848, type: 2}
-  <EliteSpawnTracker>k__BackingField: {fileID: 0}
-  <ArmorAcquiredPopup>k__BackingField: {fileID: 0}
+  <EliteSpawnTracker>k__BackingField: {fileID: 1819268699}
+  <ArmorAcquiredPopup>k__BackingField: {fileID: 1139447489}
   <AccessoryAcquiredPopup>k__BackingField: {fileID: 321904352}
   <GachaDefinition>k__BackingField: {fileID: 11400000, guid: 5b79b6f6418de4d31b71b930bae2050e, type: 2}
   <GachaService>k__BackingField: {fileID: 1819268694}
@@ -16700,6 +16820,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8763bb8d712614d5a89450c26cebb59a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Accessory.AccessoryInventory
+  database: {fileID: 0}
+--- !u!114 &1819268699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1819268672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 154e2c52d2e34842843312f4fac10c43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Enemies.EliteSpawnTracker
+  killsPerElite: 100
+--- !u!114 &1819268700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1819268672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f8e5e98c6e04b93a050c1fc6bebbe55, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WizardGrower.Armor.ArmorInventory
   database: {fileID: 0}
 --- !u!1 &1823621947
 GameObject:
