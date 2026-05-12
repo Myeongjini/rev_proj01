@@ -16,6 +16,7 @@ using WizardGrower.Missions;
 using WizardGrower.Multiplayer;
 using WizardGrower.Offline;
 using WizardGrower.Player;
+using WizardGrower.Ranking;
 using WizardGrower.Save;
 using WizardGrower.Skills;
 using WizardGrower.Stages;
@@ -93,6 +94,7 @@ namespace WizardGrower.Core
         [field: SerializeField] public PlayerExpBarView PlayerExpBar { get; private set; }
         [field: SerializeField] public SkillUnlockPopupView SkillUnlockPopup { get; private set; }
         [field: SerializeField] public CombatPowerPopupView CombatPowerPopup { get; private set; }
+        [field: SerializeField] public RankingService RankingService { get; private set; }
         public CombatPowerService CombatPower { get; private set; }
         public WeaponFusionService WeaponFusion { get; private set; }
         public ArmorFusionService ArmorFusion { get; private set; }
@@ -103,6 +105,12 @@ namespace WizardGrower.Core
         public void SetCombatPowerService(CombatPowerService combatPower)
         {
             CombatPower = combatPower;
+        }
+
+        public void SetRankingService(RankingService rankingService)
+        {
+            if (rankingService != null)
+                RankingService = rankingService;
         }
 
         public void SetWeaponFusionService(WeaponFusionService weaponFusion)

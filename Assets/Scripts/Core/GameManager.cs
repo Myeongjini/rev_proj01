@@ -16,6 +16,7 @@ using WizardGrower.Login;
 using WizardGrower.Missions;
 using WizardGrower.Offline;
 using WizardGrower.Player;
+using WizardGrower.Ranking;
 using WizardGrower.UI;
 
 namespace WizardGrower.Core
@@ -47,6 +48,7 @@ namespace WizardGrower.Core
             calculator = new CombatCalculator(context.Wizard.Stats);
             combatPower = new CombatPowerService();
             context.SetCombatPowerService(combatPower);
+            EnsureRankingService();
             EnsureCloudFunctionsClient();
             if (context.Wallet != null)
                 context.Wallet.InitializeAuthority(context.CloudFunctionsClient);
@@ -654,6 +656,11 @@ namespace WizardGrower.Core
                     await context.SyncCoordinator.StartSyncAsync(uid, context);
                 else
                     context.SaveBinder.SetUserId(uid);
+                if (context.RankingService != null)
+                {
+                    context.RankingService.Initialize(context.AuthService, context.UserProfileService, combatPower);
+                    await context.RankingService.PushMyCombatPowerScoreAsync(displayName);
+                }
                 Debug.Log($"MainScene consumed bootstrapped Firebase UID: {uid}");
             }
             catch (System.Exception ex)
@@ -673,6 +680,18 @@ namespace WizardGrower.Core
             context.SetCloudFunctionsClient(client);
         }
 
+        private void EnsureRankingService()
+        {
+            RankingService service = context.RankingService != null
+                ? context.RankingService
+                : context.GetComponent<RankingService>();
+            if (service == null)
+                service = context.gameObject.AddComponent<RankingService>();
+
+            service.Initialize(context.AuthService, context.UserProfileService, combatPower);
+            context.SetRankingService(service);
+        }
+
         private async void OnUserChanged(string uid, AccountType type)
         {
             if (context == null || context.UserProfileService == null || string.IsNullOrEmpty(uid))
@@ -687,6 +706,11 @@ namespace WizardGrower.Core
                     await context.SyncCoordinator.OnUidChanged(uid);
                 else
                     context.SaveBinder.SetUserId(uid);
+                if (context.RankingService != null)
+                {
+                    context.RankingService.Initialize(context.AuthService, context.UserProfileService, combatPower);
+                    await context.RankingService.PushMyCombatPowerScoreAsync();
+                }
             }
             catch (System.Exception ex)
             {
