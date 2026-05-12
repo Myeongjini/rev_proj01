@@ -179,6 +179,7 @@ async function grantReward(
   }
 
   const incoming = normalizePayload(request.data);
+  validateRewardGrant(incoming, forcedSource, forcedReason);
   return admin.firestore().runTransaction(async (tx) => {
     return grantCurrencyInternal(
       tx,
@@ -189,6 +190,71 @@ async function grantReward(
       forcedSource
     );
   });
+}
+
+function validateRewardGrant(
+  payload: Required<CurrencyPayload>,
+  source: string,
+  reason: string
+): void {
+  const amount = payload.amount;
+  switch (source) {
+    case "mission":
+      assertKind(payload.kind, "gem", source);
+      assertAmountAtMost(amount, 500, source);
+      assertReasonPrefix(reason, "mission_", source);
+      return;
+    case "attendance":
+      assertKind(payload.kind, "gem", source);
+      assertAmountAtMost(amount, 1000, source);
+      assertReasonPrefix(reason, "attendance_day", source);
+      return;
+    case "dungeon":
+      if (reason === "enhancement_stone_dungeon") {
+        assertKind(payload.kind, "enhancement_stone", source);
+        assertAmountAtMost(amount, 1000000, source);
+        return;
+      }
+
+      assertKind(payload.kind, "gold", source);
+      assertAmountAtMost(amount, 1000000000, source);
+      return;
+    case "offline":
+      assertKind(payload.kind, "gold", source);
+      assertAmountAtMost(amount, 1000000000, source);
+      assertReasonPrefix(reason, "offline_reward", source);
+      return;
+    case "enemy_reward":
+      assertKind(payload.kind, "gold", source);
+      assertAmountAtMost(amount, 1000000, source);
+      assertReasonPrefix(reason, "enemy_stage_", source);
+      return;
+    case "boss_reward":
+      assertKind(payload.kind, "gold", source);
+      assertAmountAtMost(amount, 10000000, source);
+      assertReasonPrefix(reason, "boss_stage_", source);
+      return;
+    default:
+      throw new HttpsError("permission-denied", "Unsupported reward source.");
+  }
+}
+
+function assertKind(actual: CurrencyKind, expected: CurrencyKind, source: string): void {
+  if (actual !== expected) {
+    throw new HttpsError("invalid-argument", `Invalid currency kind for ${source}.`);
+  }
+}
+
+function assertAmountAtMost(amount: number, maxAmount: number, source: string): void {
+  if (amount > maxAmount) {
+    throw new HttpsError("invalid-argument", `Reward amount exceeds ${source} limit.`);
+  }
+}
+
+function assertReasonPrefix(reason: string, prefix: string, source: string): void {
+  if (!reason.startsWith(prefix)) {
+    throw new HttpsError("invalid-argument", `Invalid reward reason for ${source}.`);
+  }
 }
 
 function normalizePayload(data: CurrencyPayload): Required<CurrencyPayload> {

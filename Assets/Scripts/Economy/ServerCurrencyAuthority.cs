@@ -84,7 +84,9 @@ namespace WizardGrower.Economy
                 "dungeon" => "claimDungeonReward",
                 "offline" => "claimOfflineReward",
                 "migration" => "migrateWallet",
-                _ => "claimEnemyReward"
+                "enemy_reward" => "claimEnemyReward",
+                "boss_reward" => "claimEnemyReward",
+                _ => "grantCurrency"
             };
         }
 
