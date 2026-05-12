@@ -6,10 +6,11 @@ using UnityEngine.UI;
 using WizardGrower.Ads;
 using WizardGrower.Core;
 using WizardGrower.Dungeons;
+using WizardGrower.UI.Common;
 
 namespace WizardGrower.UI
 {
-    public class GoldDungeonResultModal : MonoBehaviour, IGameStartupPopup
+    public class GoldDungeonResultModal : MonoBehaviour, IGameStartupPopup, ICancelableStartupPopup
     {
         [SerializeField] private CanvasGroup group;
         [SerializeField] private TMP_Text titleLabel;
@@ -96,14 +97,27 @@ namespace WizardGrower.UI
             closeCompletion = null;
         }
 
+        public void CancelStartupPopup()
+        {
+            Hide(false);
+        }
+
         private async void Claim()
         {
             if (busy || service == null)
                 return;
             busy = true;
             SetButtonsInteractable(false);
-            await service.CompleteEntryAsync(currentResult, false);
-            Hide(true);
+            long granted = await service.CompleteEntryAsync(currentResult, false);
+            if (granted > 0)
+            {
+                Hide(true);
+                return;
+            }
+
+            ServerStatusToast.Show(ServerStatusToast.RewardFailed);
+            busy = false;
+            SetButtonsInteractable(true);
         }
 
         private async void ClaimAd()
@@ -114,11 +128,19 @@ namespace WizardGrower.UI
             SetButtonsInteractable(false);
             bool watched = adProvider != null && await adProvider.WatchRewardedAdAsync();
             if (watched)
-                await service.CompleteEntryAsync(currentResult, true);
+            {
+                long granted = await service.CompleteEntryAsync(currentResult, true);
+                if (granted > 0)
+                {
+                    Hide(true);
+                    return;
+                }
+
+                ServerStatusToast.Show(ServerStatusToast.RewardFailed);
+            }
+
             busy = false;
             SetButtonsInteractable(true);
-            if (watched)
-                Hide(true);
         }
 
         private void SetButtonsInteractable(bool interactable)

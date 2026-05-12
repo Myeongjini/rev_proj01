@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using WizardGrower.UI.Common;
 
 namespace WizardGrower.Upgrades
 {
@@ -81,6 +82,7 @@ namespace WizardGrower.Upgrades
                 if (!purchaseTask.IsCompleted)
                 {
                     failureMessage = "서버 지연";
+                    ServerStatusToast.Show(ServerStatusToast.ServerDelayed);
                 }
                 else if (purchaseTask.IsFaulted)
                 {
@@ -95,12 +97,14 @@ namespace WizardGrower.Upgrades
                 else
                 {
                     failureMessage = "구매 실패";
+                    ServerStatusToast.Show(ServerStatusToast.RewardFailed);
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogException(ex);
                 failureMessage = "구매 실패";
+                ServerStatusToast.Show(ServerStatusToast.RewardFailed);
             }
             finally
             {

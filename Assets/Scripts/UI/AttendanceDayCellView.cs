@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using WizardGrower.Attendance;
+using WizardGrower.UI.Common;
 
 namespace WizardGrower.UI
 {
@@ -86,6 +87,8 @@ namespace WizardGrower.UI
                 button.interactable = true;
             if (!success && markLabel != null)
                 markLabel.text = "실패";
+            if (!success)
+                ServerStatusToast.Show(ServerStatusToast.RewardFailed);
         }
 
         private void ResolveReferences()

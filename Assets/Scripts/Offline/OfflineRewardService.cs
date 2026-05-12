@@ -77,19 +77,19 @@ namespace WizardGrower.Offline
             return lastSnapshot;
         }
 
-        public async Task ClaimAsync(bool watchedAd)
+        public async Task<bool> ClaimAsync(bool watchedAd)
         {
             OfflineRewardSnapshot snapshot = hasSnapshot ? lastSnapshot : await ResolvePendingAsync();
             long baseGold = Math.Max(0, save != null ? save.CurrentData.offlineRewardPending : snapshot.baseGold);
             long baseExp = Math.Max(0, save != null ? save.CurrentData.offlineRewardPendingExp : snapshot.baseExp);
             if ((baseGold <= 0 && baseExp <= 0) || wallet == null || save == null)
-                return;
+                return false;
 
             long totalGold = watchedAd ? SafeMultiply(baseGold, 2) : baseGold;
             long totalExp = watchedAd ? SafeMultiply(baseExp, 2) : baseExp;
             bool granted = await wallet.AddGoldAsync(ToWalletAmount(totalGold), "offline_reward", "offline");
             if (!granted)
-                return;
+                return false;
             playerLevel?.GrantExp(ToWalletAmount(totalExp));
             save.CurrentData.gold = wallet.Gold;
             save.CurrentData.offlineRewardPending = 0;
@@ -102,6 +102,7 @@ namespace WizardGrower.Offline
             save.Save();
             hasSnapshot = false;
             Claimed?.Invoke(totalGold, totalExp, watchedAd);
+            return true;
         }
 
         private static int ToWalletAmount(long amount)

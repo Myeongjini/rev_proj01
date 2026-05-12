@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using WizardGrower.Missions;
+using WizardGrower.UI.Common;
 
 namespace WizardGrower.UI
 {
@@ -89,6 +90,8 @@ namespace WizardGrower.UI
                 claimButton.interactable = true;
             if (!success && claimLabel != null)
                 claimLabel.text = "실패";
+            if (!success)
+                ServerStatusToast.Show(ServerStatusToast.RewardFailed);
         }
 
         private void ResolveReferences()

@@ -6,10 +6,11 @@ using UnityEngine.UI;
 using WizardGrower.Ads;
 using WizardGrower.Core;
 using WizardGrower.Offline;
+using WizardGrower.UI.Common;
 
 namespace WizardGrower.UI
 {
-    public class OfflineRewardModal : MonoBehaviour, IGameStartupPopup
+    public class OfflineRewardModal : MonoBehaviour, IGameStartupPopup, ICancelableStartupPopup
     {
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private TMP_Text titleLabel;
@@ -102,14 +103,27 @@ namespace WizardGrower.UI
             closeCompletion = null;
         }
 
+        public void CancelStartupPopup()
+        {
+            Hide();
+        }
+
         private async void Claim()
         {
             if (busy || service == null)
                 return;
             busy = true;
             SetButtonsInteractable(false);
-            await service.ClaimAsync(false);
-            Hide();
+            bool claimed = await service.ClaimAsync(false);
+            if (claimed)
+            {
+                Hide();
+                return;
+            }
+
+            ServerStatusToast.Show(ServerStatusToast.RewardFailed);
+            busy = false;
+            SetButtonsInteractable(true);
         }
 
         private async void ClaimWithAd()
@@ -120,11 +134,19 @@ namespace WizardGrower.UI
             SetButtonsInteractable(false);
             bool watched = ad != null && await ad.WatchRewardedAdAsync();
             if (watched)
-                await service.ClaimAsync(true);
+            {
+                bool claimed = await service.ClaimAsync(true);
+                if (claimed)
+                {
+                    Hide();
+                    return;
+                }
+
+                ServerStatusToast.Show(ServerStatusToast.RewardFailed);
+            }
+
             busy = false;
             SetButtonsInteractable(true);
-            if (watched)
-                Hide();
         }
 
         private void SetButtonsInteractable(bool interactable)
