@@ -1,4 +1,5 @@
 using UnityEngine;
+using WizardGrower.Accessory;
 using WizardGrower.Ads;
 using WizardGrower.Armor;
 using WizardGrower.Attendance;
@@ -59,8 +60,12 @@ namespace WizardGrower.Core
         [field: SerializeField] public ArmorDatabase ArmorDatabase { get; private set; }
         [field: SerializeField] public ArmorInventory ArmorInventory { get; private set; }
         [field: SerializeField] public ArmorDropTable ArmorDropTable { get; private set; }
+        [field: SerializeField] public AccessoryDatabase AccessoryDatabase { get; private set; }
+        [field: SerializeField] public AccessoryInventory AccessoryInventory { get; private set; }
+        [field: SerializeField] public LootDropTable LootDropTable { get; private set; }
         [field: SerializeField] public EliteSpawnTracker EliteSpawnTracker { get; private set; }
         [field: SerializeField] public ArmorAcquiredPopupView ArmorAcquiredPopup { get; private set; }
+        [field: SerializeField] public AccessoryAcquiredPopupView AccessoryAcquiredPopup { get; private set; }
         [field: SerializeField] public GachaDefinition GachaDefinition { get; private set; }
         [field: SerializeField] public GachaService GachaService { get; private set; }
         [field: SerializeField] public SkillDatabase SkillDatabase { get; private set; }
@@ -79,6 +84,8 @@ namespace WizardGrower.Core
         [field: SerializeField] public GoldDungeonService GoldDungeonService { get; private set; }
         [field: SerializeField] public EXPDungeonService EXPDungeonService { get; private set; }
         [field: SerializeField] public EXPDungeonResultModal EXPDungeonResultModal { get; private set; }
+        [field: SerializeField] public EnhancementStoneDungeonService EnhancementStoneDungeonService { get; private set; }
+        [field: SerializeField] public EnhancementStoneDungeonResultModal EnhancementStoneDungeonResultModal { get; private set; }
         [field: SerializeField] public PlayerLevelService PlayerLevelService { get; private set; }
         [field: SerializeField] public LevelUpPopupView LevelUpPopup { get; private set; }
         [field: SerializeField] public PlayerExpBarView PlayerExpBar { get; private set; }
@@ -87,6 +94,7 @@ namespace WizardGrower.Core
         public CombatPowerService CombatPower { get; private set; }
         public WeaponFusionService WeaponFusion { get; private set; }
         public ArmorFusionService ArmorFusion { get; private set; }
+        public AccessoryFusionService AccessoryFusion { get; private set; }
         public AttendanceService AttendanceService { get; private set; }
 
         public void SetCombatPowerService(CombatPowerService combatPower)
@@ -113,6 +121,20 @@ namespace WizardGrower.Core
                 ArmorDropTable = dropTable;
             if (popup != null)
                 ArmorAcquiredPopup = popup;
+        }
+
+        public void SetAccessoryServices(AccessoryDatabase database, AccessoryInventory inventory, AccessoryFusionService fusion, LootDropTable dropTable = null, AccessoryAcquiredPopupView popup = null)
+        {
+            if (database != null)
+                AccessoryDatabase = database;
+            if (inventory != null)
+                AccessoryInventory = inventory;
+            if (fusion != null)
+                AccessoryFusion = fusion;
+            if (dropTable != null)
+                LootDropTable = dropTable;
+            if (popup != null)
+                AccessoryAcquiredPopup = popup;
         }
 
         public void SetMissionServices(MissionDatabase missionDatabase, MissionService missionService, MissionResetService missionResetService)
@@ -179,6 +201,18 @@ namespace WizardGrower.Core
         {
             if (resultModal != null)
                 EXPDungeonResultModal = resultModal;
+        }
+
+        public void SetEnhancementStoneDungeonService(EnhancementStoneDungeonService service)
+        {
+            if (service != null)
+                EnhancementStoneDungeonService = service;
+        }
+
+        public void SetEnhancementStoneDungeonResultModal(EnhancementStoneDungeonResultModal resultModal)
+        {
+            if (resultModal != null)
+                EnhancementStoneDungeonResultModal = resultModal;
         }
 
         public void SetPlayerLevelServices(PlayerLevelService service, LevelUpPopupView popup = null, PlayerExpBarView expBar = null, SkillUnlockPopupView skillUnlockPopup = null)

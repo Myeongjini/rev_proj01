@@ -60,8 +60,18 @@ namespace WizardGrower.Economy
             else if (normalizedSource == "attendance")
                 payload["dayIndex"] = ExtractLastNumber(normalizedReason);
             else if (normalizedSource == "dungeon")
-                payload["dungeonType"] = normalizedReason.Contains("exp") ? "exp" : "gold";
+                payload["dungeonType"] = ResolveDungeonType(normalizedReason);
             return payload;
+        }
+
+        private static string ResolveDungeonType(string reason)
+        {
+            string normalized = string.IsNullOrEmpty(reason) ? string.Empty : reason.ToLowerInvariant();
+            if (normalized.Contains("enhancement"))
+                return "enhancement_stone";
+            if (normalized.Contains("exp"))
+                return "exp";
+            return "gold";
         }
 
         private static string ResolveGrantFunction(string source)
@@ -87,6 +97,10 @@ namespace WizardGrower.Economy
                 return ConvertToInt(gold, -1);
             if (response.TryGetValue("gem", out object gem))
                 return ConvertToInt(gem, -1);
+            if (response.TryGetValue("enhancement_stone", out object enhancementStone))
+                return ConvertToInt(enhancementStone, -1);
+            if (response.TryGetValue("enhancementStone", out object enhancementStoneCamel))
+                return ConvertToInt(enhancementStoneCamel, -1);
             return -1;
         }
 

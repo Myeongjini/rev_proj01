@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using WizardGrower.Accessory;
 using WizardGrower.Ads;
 using WizardGrower.Armor;
 using WizardGrower.Attendance;
@@ -21,11 +22,19 @@ namespace WizardGrower.Core
     public class GameManager : MonoBehaviour
     {
         [SerializeField] private GameContext context;
+        [SerializeField] private LevelUpPopupView levelUpPopupPrefab;
+        [SerializeField] private SkillUnlockPopupView skillUnlockPopupPrefab;
+        [SerializeField] private WizardGrower.UI.GoldDungeonEntryPanel goldDungeonEntryPanelPrefab;
+        [SerializeField] private GoldDungeonResultModal goldDungeonResultModalPrefab;
+        [SerializeField] private EXPDungeonResultModal expDungeonResultModalPrefab;
+        [SerializeField] private EnhancementStoneDungeonResultModal enhancementStoneDungeonResultModalPrefab;
+        [SerializeField] private OfflineRewardModal offlineRewardModalPrefab;
 
         private CombatCalculator calculator;
         private CombatPowerService combatPower;
         private WizardGrower.Weapons.WeaponFusionService weaponFusion;
         private ArmorFusionService armorFusion;
+        private AccessoryFusionService accessoryFusion;
 
         private void Awake()
         {
@@ -42,6 +51,7 @@ namespace WizardGrower.Core
             weaponFusion = new WizardGrower.Weapons.WeaponFusionService();
             context.SetWeaponFusionService(weaponFusion);
             armorFusion = new ArmorFusionService();
+            accessoryFusion = new AccessoryFusionService();
             EnsureMissionServices();
             EnsureAttendanceServices();
             EnsureOfflineTimeTracker();
@@ -51,11 +61,13 @@ namespace WizardGrower.Core
             if (context.GoldDungeonService != null)
                 context.GoldDungeonService.AttachPlayerLevel(context.PlayerLevelService);
             EnsureEXPDungeonService();
+            EnsureEnhancementStoneDungeonService();
 
             context.Movement.Initialize(context.Wizard, context.EnemySpawner);
             if (context.WeaponInventory != null)
                 context.WeaponInventory.Initialize(context.WeaponDatabase);
             EnsureArmorServices();
+            EnsureAccessoryServices();
             if (context.ProjectileFactory != null)
                 context.ProjectileFactory.BindWeaponInventory(context.WeaponInventory);
             if (context.GachaService != null)
@@ -70,7 +82,7 @@ namespace WizardGrower.Core
             if (context.MissionService != null)
                 context.MissionService.Initialize(context.MissionDatabase, context.Wallet, context.EnemySpawner, context.StageManager, context.GachaService, weaponFusion, context.MissionResetService);
             EnsureGoldDungeonEntryPanel();
-            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService, context.AttendanceService, context.GoldDungeonEntryPanel, context.PlayerLevelService, context.PlayerExpBar, context.ArmorInventory, context.ArmorDatabase, armorFusion);
+            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService, context.AttendanceService, context.GoldDungeonEntryPanel, context.PlayerLevelService, context.PlayerExpBar, context.ArmorInventory, context.ArmorDatabase, armorFusion, context.AccessoryInventory, context.AccessoryDatabase, accessoryFusion);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             if (context.OfflineTime != null)
@@ -79,12 +91,15 @@ namespace WizardGrower.Core
             EnsureStartupPopupServices();
             EnsureGoldDungeonResultModal();
             EnsureEXPDungeonResultModal();
+            EnsureEnhancementStoneDungeonResultModal();
             if (context.WeaponVisual != null)
                 context.WeaponVisual.Bind(context.Wizard, context.WeaponInventory, context.ProjectileFactory);
             if (context.WeaponInventory != null)
                 context.WeaponInventory.EquippedChanged += OnWeaponEquipped;
             if (context.ArmorInventory != null)
                 context.ArmorInventory.EquippedChanged += OnArmorEquipped;
+            if (context.AccessoryInventory != null)
+                context.AccessoryInventory.EquippedChanged += OnAccessoryEquipped;
             combatPower.Initialize(context.Wizard.Stats, context.Mana);
             if (context.CombatPowerPopup != null)
                 context.CombatPowerPopup.Bind(combatPower);
@@ -148,8 +163,29 @@ namespace WizardGrower.Core
             if (tracker == null)
                 tracker = context.gameObject.AddComponent<EliteSpawnTracker>();
 
-            tracker.Initialize(context.EnemySpawner, inventory, database, dropTable, context.ArmorAcquiredPopup);
+            tracker.Initialize(context.EnemySpawner, inventory, database, dropTable, context.ArmorAcquiredPopup, context.AccessoryInventory, context.AccessoryDatabase, context.LootDropTable, context.AccessoryAcquiredPopup);
             context.SetArmorServices(database, inventory, armorFusion, tracker, dropTable, context.ArmorAcquiredPopup);
+        }
+
+        private void EnsureAccessoryServices()
+        {
+            AccessoryInventory inventory = context.AccessoryInventory != null
+                ? context.AccessoryInventory
+                : context.GetComponent<AccessoryInventory>();
+            if (inventory == null)
+                inventory = context.gameObject.AddComponent<AccessoryInventory>();
+
+            AccessoryDatabase database = context.AccessoryDatabase;
+            inventory.Initialize(database);
+
+            LootDropTable dropTable = context.LootDropTable != null
+                ? context.LootDropTable
+                : ScriptableObject.CreateInstance<LootDropTable>();
+
+            if (context.EliteSpawnTracker != null)
+                context.EliteSpawnTracker.Initialize(context.EnemySpawner, context.ArmorInventory, context.ArmorDatabase, context.ArmorDropTable, context.ArmorAcquiredPopup, inventory, database, dropTable, context.AccessoryAcquiredPopup);
+
+            context.SetAccessoryServices(database, inventory, accessoryFusion, dropTable, context.AccessoryAcquiredPopup);
         }
 
         private void EnsureAttendanceServices()
@@ -211,6 +247,17 @@ namespace WizardGrower.Core
             context.SetEXPDungeonService(service);
         }
 
+        private void EnsureEnhancementStoneDungeonService()
+        {
+            EnhancementStoneDungeonService service = context.EnhancementStoneDungeonService != null
+                ? context.EnhancementStoneDungeonService
+                : context.GetComponent<EnhancementStoneDungeonService>();
+            if (service == null)
+                service = context.gameObject.AddComponent<EnhancementStoneDungeonService>();
+            service.Initialize(context.SaveService, context.MissionResetService, context.Wallet, context.PlayerLevelService, context.AdSimulation);
+            context.SetEnhancementStoneDungeonService(service);
+        }
+
         private void EnsurePlayerLevelServices()
         {
             PlayerLevelService service = context.PlayerLevelService != null
@@ -223,13 +270,13 @@ namespace WizardGrower.Core
                 ? context.LevelUpPopup
                 : FindLevelUpPopupInScene();
             if (popup == null)
-                popup = CreateLevelUpPopup();
+                popup = InstantiateUiPrefab(levelUpPopupPrefab, "LevelUpPopup");
 
             SkillUnlockPopupView skillUnlockPopup = context.SkillUnlockPopup != null
                 ? context.SkillUnlockPopup
                 : FindSkillUnlockPopupInScene();
             if (skillUnlockPopup == null)
-                skillUnlockPopup = CreateSkillUnlockPopup();
+                skillUnlockPopup = InstantiateUiPrefab(skillUnlockPopupPrefab, "SkillUnlockPopup");
 
             context.SetPlayerLevelServices(service, popup, context.PlayerExpBar, skillUnlockPopup);
         }
@@ -248,36 +295,6 @@ namespace WizardGrower.Core
             return popups != null && popups.Length > 0 ? popups[0] : null;
         }
 
-        private LevelUpPopupView CreateLevelUpPopup()
-        {
-            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
-            if (canvas == null)
-                canvas = FindAnyObjectByType<Canvas>();
-
-            Transform parent = canvas != null ? canvas.transform : context.transform;
-            GameObject popupGo = new GameObject("LevelUpPopup", typeof(RectTransform), typeof(CanvasGroup), typeof(LevelUpPopupView));
-            popupGo.transform.SetParent(parent, false);
-            RectTransform rect = popupGo.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = new Vector2(0f, 160f);
-            rect.sizeDelta = new Vector2(420f, 120f);
-            TMP_Text label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
-            label.transform.SetParent(popupGo.transform, false);
-            RectTransform labelRect = label.transform as RectTransform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            label.alignment = TextAlignmentOptions.Center;
-            label.fontSize = 28f;
-            label.fontStyle = FontStyles.Bold;
-            label.color = new Color(1f, 0.92f, 0.35f, 1f);
-            popupGo.SetActive(false);
-            return popupGo.GetComponent<LevelUpPopupView>();
-        }
-
         private SkillUnlockPopupView FindSkillUnlockPopupInScene()
         {
             Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
@@ -290,36 +307,6 @@ namespace WizardGrower.Core
 
             SkillUnlockPopupView[] popups = FindObjectsByType<SkillUnlockPopupView>(FindObjectsInactive.Include);
             return popups != null && popups.Length > 0 ? popups[0] : null;
-        }
-
-        private SkillUnlockPopupView CreateSkillUnlockPopup()
-        {
-            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
-            if (canvas == null)
-                canvas = FindAnyObjectByType<Canvas>();
-
-            Transform parent = canvas != null ? canvas.transform : context.transform;
-            GameObject popupGo = new GameObject("SkillUnlockPopup", typeof(RectTransform), typeof(CanvasGroup), typeof(SkillUnlockPopupView));
-            popupGo.transform.SetParent(parent, false);
-            RectTransform rect = popupGo.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = new Vector2(0f, 84f);
-            rect.sizeDelta = new Vector2(460f, 100f);
-            TMP_Text label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TMP_Text>();
-            label.transform.SetParent(popupGo.transform, false);
-            RectTransform labelRect = label.transform as RectTransform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            label.alignment = TextAlignmentOptions.Center;
-            label.fontSize = 24f;
-            label.fontStyle = FontStyles.Bold;
-            label.color = new Color(0.52f, 0.9f, 1f, 1f);
-            popupGo.SetActive(false);
-            return popupGo.GetComponent<SkillUnlockPopupView>();
         }
 
         private void EnsureStartupPopupServices()
@@ -339,7 +326,9 @@ namespace WizardGrower.Core
                 ? context.OfflineRewardModal
                 : FindOfflineRewardModalInScene();
             if (modal == null)
-                modal = CreateOfflineRewardModal();
+                modal = InstantiateUiPrefab(offlineRewardModalPrefab, "OfflineRewardModal");
+            if (modal == null)
+                return;
 
             modal.Bind(context.OfflineReward, adSimulation);
             popupQueue.Register(modal);
@@ -352,9 +341,11 @@ namespace WizardGrower.Core
                 ? context.GoldDungeonEntryPanel
                 : FindGoldDungeonEntryPanelInScene();
             if (entryPanel == null)
-                entryPanel = CreateGoldDungeonEntryPanel();
+                entryPanel = InstantiateUiPrefab(goldDungeonEntryPanelPrefab, "GoldDungeonEntryPanel");
+            if (entryPanel == null)
+                return;
 
-            entryPanel.Bind(context.GoldDungeonService, context.EXPDungeonService);
+            entryPanel.Bind(context.GoldDungeonService, context.EXPDungeonService, context.EnhancementStoneDungeonService);
             context.SetGoldDungeonEntryPanel(entryPanel);
         }
 
@@ -372,32 +363,15 @@ namespace WizardGrower.Core
             return panels != null && panels.Length > 0 ? panels[0] : null;
         }
 
-        private GoldDungeonEntryPanel CreateGoldDungeonEntryPanel()
-        {
-            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
-            if (canvas == null)
-                canvas = FindAnyObjectByType<Canvas>();
-
-            Transform parent = canvas != null ? canvas.transform : context.transform;
-            GameObject panelGo = new GameObject("GoldDungeonEntryPanel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(GoldDungeonEntryPanel));
-            panelGo.transform.SetParent(parent, false);
-            RectTransform rect = panelGo.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            panelGo.transform.SetAsLastSibling();
-            panelGo.SetActive(false);
-            return panelGo.GetComponent<GoldDungeonEntryPanel>();
-        }
-
         private void EnsureGoldDungeonResultModal()
         {
             GoldDungeonResultModal resultModal = context.GoldDungeonResultModal != null
                 ? context.GoldDungeonResultModal
                 : FindGoldDungeonResultModalInScene();
             if (resultModal == null)
-                resultModal = CreateGoldDungeonResultModal();
+                resultModal = InstantiateUiPrefab(goldDungeonResultModalPrefab, "GoldDungeonResultModal");
+            if (resultModal == null)
+                return;
 
             resultModal.Bind(context.GoldDungeonService, context.AdSimulation);
             if (context.StartupPopupQueue != null)
@@ -411,12 +385,44 @@ namespace WizardGrower.Core
                 ? context.EXPDungeonResultModal
                 : FindEXPDungeonResultModalInScene();
             if (resultModal == null)
-                resultModal = CreateEXPDungeonResultModal();
+                resultModal = InstantiateUiPrefab(expDungeonResultModalPrefab, "EXPDungeonResultModal");
+            if (resultModal == null)
+                return;
 
             resultModal.Bind(context.EXPDungeonService, context.AdSimulation);
             if (context.StartupPopupQueue != null)
                 context.StartupPopupQueue.Register(resultModal);
             context.SetEXPDungeonResultModal(resultModal);
+        }
+
+        private void EnsureEnhancementStoneDungeonResultModal()
+        {
+            EnhancementStoneDungeonResultModal resultModal = context.EnhancementStoneDungeonResultModal != null
+                ? context.EnhancementStoneDungeonResultModal
+                : FindEnhancementStoneDungeonResultModalInScene();
+            if (resultModal == null)
+                resultModal = InstantiateUiPrefab(enhancementStoneDungeonResultModalPrefab, "EnhancementStoneDungeonResultModal");
+            if (resultModal == null)
+                return;
+
+            resultModal.Bind(context.EnhancementStoneDungeonService, context.AdSimulation);
+            if (context.StartupPopupQueue != null)
+                context.StartupPopupQueue.Register(resultModal);
+            context.SetEnhancementStoneDungeonResultModal(resultModal);
+        }
+
+        private EnhancementStoneDungeonResultModal FindEnhancementStoneDungeonResultModalInScene()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas != null)
+            {
+                EnhancementStoneDungeonResultModal modal = canvas.GetComponentInChildren<EnhancementStoneDungeonResultModal>(true);
+                if (modal != null)
+                    return modal;
+            }
+
+            EnhancementStoneDungeonResultModal[] modals = FindObjectsByType<EnhancementStoneDungeonResultModal>(FindObjectsInactive.Include);
+            return modals != null && modals.Length > 0 ? modals[0] : null;
         }
 
         private EXPDungeonResultModal FindEXPDungeonResultModalInScene()
@@ -433,25 +439,6 @@ namespace WizardGrower.Core
             return modals != null && modals.Length > 0 ? modals[0] : null;
         }
 
-        private EXPDungeonResultModal CreateEXPDungeonResultModal()
-        {
-            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
-            if (canvas == null)
-                canvas = FindAnyObjectByType<Canvas>();
-
-            Transform parent = canvas != null ? canvas.transform : context.transform;
-            GameObject modalGo = new GameObject("EXPDungeonResultModal", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(EXPDungeonResultModal));
-            modalGo.transform.SetParent(parent, false);
-            RectTransform rect = modalGo.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            modalGo.transform.SetAsLastSibling();
-            modalGo.SetActive(false);
-            return modalGo.GetComponent<EXPDungeonResultModal>();
-        }
-
         private GoldDungeonResultModal FindGoldDungeonResultModalInScene()
         {
             Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
@@ -464,25 +451,6 @@ namespace WizardGrower.Core
 
             GoldDungeonResultModal[] modals = FindObjectsByType<GoldDungeonResultModal>(FindObjectsInactive.Include);
             return modals != null && modals.Length > 0 ? modals[0] : null;
-        }
-
-        private GoldDungeonResultModal CreateGoldDungeonResultModal()
-        {
-            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
-            if (canvas == null)
-                canvas = FindAnyObjectByType<Canvas>();
-
-            Transform parent = canvas != null ? canvas.transform : context.transform;
-            GameObject modalGo = new GameObject("GoldDungeonResultModal", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(GoldDungeonResultModal));
-            modalGo.transform.SetParent(parent, false);
-            RectTransform rect = modalGo.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            modalGo.transform.SetAsLastSibling();
-            modalGo.SetActive(false);
-            return modalGo.GetComponent<GoldDungeonResultModal>();
         }
 
         private OfflineRewardModal FindOfflineRewardModalInScene()
@@ -499,25 +467,24 @@ namespace WizardGrower.Core
             return modals != null && modals.Length > 0 ? modals[0] : null;
         }
 
-        private OfflineRewardModal CreateOfflineRewardModal()
+        private T InstantiateUiPrefab<T>(T prefab, string instanceName) where T : Component
         {
+            if (prefab == null)
+            {
+                Debug.LogError($"[GameManager] {instanceName} prefab is not assigned. Assign the matching UI prefab in the inspector.");
+                return null;
+            }
+
             Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
             if (canvas == null)
                 canvas = FindAnyObjectByType<Canvas>();
 
             Transform parent = canvas != null ? canvas.transform : context.transform;
-            GameObject modalGo = new GameObject("OfflineRewardModal", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(OfflineRewardModal));
-            modalGo.transform.SetParent(parent, false);
-            RectTransform rect = modalGo.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            Image overlay = modalGo.GetComponent<Image>();
-            overlay.color = new Color(0f, 0f, 0f, 0.72f);
-            modalGo.transform.SetAsLastSibling();
-            modalGo.SetActive(false);
-            return modalGo.GetComponent<OfflineRewardModal>();
+            T instance = Instantiate(prefab, parent, false);
+            instance.name = instanceName;
+            instance.transform.SetAsLastSibling();
+            instance.gameObject.SetActive(false);
+            return instance;
         }
 
         private void Update()
@@ -581,13 +548,21 @@ namespace WizardGrower.Core
                 : (WizardGrower.Weapons.WeaponStats?)null);
         }
 
+        private void OnAccessoryEquipped(AccessoryDefinition accessory)
+        {
+            RecomputeEquipmentStats(context != null && context.WeaponInventory != null && context.WeaponInventory.Equipped != null
+                ? context.WeaponInventory.Equipped.statBonuses
+                : (WizardGrower.Weapons.WeaponStats?)null);
+        }
+
         private void RecomputeEquipmentStats(WizardGrower.Weapons.WeaponStats? weaponStats)
         {
             if (context == null || context.Wizard == null)
                 return;
 
             ArmorStats armorStats = context.ArmorInventory != null ? context.ArmorInventory.CaptureEquippedStats() : default;
-            context.Wizard.Stats.RecomputeWithEquipment(weaponStats, armorStats);
+            AccessoryStats accessoryStats = context.AccessoryInventory != null ? context.AccessoryInventory.CaptureEquippedStats() : default;
+            context.Wizard.Stats.RecomputeWithEquipment(weaponStats, armorStats, accessoryStats);
             if (context.CombatPower != null)
                 context.CombatPower.Recalculate(true);
         }

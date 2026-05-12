@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using WizardGrower.Attendance;
+using WizardGrower.Accessory;
 using WizardGrower.Dungeons;
 using WizardGrower.Missions;
 using WizardGrower.Skills;
@@ -11,12 +12,13 @@ namespace WizardGrower.Save
     [Serializable]
     public class SaveData
     {
-        public int saveVersion = 9;
+        public int saveVersion = 10;
         public string userId = "local";
         public long updatedAtUnixMs;
 
         public int gold;
         public int gems = 300;
+        public int enhancementStone;
         public int pityCounter;
         public int summonLevel = 1;
         public int summonPullsInLevel;
@@ -32,6 +34,9 @@ namespace WizardGrower.Save
         public List<WizardGrower.Armor.OwnedArmorEntry> ownedArmors = new List<WizardGrower.Armor.OwnedArmorEntry>();
         public List<WizardGrower.Armor.EquippedArmorEntry> equippedArmors = new List<WizardGrower.Armor.EquippedArmorEntry>();
         public Dictionary<string, string> equippedArmorBySlot = new Dictionary<string, string>();
+        public List<OwnedAccessoryEntry> ownedAccessories = new List<OwnedAccessoryEntry>();
+        public List<EquippedAccessoryEntry> equippedAccessories = new List<EquippedAccessoryEntry>();
+        public Dictionary<string, string> equippedAccessoryBySlot = new Dictionary<string, string>();
         public int eliteSpawnCounter;
         public List<string> ownedWeaponIds = new List<string> { "wand_starter" };
         public List<string> ownedSkillIds = new List<string>(SkillId.DefaultOwned);
@@ -44,6 +49,7 @@ namespace WizardGrower.Save
         public long offlineRewardPendingExp;
         public GoldDungeonState goldDungeon = new GoldDungeonState();
         public EXPDungeonState expDungeon = new EXPDungeonState();
+        public EnhancementStoneDungeonState enhancementStoneDungeon = new EnhancementStoneDungeonState();
     }
 
     [Serializable]

@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 
-export type CurrencyKind = "gold" | "gem";
+export type CurrencyKind = "gold" | "gem" | "enhancement_stone";
 
 export interface CurrencyMutationResult {
   balanceAfter: number;

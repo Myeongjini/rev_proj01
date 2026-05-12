@@ -96,6 +96,10 @@ namespace WizardGrower.Save
                     data.gold = Mathf.Max(0, serverGold);
                 if (snapshot.TryGetValue("gem", out int serverGem))
                     data.gems = Mathf.Max(0, serverGem);
+                if (snapshot.TryGetValue("enhancement_stone", out int serverEnhancementStone))
+                    data.enhancementStone = Mathf.Max(0, serverEnhancementStone);
+                else if (snapshot.TryGetValue("enhancementStone", out int serverEnhancementStoneCamel))
+                    data.enhancementStone = Mathf.Max(0, serverEnhancementStoneCamel);
                 return;
             }
 
@@ -114,6 +118,10 @@ namespace WizardGrower.Save
                 data.gold = ConvertToInt(migratedGold, data.gold);
             if (result.TryGetValue("gem", out object migratedGem))
                 data.gems = ConvertToInt(migratedGem, data.gems);
+            if (result.TryGetValue("enhancement_stone", out object migratedEnhancementStone))
+                data.enhancementStone = ConvertToInt(migratedEnhancementStone, data.enhancementStone);
+            else if (result.TryGetValue("enhancementStone", out object migratedEnhancementStoneCamel))
+                data.enhancementStone = ConvertToInt(migratedEnhancementStoneCamel, data.enhancementStone);
         }
 
         public Task FlushPendingAsync()

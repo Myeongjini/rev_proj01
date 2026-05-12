@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using WizardGrower.Accessory;
 using WizardGrower.Attendance;
 using WizardGrower.Dungeons;
 using WizardGrower.Missions;
@@ -23,6 +24,7 @@ namespace WizardGrower.Save
                 UpdatedAtUnixMs = data.updatedAtUnixMs,
                 Gold = data.gold,
                 Gems = data.gems,
+                EnhancementStone = Mathf.Max(0, data.enhancementStone),
                 PityCounter = data.pityCounter,
                 SummonLevel = Mathf.Max(1, data.summonLevel),
                 SummonPullsInLevel = Mathf.Max(0, data.summonPullsInLevel),
@@ -37,6 +39,9 @@ namespace WizardGrower.Save
                 OwnedArmors = ToArmorDocument(data.ownedArmors),
                 EquippedArmors = ToEquippedArmorDocument(data.equippedArmors),
                 EquippedArmorBySlot = data.equippedArmorBySlot != null ? new Dictionary<string, string>(data.equippedArmorBySlot) : ToEquippedArmorDictionary(data.equippedArmors),
+                OwnedAccessories = ToAccessoryDocument(data.ownedAccessories),
+                EquippedAccessories = ToEquippedAccessoryDocument(data.equippedAccessories),
+                EquippedAccessoryBySlot = data.equippedAccessoryBySlot != null ? new Dictionary<string, string>(data.equippedAccessoryBySlot) : ToEquippedAccessoryDictionary(data.equippedAccessories),
                 EliteSpawnCounter = Mathf.Max(0, data.eliteSpawnCounter),
                 OwnedWeaponIds = data.ownedWeaponIds != null ? new List<string>(data.ownedWeaponIds) : new List<string> { "wand_starter" },
                 OwnedSkillIds = NormalizeOwnedSkills(data.ownedSkillIds),
@@ -48,7 +53,8 @@ namespace WizardGrower.Save
                 OfflineRewardPending = Math.Max(0, data.offlineRewardPending),
                 OfflineRewardPendingExp = Math.Max(0, data.offlineRewardPendingExp),
                 GoldDungeon = ToGoldDungeonDoc(data.goldDungeon),
-                ExpDungeon = ToEXPDungeonDoc(data.expDungeon)
+                ExpDungeon = ToEXPDungeonDoc(data.expDungeon),
+                EnhancementStoneDungeon = ToEnhancementStoneDungeonDoc(data.enhancementStoneDungeon)
             };
         }
 
@@ -64,6 +70,7 @@ namespace WizardGrower.Save
                 updatedAtUnixMs = doc.UpdatedAtUnixMs,
                 gold = doc.Gold,
                 gems = doc.SaveVersion < 2 && doc.Gems <= 0 ? 300 : doc.Gems,
+                enhancementStone = Mathf.Max(0, doc.EnhancementStone),
                 pityCounter = Mathf.Max(0, doc.PityCounter),
                 summonLevel = Mathf.Max(1, doc.SummonLevel),
                 summonPullsInLevel = Mathf.Max(0, doc.SummonPullsInLevel),
@@ -78,6 +85,9 @@ namespace WizardGrower.Save
                 ownedArmors = FromArmorDocument(doc.OwnedArmors),
                 equippedArmors = FromEquippedArmorDocument(doc.EquippedArmors, doc.EquippedArmorBySlot),
                 equippedArmorBySlot = doc.EquippedArmorBySlot != null ? new Dictionary<string, string>(doc.EquippedArmorBySlot) : ToEquippedArmorDictionary(FromEquippedArmorDocument(doc.EquippedArmors, null)),
+                ownedAccessories = FromAccessoryDocument(doc.OwnedAccessories),
+                equippedAccessories = FromEquippedAccessoryDocument(doc.EquippedAccessories, doc.EquippedAccessoryBySlot),
+                equippedAccessoryBySlot = doc.EquippedAccessoryBySlot != null ? new Dictionary<string, string>(doc.EquippedAccessoryBySlot) : ToEquippedAccessoryDictionary(FromEquippedAccessoryDocument(doc.EquippedAccessories, null)),
                 eliteSpawnCounter = Mathf.Max(0, doc.EliteSpawnCounter),
                 ownedWeaponIds = doc.OwnedWeaponIds != null ? new List<string>(doc.OwnedWeaponIds) : new List<string> { "wand_starter" },
                 ownedSkillIds = NormalizeOwnedSkills(doc.OwnedSkillIds),
@@ -89,7 +99,8 @@ namespace WizardGrower.Save
                 offlineRewardPending = Math.Max(0, doc.OfflineRewardPending),
                 offlineRewardPendingExp = Math.Max(0, doc.OfflineRewardPendingExp),
                 goldDungeon = FromGoldDungeonDoc(doc.GoldDungeon),
-                expDungeon = FromEXPDungeonDoc(doc.ExpDungeon)
+                expDungeon = FromEXPDungeonDoc(doc.ExpDungeon),
+                enhancementStoneDungeon = FromEnhancementStoneDungeonDoc(doc.EnhancementStoneDungeon)
             };
         }
 
@@ -316,6 +327,91 @@ namespace WizardGrower.Save
             return dictionary;
         }
 
+        private static List<OwnedAccessoryEntryDoc> ToAccessoryDocument(List<OwnedAccessoryEntry> entries)
+        {
+            List<OwnedAccessoryEntryDoc> docs = new List<OwnedAccessoryEntryDoc>();
+            if (entries == null)
+                return docs;
+
+            foreach (OwnedAccessoryEntry entry in entries)
+            {
+                if (entry == null || string.IsNullOrEmpty(entry.accessoryId) || entry.count <= 0)
+                    continue;
+                docs.Add(new OwnedAccessoryEntryDoc { AccessoryId = entry.accessoryId, Count = entry.count });
+            }
+            return docs;
+        }
+
+        private static List<OwnedAccessoryEntry> FromAccessoryDocument(List<OwnedAccessoryEntryDoc> docs)
+        {
+            List<OwnedAccessoryEntry> entries = new List<OwnedAccessoryEntry>();
+            if (docs == null)
+                return entries;
+
+            foreach (OwnedAccessoryEntryDoc doc in docs)
+            {
+                if (doc == null || string.IsNullOrEmpty(doc.AccessoryId) || doc.Count <= 0)
+                    continue;
+                entries.Add(new OwnedAccessoryEntry(doc.AccessoryId, doc.Count));
+            }
+            return entries;
+        }
+
+        private static List<EquippedAccessoryEntryDoc> ToEquippedAccessoryDocument(List<EquippedAccessoryEntry> entries)
+        {
+            List<EquippedAccessoryEntryDoc> docs = new List<EquippedAccessoryEntryDoc>();
+            if (entries == null)
+                return docs;
+
+            foreach (EquippedAccessoryEntry entry in entries)
+            {
+                if (entry == null || string.IsNullOrEmpty(entry.accessoryId))
+                    continue;
+                docs.Add(new EquippedAccessoryEntryDoc { Slot = entry.slot.ToString(), AccessoryId = entry.accessoryId });
+            }
+            return docs;
+        }
+
+        private static List<EquippedAccessoryEntry> FromEquippedAccessoryDocument(List<EquippedAccessoryEntryDoc> docs, Dictionary<string, string> dictionary)
+        {
+            List<EquippedAccessoryEntry> entries = new List<EquippedAccessoryEntry>();
+            if (docs != null)
+            {
+                foreach (EquippedAccessoryEntryDoc doc in docs)
+                {
+                    if (doc == null || string.IsNullOrEmpty(doc.AccessoryId))
+                        continue;
+                    if (Enum.TryParse(doc.Slot, out AccessorySlot slot))
+                        entries.Add(new EquippedAccessoryEntry(slot, doc.AccessoryId));
+                }
+            }
+
+            if (dictionary != null)
+            {
+                foreach (KeyValuePair<string, string> pair in dictionary)
+                {
+                    if (string.IsNullOrEmpty(pair.Value))
+                        continue;
+                    if (Enum.TryParse(pair.Key, out AccessorySlot slot) && !entries.Exists(entry => entry.slot == slot))
+                        entries.Add(new EquippedAccessoryEntry(slot, pair.Value));
+                }
+            }
+            return entries;
+        }
+
+        private static Dictionary<string, string> ToEquippedAccessoryDictionary(List<EquippedAccessoryEntry> entries)
+        {
+            Dictionary<string, string> dictionary = new Dictionary<string, string>();
+            if (entries == null)
+                return dictionary;
+            foreach (EquippedAccessoryEntry entry in entries)
+            {
+                if (entry != null && !string.IsNullOrEmpty(entry.accessoryId))
+                    dictionary[entry.slot.ToString()] = entry.accessoryId;
+            }
+            return dictionary;
+        }
+
         private static List<DailyMissionStateDoc> ToDailyMissionDocs(List<DailyMissionState> states)
         {
             List<DailyMissionStateDoc> docs = new List<DailyMissionStateDoc>();
@@ -469,12 +565,36 @@ namespace WizardGrower.Save
             };
         }
 
+        private static EnhancementStoneDungeonStateDoc ToEnhancementStoneDungeonDoc(EnhancementStoneDungeonState state)
+        {
+            state ??= new EnhancementStoneDungeonState();
+            return new EnhancementStoneDungeonStateDoc
+            {
+                LastEntryDateUtcMs = state.lastEntryDateUtcMs,
+                TodayEntryCount = state.todayEntryCount,
+                BestScore = state.bestScore
+            };
+        }
+
         private static EXPDungeonState FromEXPDungeonDoc(EXPDungeonStateDoc doc)
         {
             if (doc == null)
                 return new EXPDungeonState();
 
             return new EXPDungeonState
+            {
+                lastEntryDateUtcMs = Math.Max(0, doc.LastEntryDateUtcMs),
+                todayEntryCount = Mathf.Max(0, doc.TodayEntryCount),
+                bestScore = Math.Max(0, doc.BestScore)
+            };
+        }
+
+        private static EnhancementStoneDungeonState FromEnhancementStoneDungeonDoc(EnhancementStoneDungeonStateDoc doc)
+        {
+            if (doc == null)
+                return new EnhancementStoneDungeonState();
+
+            return new EnhancementStoneDungeonState
             {
                 lastEntryDateUtcMs = Math.Max(0, doc.LastEntryDateUtcMs),
                 todayEntryCount = Mathf.Max(0, doc.TodayEntryCount),

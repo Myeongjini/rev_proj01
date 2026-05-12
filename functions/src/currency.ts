@@ -76,7 +76,13 @@ export const claimAttendanceReward = onCall({region: "asia-northeast3"}, async (
 
 export const claimDungeonReward = onCall({region: "asia-northeast3"}, async (request) => {
   const dungeonType = String(request.data?.dungeonType ?? "gold");
-  return grantReward(request, "dungeon", dungeonType === "exp" ? "exp_dungeon" : "gold_dungeon");
+  const reason =
+    dungeonType === "exp" ?
+      "exp_dungeon" :
+      dungeonType === "enhancement_stone" || dungeonType === "enhancementStone" ?
+        "enhancement_stone_dungeon" :
+        "gold_dungeon";
+  return grantReward(request, "dungeon", reason);
 });
 
 export const claimOfflineReward = onCall({region: "asia-northeast3"}, async (request) => {
@@ -105,6 +111,7 @@ export const migrateWallet = onCall({region: "asia-northeast3"}, async (request)
       return {
         gold: Number(snapshot.get("gold") ?? 0),
         gem: Number(snapshot.get("gem") ?? 0),
+        enhancement_stone: Number(snapshot.get("enhancement_stone") ?? 0),
       };
     }
 
@@ -120,10 +127,11 @@ export const migrateWallet = onCall({region: "asia-northeast3"}, async (request)
       tx.set(walletRef, {
         gold: 0,
         gem: 0,
+        enhancement_stone: 0,
         lastUpdatedMs: Date.now(),
       }, {merge: true});
     }
-    return {gold, gem};
+    return {gold, gem, enhancement_stone: 0};
   });
 });
 
@@ -151,7 +159,12 @@ async function grantReward(
 }
 
 function normalizePayload(data: CurrencyPayload): Required<CurrencyPayload> {
-  const kind = data.kind === "gem" ? "gem" : "gold";
+  const kind =
+    data.kind === "gem" ?
+      "gem" :
+      data.kind === "enhancement_stone" ?
+        "enhancement_stone" :
+        "gold";
   const amount = Math.max(0, Math.floor(Number(data.amount ?? 0)));
   if (amount <= 0) {
     throw new HttpsError("invalid-argument", "Amount must be positive.");

@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using WizardGrower.Accessory;
 using WizardGrower.Attendance;
 using WizardGrower.Armor;
 using WizardGrower.Chat;
@@ -21,6 +22,7 @@ namespace WizardGrower.UI
         [SerializeField] private TMP_Text stageLabel;
         [SerializeField] private TMP_Text goldLabel;
         [SerializeField] private TMP_Text gemLabel;
+        [SerializeField] private TMP_Text enhancementStoneLabel;
         [SerializeField] private TMP_Text attackLabel;
         [SerializeField] private TMP_Text feedbackLabel;
         [SerializeField] private ManaBarView manaBar;
@@ -48,8 +50,10 @@ namespace WizardGrower.UI
         [SerializeField] private PlayerExpBarView playerExpBarView;
         [SerializeField] private AchievementButton achievementButton;
         [SerializeField] private AchievementPanel achievementPanel;
+        [SerializeField] private AchievementPanel achievementPanelPrefab;
         [SerializeField] private AttendanceButton attendanceButton;
         [SerializeField] private AttendancePanel attendancePanel;
+        [SerializeField] private AttendancePanel attendancePanelPrefab;
         [SerializeField] private CombatPowerPopupView combatPowerPopup;
         [SerializeField] private UpgradeDrawerView upgradeDrawer;
         [SerializeField] private Transform upgradeButtonContainer;
@@ -90,7 +94,10 @@ namespace WizardGrower.UI
             PlayerExpBarView playerExpBarView = null,
             ArmorInventory armorInventory = null,
             ArmorDatabase armorDatabase = null,
-            ArmorFusionService armorFusionService = null)
+            ArmorFusionService armorFusionService = null,
+            AccessoryInventory accessoryInventory = null,
+            AccessoryDatabase accessoryDatabase = null,
+            AccessoryFusionService accessoryFusionService = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
@@ -104,7 +111,9 @@ namespace WizardGrower.UI
 
             wallet.GoldChanged += gold => goldLabel.text = $"Gold {gold}";
             if (gemLabel != null)
-                wallet.GemsChanged += gems => gemLabel.text = $"Gem {gems}";
+                wallet.GemsChanged += gems => gemLabel.text = $"다이아 {gems}";
+            if (enhancementStoneLabel != null)
+                wallet.EnhancementStoneChanged += stones => enhancementStoneLabel.text = $"강화석 {stones}";
             wizard.Stats.Changed += () => RefreshAttack(wizard);
             if (this.combatPowerService != null)
             {
@@ -136,6 +145,7 @@ namespace WizardGrower.UI
             {
                 weaponInventoryPanel.Initialize(weaponInventory, weaponDatabase, weaponFusionService);
                 weaponInventoryPanel.InitializeArmor(armorInventory, armorDatabase, armorFusionService);
+                weaponInventoryPanel.InitializeAccessory(accessoryInventory, accessoryDatabase, accessoryFusionService);
             }
             if (gachaPanel != null)
                 gachaPanel.Initialize(gachaService, gachaDefinition);
@@ -164,7 +174,9 @@ namespace WizardGrower.UI
             RefreshAttack(wizard);
             goldLabel.text = $"Gold {wallet.Gold}";
             if (gemLabel != null)
-                gemLabel.text = $"Gem {wallet.Gems}";
+                gemLabel.text = $"다이아 {wallet.Gems}";
+            if (enhancementStoneLabel != null)
+                enhancementStoneLabel.text = $"강화석 {wallet.EnhancementStone}";
             manaBar.Refresh(mana.Current, mana.Max);
             if (playerHealthBar != null)
                 playerHealthBar.Bind(wizard.Stats);
@@ -219,8 +231,10 @@ namespace WizardGrower.UI
 
         private void RefreshAttack(PlayerWizard wizard)
         {
+            if (attackLabel == null)
+                return;
             float power = combatPowerService != null ? combatPowerService.CurrentPower : wizard.Stats.CombatPower;
-            attackLabel.text = $"Attack {wizard.Stats.AttackDamage:0}  CP {power:0}";
+            attackLabel.text = $"전투력 {power:0}";
         }
 
         public void BindCombatPower(CombatPowerService service)
@@ -290,43 +304,11 @@ namespace WizardGrower.UI
 
             if (achievementPanel == null)
             {
-                GameObject panelGo = new GameObject("AchievementPanel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(AchievementPanel));
-                panelGo.transform.SetParent(root, false);
-                RectTransform rect = panelGo.GetComponent<RectTransform>();
-                rect.anchorMin = new Vector2(0.5f, 0f);
-                rect.anchorMax = new Vector2(0.5f, 0f);
-                rect.pivot = new Vector2(0.5f, 0f);
-                rect.anchoredPosition = new Vector2(0f, 92f);
-                rect.sizeDelta = new Vector2(700f, 380f);
-                achievementPanel = panelGo.GetComponent<AchievementPanel>();
-            }
-
-            if (achievementButton == null)
-            {
-                Transform parent = autoToggleButton != null ? autoToggleButton.transform.parent : root;
-                GameObject buttonGo = new GameObject("AchievementButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(AchievementButton));
-                buttonGo.transform.SetParent(parent, false);
-                RectTransform rect = buttonGo.GetComponent<RectTransform>();
-                RectTransform autoRect = autoToggleButton != null ? autoToggleButton.transform as RectTransform : null;
-                if (autoRect != null)
+                if (achievementPanelPrefab != null)
                 {
-                    rect.anchorMin = autoRect.anchorMin;
-                    rect.anchorMax = autoRect.anchorMax;
-                    rect.pivot = autoRect.pivot;
-                    rect.anchoredPosition = autoRect.anchoredPosition + new Vector2(0f, -42f);
+                    achievementPanel = Instantiate(achievementPanelPrefab, root, false);
+                    achievementPanel.name = "AchievementPanel";
                 }
-                else
-                {
-                    rect.anchorMin = new Vector2(0f, 1f);
-                    rect.anchorMax = new Vector2(0f, 1f);
-                    rect.pivot = new Vector2(0f, 1f);
-                    rect.anchoredPosition = new Vector2(14f, -116f);
-                }
-                rect.sizeDelta = new Vector2(82f, 34f);
-                buttonGo.GetComponent<Image>().color = new Color(0.12f, 0.18f, 0.28f, 0.92f);
-                TMP_Text label = CreateRuntimeLabel(buttonGo.transform, "업적", 14f);
-                label.fontStyle = FontStyles.Bold;
-                achievementButton = buttonGo.GetComponent<AchievementButton>();
             }
         }
 
@@ -340,51 +322,11 @@ namespace WizardGrower.UI
 
             if (attendancePanel == null)
             {
-                GameObject panelGo = new GameObject("AttendancePanel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(AttendancePanel));
-                panelGo.transform.SetParent(root, false);
-                RectTransform rect = panelGo.GetComponent<RectTransform>();
-                rect.anchorMin = new Vector2(0.5f, 0f);
-                rect.anchorMax = new Vector2(0.5f, 0f);
-                rect.pivot = new Vector2(0.5f, 0f);
-                rect.anchoredPosition = new Vector2(0f, 92f);
-                rect.sizeDelta = new Vector2(700f, 330f);
-                attendancePanel = panelGo.GetComponent<AttendancePanel>();
-            }
-
-            if (attendanceButton == null)
-            {
-                Transform parent = achievementButton != null ? achievementButton.transform.parent : (autoToggleButton != null ? autoToggleButton.transform.parent : root);
-                GameObject buttonGo = new GameObject("AttendanceButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(AttendanceButton));
-                buttonGo.transform.SetParent(parent, false);
-                RectTransform rect = buttonGo.GetComponent<RectTransform>();
-                RectTransform achievementRect = achievementButton != null ? achievementButton.transform as RectTransform : null;
-                RectTransform autoRect = autoToggleButton != null ? autoToggleButton.transform as RectTransform : null;
-                if (achievementRect != null)
+                if (attendancePanelPrefab != null)
                 {
-                    rect.anchorMin = achievementRect.anchorMin;
-                    rect.anchorMax = achievementRect.anchorMax;
-                    rect.pivot = achievementRect.pivot;
-                    rect.anchoredPosition = achievementRect.anchoredPosition + new Vector2(0f, -42f);
+                    attendancePanel = Instantiate(attendancePanelPrefab, root, false);
+                    attendancePanel.name = "AttendancePanel";
                 }
-                else if (autoRect != null)
-                {
-                    rect.anchorMin = autoRect.anchorMin;
-                    rect.anchorMax = autoRect.anchorMax;
-                    rect.pivot = autoRect.pivot;
-                    rect.anchoredPosition = autoRect.anchoredPosition + new Vector2(0f, -84f);
-                }
-                else
-                {
-                    rect.anchorMin = new Vector2(0f, 1f);
-                    rect.anchorMax = new Vector2(0f, 1f);
-                    rect.pivot = new Vector2(0f, 1f);
-                    rect.anchoredPosition = new Vector2(14f, -158f);
-                }
-                rect.sizeDelta = new Vector2(82f, 34f);
-                buttonGo.GetComponent<Image>().color = new Color(0.18f, 0.15f, 0.30f, 0.92f);
-                TMP_Text label = CreateRuntimeLabel(buttonGo.transform, "출석", 14f);
-                label.fontStyle = FontStyles.Bold;
-                attendanceButton = buttonGo.GetComponent<AttendanceButton>();
             }
         }
 
@@ -393,29 +335,6 @@ namespace WizardGrower.UI
             if (playerLevelService == null || playerExpBarView != null)
                 return;
 
-            Transform parent = manaBar != null ? manaBar.transform.parent : transform;
-            GameObject expGo = new GameObject("PlayerExpBar", typeof(RectTransform), typeof(PlayerExpBarView));
-            expGo.transform.SetParent(parent, false);
-            RectTransform rect = expGo.GetComponent<RectTransform>();
-            RectTransform manaRect = manaBar != null ? manaBar.transform as RectTransform : null;
-            if (manaRect != null)
-            {
-                rect.anchorMin = manaRect.anchorMin;
-                rect.anchorMax = manaRect.anchorMax;
-                rect.pivot = manaRect.pivot;
-                rect.anchoredPosition = manaRect.anchoredPosition + new Vector2(0f, 30f);
-                rect.sizeDelta = manaRect.sizeDelta;
-            }
-            else
-            {
-                rect.anchorMin = new Vector2(0.5f, 0f);
-                rect.anchorMax = new Vector2(0.5f, 0f);
-                rect.pivot = new Vector2(0.5f, 0f);
-                rect.anchoredPosition = new Vector2(0f, 162f);
-                rect.sizeDelta = new Vector2(360f, 22f);
-            }
-
-            playerExpBarView = expGo.GetComponent<PlayerExpBarView>();
         }
 
         private void BindSecondaryPanelCoordinator()
@@ -451,23 +370,6 @@ namespace WizardGrower.UI
                 achievementPanel?.Close();
                 attendancePanel?.Close();
             }
-        }
-
-        private TMP_Text CreateRuntimeLabel(Transform parent, string text, float fontSize)
-        {
-            GameObject labelGo = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            labelGo.transform.SetParent(parent, false);
-            RectTransform rect = labelGo.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            TMP_Text label = labelGo.GetComponent<TMP_Text>();
-            label.text = text;
-            label.alignment = TextAlignmentOptions.Center;
-            label.fontSize = fontSize;
-            label.color = Color.white;
-            return label;
         }
 
         private void ShowFeedback(string message)

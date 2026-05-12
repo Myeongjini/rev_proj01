@@ -18,11 +18,15 @@ namespace WizardGrower.UI
         [SerializeField] private Button cancelButton;
         [SerializeField] private Button goldTabButton;
         [SerializeField] private Button expTabButton;
+        [SerializeField] private Button enhancementStoneTabButton;
+        [SerializeField] private Transform difficultySlotContainer;
         [SerializeField] private string dungeonSceneName = "GoldDungeonScene";
         [SerializeField] private string expDungeonSceneName = "EXPDungeonScene";
+        [SerializeField] private string enhancementStoneDungeonSceneName = "EnhancementStoneDungeonScene";
 
         private GoldDungeonService service;
         private EXPDungeonService expService;
+        private EnhancementStoneDungeonService enhancementStoneService;
         private readonly System.Collections.Generic.List<GoldDungeonDifficultySlotView> difficultySlots = new System.Collections.Generic.List<GoldDungeonDifficultySlotView>();
         private int selectedDifficultyIndex;
         private DungeonTab activeTab;
@@ -30,18 +34,20 @@ namespace WizardGrower.UI
         private enum DungeonTab
         {
             Gold,
-            Exp
+            Exp,
+            EnhancementStone
         }
 
         public event Action<bool> OpenStateChanged;
 
         private void Awake()
         {
-            EnsureUi();
+            ResolveReferences();
+            WireButtons();
             Close();
         }
 
-        public void Bind(GoldDungeonService service = null, EXPDungeonService expService = null)
+        public void Bind(GoldDungeonService service = null, EXPDungeonService expService = null, EnhancementStoneDungeonService enhancementStoneService = null)
         {
             if (service != null)
             {
@@ -57,18 +63,28 @@ namespace WizardGrower.UI
                 this.expService = expService;
                 this.expService.EntryCountChanged += OnEntryCountChanged;
             }
+            if (enhancementStoneService != null)
+            {
+                if (this.enhancementStoneService != null)
+                    this.enhancementStoneService.EntryCountChanged -= OnEntryCountChanged;
+                this.enhancementStoneService = enhancementStoneService;
+                this.enhancementStoneService.EntryCountChanged += OnEntryCountChanged;
+            }
 
-            EnsureUi();
+            ResolveReferences();
             RefreshFromService();
         }
 
         public void Open()
         {
-            EnsureUi();
+            ResolveReferences();
             gameObject.SetActive(true);
-            group.alpha = 1f;
-            group.interactable = true;
-            group.blocksRaycasts = true;
+            if (group != null)
+            {
+                group.alpha = 1f;
+                group.interactable = true;
+                group.blocksRaycasts = true;
+            }
             RefreshFromService();
             OpenStateChanged?.Invoke(true);
         }
@@ -88,13 +104,13 @@ namespace WizardGrower.UI
 
         public void Refresh(int remainingEntries, int dailyLimit)
         {
-            EnsureUi();
+            ResolveReferences();
             if (remainingLabel != null)
                 remainingLabel.text = $"잔여 입장 {Mathf.Max(0, remainingEntries)}/{Mathf.Max(1, dailyLimit)}";
             if (titleLabel != null)
-                titleLabel.text = activeTab == DungeonTab.Gold ? "골드 던전" : "EXP 던전";
+                titleLabel.text = GetActiveTitle();
             if (feedbackLabel != null)
-                feedbackLabel.text = activeTab == DungeonTab.Gold ? "골드 보상 던전" : "EXP 보상 던전";
+                feedbackLabel.text = GetActiveDescription();
             if (enterButton != null)
                 enterButton.interactable = remainingEntries > 0;
             if (sweepButton != null)
@@ -105,6 +121,24 @@ namespace WizardGrower.UI
 
         private async void Enter()
         {
+            if (activeTab == DungeonTab.EnhancementStone)
+            {
+                if (enhancementStoneService != null)
+                {
+                    bool stoneEntered = await enhancementStoneService.BeginEntryAsync(selectedDifficultyIndex);
+                    if (!stoneEntered)
+                    {
+                        if (feedbackLabel != null)
+                            feedbackLabel.text = "입장 조건을 확인해주세요";
+                        RefreshFromService();
+                        return;
+                    }
+                }
+
+                _ = SceneManager.LoadSceneAsync(enhancementStoneDungeonSceneName, LoadSceneMode.Single);
+                return;
+            }
+
             if (activeTab == DungeonTab.Exp)
             {
                 if (expService != null)
@@ -140,6 +174,34 @@ namespace WizardGrower.UI
 
         private async void Sweep()
         {
+            if (activeTab == DungeonTab.EnhancementStone)
+            {
+                if (enhancementStoneService == null)
+                    return;
+
+                long bestStone = enhancementStoneService.GetBestScore();
+                if (bestStone <= 0)
+                    return;
+
+                bool stoneSweepEntered = await enhancementStoneService.BeginEntryAsync(selectedDifficultyIndex);
+                if (!stoneSweepEntered)
+                {
+                    if (feedbackLabel != null)
+                        feedbackLabel.text = "입장 조건을 확인해주세요";
+                    RefreshFromService();
+                    return;
+                }
+
+                EnhancementStoneDungeonSceneTransfer.SetPending(new EnhancementStoneDungeonResult
+                {
+                    killCount = 0,
+                    earnedStone = bestStone,
+                    difficulty = selectedDifficultyIndex + 1
+                });
+                Close();
+                return;
+            }
+
             if (activeTab == DungeonTab.Exp)
             {
                 if (expService == null)
@@ -194,6 +256,19 @@ namespace WizardGrower.UI
 
         private async void RefreshFromService()
         {
+            if (activeTab == DungeonTab.EnhancementStone)
+            {
+                if (enhancementStoneService == null)
+                {
+                    Refresh(3, 3);
+                    return;
+                }
+
+                int stoneUsed = await enhancementStoneService.GetTodayEntryCountAsync();
+                Refresh(enhancementStoneService.DailyEntryLimit - stoneUsed, enhancementStoneService.DailyEntryLimit);
+                return;
+            }
+
             if (activeTab == DungeonTab.Exp)
             {
                 if (expService == null)
@@ -222,90 +297,88 @@ namespace WizardGrower.UI
             RefreshFromService();
         }
 
-        private void EnsureUi()
+        private void ResolveReferences()
         {
             if (group == null)
-                group = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
-
-            Image overlay = GetComponent<Image>() ?? gameObject.AddComponent<Image>();
-            overlay.color = new Color(0f, 0f, 0f, 0.55f);
-
-            RectTransform rect = transform as RectTransform;
-            if (rect != null)
-            {
-                rect.anchorMin = Vector2.zero;
-                rect.anchorMax = Vector2.one;
-                rect.offsetMin = Vector2.zero;
-                rect.offsetMax = Vector2.zero;
-            }
-
-            Transform panel = transform.Find("Panel");
-            if (panel == null)
-            {
-                GameObject panelGo = new GameObject("Panel", typeof(RectTransform), typeof(Image));
-                panelGo.transform.SetParent(transform, false);
-                RectTransform panelRect = panelGo.GetComponent<RectTransform>();
-                panelRect.anchorMin = new Vector2(0.5f, 0.5f);
-                panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-                panelRect.sizeDelta = new Vector2(620f, 430f);
-                panelRect.anchoredPosition = Vector2.zero;
-                panelGo.GetComponent<Image>().color = new Color(0.05f, 0.06f, 0.09f, 0.98f);
-                panel = panelGo.transform;
-            }
-
+                group = GetComponent<CanvasGroup>();
             if (titleLabel == null)
-                titleLabel = CreateText(panel, "Title", "골드던전", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -52f), new Vector2(-120f, 58f), 30f, FontStyles.Bold);
+                titleLabel = FindText("Title");
             if (goldTabButton == null)
-                goldTabButton = CreateButton(panel, "GoldTabButton", "골드", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(90f, -50f), new Vector2(96f, 42f), new Color(0.78f, 0.48f, 0.12f, 1f));
+                goldTabButton = FindButton("GoldTabButton");
             if (expTabButton == null)
-                expTabButton = CreateButton(panel, "EXPTabButton", "EXP", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(196f, -50f), new Vector2(96f, 42f), new Color(0.12f, 0.36f, 0.92f, 1f));
+                expTabButton = FindButton("EXPTabButton");
+            if (enhancementStoneTabButton == null)
+                enhancementStoneTabButton = FindButton("EnhancementStoneTabButton");
             if (remainingLabel == null)
-                remainingLabel = CreateText(panel, "Remaining", "잔여 입장 3/3", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 74f), new Vector2(-90f, 48f), 22f, FontStyles.Bold);
+                remainingLabel = FindText("Remaining");
             if (feedbackLabel == null)
-                feedbackLabel = CreateText(panel, "Feedback", "난이도 Lv1", new Vector2(0f, 0.5f), new Vector2(1f, 0.5f), new Vector2(0f, 24f), new Vector2(-90f, 44f), 18f, FontStyles.Normal);
+                feedbackLabel = FindText("Feedback");
             if (enterButton == null)
-                enterButton = CreateButton(panel, "EnterButton", "입장", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-120f, 70f), new Vector2(200f, 60f), new Color(0.12f, 0.36f, 0.92f, 1f));
+                enterButton = FindButton("EnterButton");
             if (sweepButton == null)
-                sweepButton = CreateButton(panel, "SweepButton", "소탕", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 138f), new Vector2(200f, 48f), new Color(0.78f, 0.48f, 0.12f, 1f));
+                sweepButton = FindButton("SweepButton");
             if (cancelButton == null)
-                cancelButton = CreateButton(panel, "CancelButton", "취소", new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(120f, 70f), new Vector2(200f, 60f), new Color(0.20f, 0.22f, 0.26f, 1f));
-            EnsureDifficultySlots(panel);
-
-            enterButton.onClick.RemoveAllListeners();
-            sweepButton.onClick.RemoveAllListeners();
-            cancelButton.onClick.RemoveAllListeners();
-            goldTabButton.onClick.RemoveAllListeners();
-            expTabButton.onClick.RemoveAllListeners();
-            enterButton.onClick.AddListener(Enter);
-            sweepButton.onClick.AddListener(Sweep);
-            cancelButton.onClick.AddListener(Close);
-            goldTabButton.onClick.AddListener(() => SelectTab(DungeonTab.Gold));
-            expTabButton.onClick.AddListener(() => SelectTab(DungeonTab.Exp));
+                cancelButton = FindButton("CancelButton");
+            if (difficultySlotContainer == null)
+                difficultySlotContainer = FindChildTransform("DifficultySlots");
+            ResolveDifficultySlots();
         }
 
-        private void EnsureDifficultySlots(Transform panel)
+        private void WireButtons()
         {
-            if (difficultySlots.Count > 0)
-                return;
-
-            for (int i = 0; i < 5; i++)
+            if (enterButton != null)
             {
-                GameObject slotGo = new GameObject($"DifficultySlot_{i + 1}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(GoldDungeonDifficultySlotView));
-                slotGo.transform.SetParent(panel, false);
-                RectTransform rect = slotGo.GetComponent<RectTransform>();
-                rect.anchorMin = new Vector2(0.5f, 0.5f);
-                rect.anchorMax = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(-208f + i * 104f, -50f);
-                rect.sizeDelta = new Vector2(94f, 70f);
-                GoldDungeonDifficultySlotView slot = slotGo.GetComponent<GoldDungeonDifficultySlotView>();
+                enterButton.onClick.RemoveAllListeners();
+                enterButton.onClick.AddListener(Enter);
+            }
+            if (sweepButton != null)
+            {
+                sweepButton.onClick.RemoveAllListeners();
+                sweepButton.onClick.AddListener(Sweep);
+            }
+            if (cancelButton != null)
+            {
+                cancelButton.onClick.RemoveAllListeners();
+                cancelButton.onClick.AddListener(Close);
+            }
+            if (goldTabButton != null)
+            {
+                goldTabButton.onClick.RemoveAllListeners();
+                goldTabButton.onClick.AddListener(() => SelectTab(DungeonTab.Gold));
+            }
+            if (expTabButton != null)
+            {
+                expTabButton.onClick.RemoveAllListeners();
+                expTabButton.onClick.AddListener(() => SelectTab(DungeonTab.Exp));
+            }
+            if (enhancementStoneTabButton != null)
+            {
+                enhancementStoneTabButton.onClick.RemoveAllListeners();
+                enhancementStoneTabButton.onClick.AddListener(() => SelectTab(DungeonTab.EnhancementStone));
+            }
+
+            for (int i = 0; i < difficultySlots.Count; i++)
+            {
                 int captured = i;
-                slot.AddClickListener(() =>
+                difficultySlots[i].AddClickListener(() =>
                 {
                     selectedDifficultyIndex = captured;
                     RefreshDifficultySlots();
                 });
-                difficultySlots.Add(slot);
             }
+        }
+
+        private void ResolveDifficultySlots()
+        {
+            if (difficultySlots.Count > 0)
+                return;
+
+            GoldDungeonDifficultySlotView[] slots = difficultySlotContainer != null
+                ? difficultySlotContainer.GetComponentsInChildren<GoldDungeonDifficultySlotView>(true)
+                : GetComponentsInChildren<GoldDungeonDifficultySlotView>(true);
+            Array.Sort(slots, (a, b) => string.CompareOrdinal(a.name, b.name));
+            for (int i = 0; i < slots.Length; i++)
+                difficultySlots.Add(slots[i]);
         }
 
         private void RefreshDifficultySlots()
@@ -330,9 +403,12 @@ namespace WizardGrower.UI
 
         private long GetActiveBestScore()
         {
-            return activeTab == DungeonTab.Exp
-                ? expService != null ? expService.GetBestScore() : 0
-                : service != null ? service.GetBestScore() : 0;
+            return activeTab switch
+            {
+                DungeonTab.Exp => expService != null ? expService.GetBestScore() : 0,
+                DungeonTab.EnhancementStone => enhancementStoneService != null ? enhancementStoneService.GetBestScore() : 0,
+                _ => service != null ? service.GetBestScore() : 0
+            };
         }
 
         private GoldDungeonDifficulty GetActiveDifficulty(int index)
@@ -341,6 +417,11 @@ namespace WizardGrower.UI
             {
                 if (expService != null && expService.Difficulties != null && index < expService.Difficulties.Count)
                     return expService.Difficulties[index];
+            }
+            else if (activeTab == DungeonTab.EnhancementStone)
+            {
+                if (enhancementStoneService != null && enhancementStoneService.Difficulties != null && index < enhancementStoneService.Difficulties.Count)
+                    return enhancementStoneService.Difficulties[index];
             }
             else if (service != null && service.Difficulties != null && index < service.Difficulties.Count)
             {
@@ -354,6 +435,8 @@ namespace WizardGrower.UI
         {
             if (activeTab == DungeonTab.Exp && expService != null)
                 return expService.IsDifficultyUnlocked(index);
+            if (activeTab == DungeonTab.EnhancementStone && enhancementStoneService != null)
+                return enhancementStoneService.IsDifficultyUnlocked(index);
             if (activeTab == DungeonTab.Gold && service != null)
                 return service.IsDifficultyUnlocked(index);
             return difficulty != null && difficulty.unlockPlayerLevel <= 0;
@@ -365,59 +448,71 @@ namespace WizardGrower.UI
                 goldTabButton.GetComponent<Image>().color = activeTab == DungeonTab.Gold ? new Color(0.78f, 0.48f, 0.12f, 1f) : new Color(0.18f, 0.18f, 0.20f, 1f);
             if (expTabButton != null)
                 expTabButton.GetComponent<Image>().color = activeTab == DungeonTab.Exp ? new Color(0.12f, 0.36f, 0.92f, 1f) : new Color(0.18f, 0.18f, 0.20f, 1f);
+            if (enhancementStoneTabButton != null)
+                enhancementStoneTabButton.GetComponent<Image>().color = activeTab == DungeonTab.EnhancementStone ? new Color(0.15f, 0.62f, 0.58f, 1f) : new Color(0.18f, 0.18f, 0.20f, 1f);
         }
 
-        private TMP_Text CreateText(Transform parent, string name, string text, Vector2 min, Vector2 max, Vector2 pos, Vector2 size, float fontSize, FontStyles style)
+        private string GetActiveTitle()
         {
-            GameObject go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-            go.transform.SetParent(parent, false);
-            RectTransform rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = min;
-            rect.anchorMax = max;
-            rect.anchoredPosition = pos;
-            rect.sizeDelta = size;
-            TMP_Text label = go.GetComponent<TMP_Text>();
-            label.alignment = TextAlignmentOptions.Center;
-            label.fontSize = fontSize;
-            label.fontStyle = style;
-            label.color = Color.white;
-            ApplyProjectFont(label);
-            label.text = text;
-            return label;
-        }
-
-        private Button CreateButton(Transform parent, string name, string text, Vector2 min, Vector2 max, Vector2 pos, Vector2 size, Color color)
-        {
-            GameObject go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            go.transform.SetParent(parent, false);
-            RectTransform rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = min;
-            rect.anchorMax = max;
-            rect.anchoredPosition = pos;
-            rect.sizeDelta = size;
-            go.GetComponent<Image>().color = color;
-            CreateText(go.transform, "Label", text, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, 18f, FontStyles.Bold);
-            return go.GetComponent<Button>();
-        }
-
-        private void ApplyProjectFont(TMP_Text text)
-        {
-            if (text == null)
-                return;
-
-            Canvas canvas = GetComponentInParent<Canvas>(true);
-            if (canvas == null)
-                return;
-
-            TMP_Text[] labels = canvas.GetComponentsInChildren<TMP_Text>(true);
-            for (int i = 0; i < labels.Length; i++)
+            return activeTab switch
             {
-                if (labels[i] != null && labels[i].font != null && labels[i].font.name.Contains("Nanum"))
-                {
-                    text.font = labels[i].font;
-                    return;
-                }
+                DungeonTab.Exp => "EXP 던전",
+                DungeonTab.EnhancementStone => "강화석 던전",
+                _ => "골드 던전"
+            };
+        }
+
+        private string GetActiveDescription()
+        {
+            return activeTab switch
+            {
+                DungeonTab.Exp => "EXP 보상 던전",
+                DungeonTab.EnhancementStone => "강화석 보상 던전",
+                _ => "골드 보상 던전"
+            };
+        }
+
+        private TMP_Text FindText(string objectName)
+        {
+            TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
+            for (int i = 0; i < texts.Length; i++)
+            {
+                if (texts[i] != null && texts[i].name == objectName)
+                    return texts[i];
             }
+            return null;
+        }
+
+        private Button FindButton(string objectName)
+        {
+            Button[] buttons = GetComponentsInChildren<Button>(true);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] != null && buttons[i].name == objectName)
+                    return buttons[i];
+            }
+            return null;
+        }
+
+        private Transform FindChildTransform(string objectName)
+        {
+            RectTransform[] rects = GetComponentsInChildren<RectTransform>(true);
+            for (int i = 0; i < rects.Length; i++)
+            {
+                if (rects[i] != null && rects[i].name == objectName)
+                    return rects[i];
+            }
+            return null;
+        }
+
+        private void Reset()
+        {
+            ResolveReferences();
+        }
+
+        private void OnValidate()
+        {
+            ResolveReferences();
         }
     }
 }

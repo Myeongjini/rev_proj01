@@ -17,5 +17,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/EXPDungeonScene.unity
     guid: 4a4b2d7039dc4401916d50ad04779dd4
+  - enabled: 1
+    path: Assets/Scenes/EnhancementStoneDungeonScene.unity
+    guid: 9dad7828787fe484895dd044d8ce5636
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

@@ -13,6 +13,7 @@ namespace WizardGrower.Save
         [FirestoreProperty("updatedAtUnixMs")] public long UpdatedAtUnixMs { get; set; }
         [FirestoreProperty("gold")] public int Gold { get; set; }
         [FirestoreProperty("gems")] public int Gems { get; set; } = 300;
+        [FirestoreProperty("enhancementStone")] public int EnhancementStone { get; set; }
         [FirestoreProperty("pityCounter")] public int PityCounter { get; set; }
         [FirestoreProperty("summonLevel")] public int SummonLevel { get; set; } = 1;
         [FirestoreProperty("summonPullsInLevel")] public int SummonPullsInLevel { get; set; }
@@ -27,6 +28,9 @@ namespace WizardGrower.Save
         [FirestoreProperty("ownedArmors")] public List<OwnedArmorEntryDoc> OwnedArmors { get; set; }
         [FirestoreProperty("equippedArmors")] public List<EquippedArmorEntryDoc> EquippedArmors { get; set; }
         [FirestoreProperty("equippedArmorBySlot")] public Dictionary<string, string> EquippedArmorBySlot { get; set; }
+        [FirestoreProperty("ownedAccessories")] public List<OwnedAccessoryEntryDoc> OwnedAccessories { get; set; }
+        [FirestoreProperty("equippedAccessories")] public List<EquippedAccessoryEntryDoc> EquippedAccessories { get; set; }
+        [FirestoreProperty("equippedAccessoryBySlot")] public Dictionary<string, string> EquippedAccessoryBySlot { get; set; }
         [FirestoreProperty("eliteSpawnCounter")] public int EliteSpawnCounter { get; set; }
         [FirestoreProperty("ownedWeaponIds")] public List<string> OwnedWeaponIds { get; set; }
         [FirestoreProperty("ownedSkillIds")] public List<string> OwnedSkillIds { get; set; }
@@ -39,6 +43,7 @@ namespace WizardGrower.Save
         [FirestoreProperty("offlineRewardPendingExp")] public long OfflineRewardPendingExp { get; set; }
         [FirestoreProperty("goldDungeon")] public GoldDungeonStateDoc GoldDungeon { get; set; }
         [FirestoreProperty("expDungeon")] public EXPDungeonStateDoc ExpDungeon { get; set; }
+        [FirestoreProperty("enhancementStoneDungeon")] public EnhancementStoneDungeonStateDoc EnhancementStoneDungeon { get; set; }
     }
 
     [FirestoreData]
@@ -87,6 +92,20 @@ namespace WizardGrower.Save
     }
 
     [FirestoreData]
+    public class OwnedAccessoryEntryDoc
+    {
+        [FirestoreProperty("accessoryId")] public string AccessoryId { get; set; }
+        [FirestoreProperty("count")] public int Count { get; set; }
+    }
+
+    [FirestoreData]
+    public class EquippedAccessoryEntryDoc
+    {
+        [FirestoreProperty("slot")] public string Slot { get; set; }
+        [FirestoreProperty("accessoryId")] public string AccessoryId { get; set; }
+    }
+
+    [FirestoreData]
     public class DailyMissionStateDoc
     {
         [FirestoreProperty("missionId")] public string MissionId { get; set; }
@@ -121,6 +140,14 @@ namespace WizardGrower.Save
 
     [FirestoreData]
     public class EXPDungeonStateDoc
+    {
+        [FirestoreProperty("lastEntryDateUtcMs")] public long LastEntryDateUtcMs { get; set; }
+        [FirestoreProperty("todayEntryCount")] public int TodayEntryCount { get; set; }
+        [FirestoreProperty("bestScore")] public long BestScore { get; set; }
+    }
+
+    [FirestoreData]
+    public class EnhancementStoneDungeonStateDoc
     {
         [FirestoreProperty("lastEntryDateUtcMs")] public long LastEntryDateUtcMs { get; set; }
         [FirestoreProperty("todayEntryCount")] public int TodayEntryCount { get; set; }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using WizardGrower.Accessory;
 using WizardGrower.Core;
 
 namespace WizardGrower.Save
@@ -29,11 +30,15 @@ namespace WizardGrower.Save
                 if (ctx.EliteSpawnTracker != null)
                     ctx.EliteSpawnTracker.LoadCounter(data.eliteSpawnCounter);
             }
+            if (ctx.AccessoryInventory != null)
+                ctx.AccessoryInventory.LoadFromSave(data.ownedAccessories, data.equippedAccessories);
             ctx.Wizard.Stats.RecomputeWithEquipment(
                 ctx.WeaponInventory != null && ctx.WeaponInventory.Equipped != null ? ctx.WeaponInventory.Equipped.statBonuses : (WizardGrower.Weapons.WeaponStats?)null,
-                ctx.ArmorInventory != null ? ctx.ArmorInventory.CaptureEquippedStats() : default);
+                ctx.ArmorInventory != null ? ctx.ArmorInventory.CaptureEquippedStats() : default,
+                ctx.AccessoryInventory != null ? ctx.AccessoryInventory.CaptureEquippedStats() : default);
             ctx.Wallet.SetGold(data.gold);
             ctx.Wallet.SetGems(data.gems);
+            ctx.Wallet.SetEnhancementStone(data.enhancementStone);
             if (ctx.GachaService != null)
                 ctx.GachaService.LoadState(data.summonLevel, data.summonPullsInLevel, data.pityCounter);
             if (ctx.PlayerLevelService != null)
@@ -62,6 +67,7 @@ namespace WizardGrower.Save
             data.userId = string.IsNullOrEmpty(userId) ? "local" : userId;
             data.gold = ctx.Wallet != null ? ctx.Wallet.Gold : 0;
             data.gems = ctx.Wallet != null ? ctx.Wallet.Gems : 300;
+            data.enhancementStone = ctx.Wallet != null ? ctx.Wallet.EnhancementStone : 0;
             data.pityCounter = ctx.GachaService != null ? ctx.GachaService.CurrentPity : 0;
             data.summonLevel = ctx.GachaService != null ? ctx.GachaService.CurrentSummonLevel : 1;
             data.summonPullsInLevel = ctx.GachaService != null ? ctx.GachaService.SummonPullsInLevel : 0;
@@ -96,6 +102,14 @@ namespace WizardGrower.Save
                 for (int i = 0; i < data.equippedArmors.Count; i++)
                     data.equippedArmorBySlot[data.equippedArmors[i].slot.ToString()] = data.equippedArmors[i].armorId;
             }
+            if (ctx.AccessoryInventory != null)
+            {
+                data.ownedAccessories = new System.Collections.Generic.List<OwnedAccessoryEntry>(ctx.AccessoryInventory.CaptureForSave());
+                data.equippedAccessories = new System.Collections.Generic.List<EquippedAccessoryEntry>(ctx.AccessoryInventory.CaptureEquippedForSave());
+                data.equippedAccessoryBySlot = new System.Collections.Generic.Dictionary<string, string>();
+                for (int i = 0; i < data.equippedAccessories.Count; i++)
+                    data.equippedAccessoryBySlot[data.equippedAccessories[i].slot.ToString()] = data.equippedAccessories[i].accessoryId;
+            }
             data.eliteSpawnCounter = ctx.EliteSpawnTracker != null ? ctx.EliteSpawnTracker.Counter : 0;
             data.goldDungeon = ctx.GoldDungeonService != null && ctx.SaveService != null && ctx.SaveService.CurrentData.goldDungeon != null
                 ? ctx.SaveService.CurrentData.goldDungeon
@@ -103,6 +117,9 @@ namespace WizardGrower.Save
             data.expDungeon = ctx.EXPDungeonService != null && ctx.SaveService != null && ctx.SaveService.CurrentData.expDungeon != null
                 ? ctx.SaveService.CurrentData.expDungeon
                 : new WizardGrower.Dungeons.EXPDungeonState();
+            data.enhancementStoneDungeon = ctx.EnhancementStoneDungeonService != null && ctx.SaveService != null && ctx.SaveService.CurrentData.enhancementStoneDungeon != null
+                ? ctx.SaveService.CurrentData.enhancementStoneDungeon
+                : new WizardGrower.Dungeons.EnhancementStoneDungeonState();
             return data;
         }
 
@@ -115,6 +132,7 @@ namespace WizardGrower.Save
 
             context.Wallet.GoldChanged += _ => QueueSave();
             context.Wallet.GemsChanged += _ => QueueSave();
+            context.Wallet.EnhancementStoneChanged += _ => QueueSave();
             context.UpgradeSystem.UpgradePurchased += (_, _, _) => QueueSave();
             context.StageManager.StateChanged += (_, _, _) => QueueSave();
             if (context.WeaponInventory != null)
@@ -126,6 +144,11 @@ namespace WizardGrower.Save
             {
                 context.ArmorInventory.EquippedChanged += _ => QueueSave();
                 context.ArmorInventory.InventoryChanged += QueueSave;
+            }
+            if (context.AccessoryInventory != null)
+            {
+                context.AccessoryInventory.EquippedChanged += _ => QueueSave();
+                context.AccessoryInventory.InventoryChanged += QueueSave;
             }
             if (context.EliteSpawnTracker != null)
                 context.EliteSpawnTracker.CounterChanged += _ => QueueSave();
@@ -144,6 +167,8 @@ namespace WizardGrower.Save
                 context.GoldDungeonService.StateChanged += QueueSave;
             if (context.EXPDungeonService != null)
                 context.EXPDungeonService.StateChanged += QueueSave;
+            if (context.EnhancementStoneDungeonService != null)
+                context.EnhancementStoneDungeonService.StateChanged += QueueSave;
             if (context.PlayerLevelService != null)
                 context.PlayerLevelService.StateChanged += QueueSave;
         }

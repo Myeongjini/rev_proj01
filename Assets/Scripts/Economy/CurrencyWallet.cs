@@ -11,6 +11,7 @@ namespace WizardGrower.Economy
     {
         [SerializeField] private int gold;
         [SerializeField] private int gems = 300;
+        [SerializeField] private int enhancementStone;
 
         private ICurrencyAuthority authority = new LocalCurrencyAuthority();
         private readonly SemaphoreSlim authorityLock = new SemaphoreSlim(1, 1);
@@ -19,9 +20,11 @@ namespace WizardGrower.Economy
 
         public event Action<int> GoldChanged;
         public event Action<int> GemsChanged;
+        public event Action<int> EnhancementStoneChanged;
         public event Action<int> GoldGained;
         public int Gold => gold;
         public int Gems => gems;
+        public int EnhancementStone => enhancementStone;
         public bool IsAuthorityBusy => authorityMutationInFlight || (authority != null && authority.IsBusy);
 
         public void InitializeAuthority(CloudFunctionsClient client)
@@ -106,6 +109,22 @@ namespace WizardGrower.Economy
             return TrySpendAsync("gem", amount, reason, Gems, SetGems, ct);
         }
 
+        public Task<bool> AddEnhancementStoneAsync(int amount, string reason = "reward", string source = "gameplay", CancellationToken ct = default)
+        {
+            return TryGrantAsync("enhancement_stone", amount, reason, source, EnhancementStone, SetEnhancementStone, null, ct);
+        }
+
+        public Task<bool> TrySpendEnhancementStoneAsync(int amount, string reason = "spend_enhancement_stone", CancellationToken ct = default)
+        {
+            return TrySpendAsync("enhancement_stone", amount, reason, EnhancementStone, SetEnhancementStone, ct);
+        }
+
+        public void SetEnhancementStone(int amount)
+        {
+            enhancementStone = Mathf.Max(0, amount);
+            EnhancementStoneChanged?.Invoke(enhancementStone);
+        }
+
         public void SetGems(int amount)
         {
             gems = Mathf.Max(0, amount);
@@ -137,6 +156,10 @@ namespace WizardGrower.Economy
                         SetGold(serverGold);
                     if (snapshot.TryGetValue("gem", out int serverGems))
                         SetGems(serverGems);
+                    if (snapshot.TryGetValue("enhancement_stone", out int serverEnhancementStone))
+                        SetEnhancementStone(serverEnhancementStone);
+                    else if (snapshot.TryGetValue("enhancementStone", out int serverEnhancementStoneCamel))
+                        SetEnhancementStone(serverEnhancementStoneCamel);
                 });
             }
             catch (Exception ex)
@@ -194,7 +217,7 @@ namespace WizardGrower.Economy
 
             if (authority == null || !authority.IsServerAuthoritative)
             {
-                applyBalance((kind == "gold" ? gold : gems) + gained);
+                applyBalance(GetBalance(kind) + gained);
                 gainedEvent?.Invoke(gained);
                 return true;
             }
@@ -203,7 +226,7 @@ namespace WizardGrower.Economy
             authorityMutationInFlight = true;
             try
             {
-                int latestBalance = kind == "gold" ? gold : gems;
+                int latestBalance = GetBalance(kind);
                 CurrencyAuthorityResult result = await authority.GrantAsync(kind, gained, reason, source);
                 if (!result.Success)
                     return false;
@@ -238,7 +261,7 @@ namespace WizardGrower.Economy
 
             if (authority == null || !authority.IsServerAuthoritative)
             {
-                int localBalance = kind == "gold" ? gold : gems;
+                int localBalance = GetBalance(kind);
                 if (localBalance < cost)
                     return false;
 
@@ -250,7 +273,7 @@ namespace WizardGrower.Economy
             authorityMutationInFlight = true;
             try
             {
-                int latestBalance = kind == "gold" ? gold : gems;
+                int latestBalance = GetBalance(kind);
                 if (latestBalance < cost)
                     return false;
 
@@ -277,6 +300,17 @@ namespace WizardGrower.Economy
         {
             StopServerWalletListener();
             authorityLock.Dispose();
+        }
+
+        private int GetBalance(string kind)
+        {
+            if (kind == "gold")
+                return gold;
+            if (kind == "gem")
+                return gems;
+            if (kind == "enhancement_stone")
+                return enhancementStone;
+            return 0;
         }
     }
 }
