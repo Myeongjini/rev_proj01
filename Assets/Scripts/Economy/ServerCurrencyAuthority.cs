@@ -78,6 +78,7 @@ namespace WizardGrower.Economy
         {
             return source switch
             {
+                "developer" => "grantDeveloperCurrency",
                 "mission" => "claimMissionReward",
                 "attendance" => "claimAttendanceReward",
                 "dungeon" => "claimDungeonReward",

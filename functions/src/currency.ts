@@ -65,6 +65,39 @@ export const grantCurrency = onCall({region: "asia-northeast3"}, async (request)
   });
 });
 
+export const grantDeveloperCurrency = onCall({region: "asia-northeast3"}, async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Login required.");
+  }
+
+  const isEmulator = process.env.FUNCTIONS_EMULATOR === "true";
+  const isDeveloper = request.auth?.token?.developer === true;
+  if (!isEmulator && !isDeveloper) {
+    throw new HttpsError(
+      "permission-denied",
+      "Developer currency grants are not allowed."
+    );
+  }
+
+  const payload = normalizePayload(request.data);
+  const maxAmount = payload.kind === "gem" ? 3000 : 10000;
+  if (payload.amount > maxAmount) {
+    throw new HttpsError("invalid-argument", "Developer grant amount exceeds limit.");
+  }
+
+  return admin.firestore().runTransaction(async (tx) => {
+    return grantCurrencyInternal(
+      tx,
+      uid,
+      payload.kind,
+      payload.amount,
+      payload.reason || "developer_grant",
+      "developer"
+    );
+  });
+});
+
 export const claimMissionReward = onCall({region: "asia-northeast3"}, async (request) => {
   return grantReward(request, "mission", `mission_${String(request.data?.missionId ?? "unknown")}`);
 });

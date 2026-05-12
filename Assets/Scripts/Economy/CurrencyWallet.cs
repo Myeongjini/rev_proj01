@@ -31,6 +31,7 @@ namespace WizardGrower.Economy
         public int Gems => gems;
         public int EnhancementStone => enhancementStone;
         public bool IsAuthorityBusy => authorityMutationInFlight || (authority != null && authority.IsBusy);
+        public bool IsServerAuthoritative => authority != null && authority.IsServerAuthoritative;
         public string LastFailureMessage => lastFailureMessage;
         public static string RecentFailureMessage => !string.IsNullOrEmpty(recentFailureMessage) && Time.realtimeSinceStartup - recentFailureTime <= RecentFailureSeconds
             ? recentFailureMessage

@@ -7,6 +7,7 @@ export {enhanceItem} from "./enhancement";
 export {
   spendCurrency,
   grantCurrency,
+  grantDeveloperCurrency,
   claimMissionReward,
   claimAttendanceReward,
   claimDungeonReward,
