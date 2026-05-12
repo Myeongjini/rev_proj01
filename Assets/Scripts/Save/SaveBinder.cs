@@ -34,6 +34,7 @@ namespace WizardGrower.Save
                 ctx.AccessoryInventory.LoadFromSave(data.ownedAccessories, data.equippedAccessories);
             ctx.Wizard.Stats.RecomputeWithEquipment(
                 ctx.WeaponInventory != null && ctx.WeaponInventory.Equipped != null ? ctx.WeaponInventory.Equipped.statBonuses : (WizardGrower.Weapons.WeaponStats?)null,
+                ctx.WeaponInventory != null ? ctx.WeaponInventory.GetEnhancementLevel(ctx.WeaponInventory.EquippedWeaponId) : 0,
                 ctx.ArmorInventory != null ? ctx.ArmorInventory.CaptureEquippedStats() : default,
                 ctx.AccessoryInventory != null ? ctx.AccessoryInventory.CaptureEquippedStats() : default);
             ctx.Wallet.SetGold(data.gold);

@@ -10,6 +10,7 @@ using WizardGrower.Combat;
 using WizardGrower.Dungeons;
 using WizardGrower.Drops;
 using WizardGrower.Economy;
+using WizardGrower.Enhancement;
 using WizardGrower.Enemies;
 using WizardGrower.Missions;
 using WizardGrower.Multiplayer;
@@ -95,6 +96,7 @@ namespace WizardGrower.Core
         public WeaponFusionService WeaponFusion { get; private set; }
         public ArmorFusionService ArmorFusion { get; private set; }
         public AccessoryFusionService AccessoryFusion { get; private set; }
+        public EnhancementService EnhancementService { get; private set; }
         public AttendanceService AttendanceService { get; private set; }
 
         public void SetCombatPowerService(CombatPowerService combatPower)
@@ -135,6 +137,12 @@ namespace WizardGrower.Core
                 LootDropTable = dropTable;
             if (popup != null)
                 AccessoryAcquiredPopup = popup;
+        }
+
+        public void SetEnhancementService(EnhancementService service)
+        {
+            if (service != null)
+                EnhancementService = service;
         }
 
         public void SetMissionServices(MissionDatabase missionDatabase, MissionService missionService, MissionResetService missionResetService)

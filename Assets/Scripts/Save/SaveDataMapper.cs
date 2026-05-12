@@ -220,7 +220,8 @@ namespace WizardGrower.Save
                 docs.Add(new OwnedWeaponEntryDoc
                 {
                     WeaponId = entry.weaponId,
-                    Count = entry.count
+                    Count = entry.count,
+                    EnhancementLevel = Mathf.Max(0, entry.enhancementLevel)
                 });
             }
             return docs;
@@ -237,7 +238,7 @@ namespace WizardGrower.Save
                 if (doc == null || string.IsNullOrEmpty(doc.WeaponId) || doc.Count <= 0)
                     continue;
 
-                entries.Add(new OwnedWeaponEntry(doc.WeaponId, doc.Count));
+                entries.Add(new OwnedWeaponEntry(doc.WeaponId, doc.Count, Mathf.Max(0, doc.EnhancementLevel)));
             }
             return entries;
         }
@@ -252,7 +253,7 @@ namespace WizardGrower.Save
             {
                 if (entry == null || string.IsNullOrEmpty(entry.armorId) || entry.count <= 0)
                     continue;
-                docs.Add(new OwnedArmorEntryDoc { ArmorId = entry.armorId, Count = entry.count });
+                docs.Add(new OwnedArmorEntryDoc { ArmorId = entry.armorId, Count = entry.count, EnhancementLevel = Mathf.Max(0, entry.enhancementLevel) });
             }
             return docs;
         }
@@ -267,7 +268,7 @@ namespace WizardGrower.Save
             {
                 if (doc == null || string.IsNullOrEmpty(doc.ArmorId) || doc.Count <= 0)
                     continue;
-                entries.Add(new OwnedArmorEntry(doc.ArmorId, doc.Count));
+                entries.Add(new OwnedArmorEntry(doc.ArmorId, doc.Count, Mathf.Max(0, doc.EnhancementLevel)));
             }
             return entries;
         }
@@ -337,7 +338,7 @@ namespace WizardGrower.Save
             {
                 if (entry == null || string.IsNullOrEmpty(entry.accessoryId) || entry.count <= 0)
                     continue;
-                docs.Add(new OwnedAccessoryEntryDoc { AccessoryId = entry.accessoryId, Count = entry.count });
+                docs.Add(new OwnedAccessoryEntryDoc { AccessoryId = entry.accessoryId, Count = entry.count, EnhancementLevel = Mathf.Max(0, entry.enhancementLevel) });
             }
             return docs;
         }
@@ -352,7 +353,7 @@ namespace WizardGrower.Save
             {
                 if (doc == null || string.IsNullOrEmpty(doc.AccessoryId) || doc.Count <= 0)
                     continue;
-                entries.Add(new OwnedAccessoryEntry(doc.AccessoryId, doc.Count));
+                entries.Add(new OwnedAccessoryEntry(doc.AccessoryId, doc.Count, Mathf.Max(0, doc.EnhancementLevel)));
             }
             return entries;
         }

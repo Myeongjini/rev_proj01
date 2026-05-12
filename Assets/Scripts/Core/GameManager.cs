@@ -10,6 +10,7 @@ using WizardGrower.Cloud;
 using WizardGrower.Combat;
 using WizardGrower.Dungeons;
 using WizardGrower.Drops;
+using WizardGrower.Enhancement;
 using WizardGrower.Enemies;
 using WizardGrower.Login;
 using WizardGrower.Missions;
@@ -68,6 +69,7 @@ namespace WizardGrower.Core
                 context.WeaponInventory.Initialize(context.WeaponDatabase);
             EnsureArmorServices();
             EnsureAccessoryServices();
+            EnsureEnhancementService();
             if (context.ProjectileFactory != null)
                 context.ProjectileFactory.BindWeaponInventory(context.WeaponInventory);
             if (context.GachaService != null)
@@ -100,6 +102,8 @@ namespace WizardGrower.Core
                 context.ArmorInventory.EquippedChanged += OnArmorEquipped;
             if (context.AccessoryInventory != null)
                 context.AccessoryInventory.EquippedChanged += OnAccessoryEquipped;
+            if (context.EnhancementService != null)
+                context.EnhancementService.EnhancementChanged += OnEnhancementChanged;
             combatPower.Initialize(context.Wizard.Stats, context.Mana);
             if (context.CombatPowerPopup != null)
                 context.CombatPowerPopup.Bind(combatPower);
@@ -186,6 +190,18 @@ namespace WizardGrower.Core
                 context.EliteSpawnTracker.Initialize(context.EnemySpawner, context.ArmorInventory, context.ArmorDatabase, context.ArmorDropTable, context.ArmorAcquiredPopup, inventory, database, dropTable, context.AccessoryAcquiredPopup);
 
             context.SetAccessoryServices(database, inventory, accessoryFusion, dropTable, context.AccessoryAcquiredPopup);
+        }
+
+        private void EnsureEnhancementService()
+        {
+            EnhancementService service = context.EnhancementService != null
+                ? context.EnhancementService
+                : context.GetComponent<EnhancementService>();
+            if (service == null)
+                service = context.gameObject.AddComponent<EnhancementService>();
+
+            service.Initialize(context.Wallet, context.WeaponInventory, context.ArmorInventory, context.AccessoryInventory, context.SaveService, context.CloudFunctionsClient);
+            context.SetEnhancementService(service);
         }
 
         private void EnsureAttendanceServices()
@@ -555,6 +571,15 @@ namespace WizardGrower.Core
                 : (WizardGrower.Weapons.WeaponStats?)null);
         }
 
+        private void OnEnhancementChanged(EnhancementSlotKind slotKind, string itemId, int level)
+        {
+            RecomputeEquipmentStats(context != null && context.WeaponInventory != null && context.WeaponInventory.Equipped != null
+                ? context.WeaponInventory.Equipped.statBonuses
+                : (WizardGrower.Weapons.WeaponStats?)null);
+            if (context != null && context.CombatPower != null)
+                context.CombatPower.Recalculate(true);
+        }
+
         private void RecomputeEquipmentStats(WizardGrower.Weapons.WeaponStats? weaponStats)
         {
             if (context == null || context.Wizard == null)
@@ -562,7 +587,8 @@ namespace WizardGrower.Core
 
             ArmorStats armorStats = context.ArmorInventory != null ? context.ArmorInventory.CaptureEquippedStats() : default;
             AccessoryStats accessoryStats = context.AccessoryInventory != null ? context.AccessoryInventory.CaptureEquippedStats() : default;
-            context.Wizard.Stats.RecomputeWithEquipment(weaponStats, armorStats, accessoryStats);
+            int weaponEnhancementLevel = context.WeaponInventory != null ? context.WeaponInventory.GetEnhancementLevel(context.WeaponInventory.EquippedWeaponId) : 0;
+            context.Wizard.Stats.RecomputeWithEquipment(weaponStats, weaponEnhancementLevel, armorStats, accessoryStats);
             if (context.CombatPower != null)
                 context.CombatPower.Recalculate(true);
         }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using WizardGrower.Enhancement;
 
 namespace WizardGrower.Armor
 {
@@ -36,6 +37,27 @@ namespace WizardGrower.Armor
             return GetCount(armorId) > 0;
         }
 
+        public int GetEnhancementLevel(string armorId)
+        {
+            OwnedArmorEntry entry = FindEntry(armorId);
+            return entry != null ? EnhancementCostCalculator.ClampLevel(entry.enhancementLevel) : 0;
+        }
+
+        public bool TrySetEnhancementLevel(string armorId, int level)
+        {
+            OwnedArmorEntry entry = FindEntry(armorId);
+            if (entry == null || entry.count <= 0)
+                return false;
+
+            entry.enhancementLevel = EnhancementCostCalculator.ClampLevel(level);
+            ArmorDefinition armor = database != null ? database.GetById(armorId) : null;
+            ArmorCountChanged?.Invoke(armor, entry.count);
+            if (armor != null && GetEquippedId(armor.slot) == armorId)
+                EquippedChanged?.Invoke(armor);
+            InventoryChanged?.Invoke();
+            return true;
+        }
+
         public string GetEquippedId(ArmorSlot slot)
         {
             return equippedBySlot.TryGetValue(slot, out string armorId) ? armorId : string.Empty;
@@ -54,7 +76,7 @@ namespace WizardGrower.Armor
             {
                 ArmorDefinition armor = database != null ? database.GetById(pair.Value) : null;
                 if (armor != null)
-                    total.Add(armor.statBonuses);
+                    total.Add(ArmorStatComposer.ApplyEnhancement(armor.statBonuses, GetEnhancementLevel(pair.Value)));
             }
             return total;
         }
@@ -128,9 +150,12 @@ namespace WizardGrower.Armor
 
                     OwnedArmorEntry existing = FindEntry(entry.armorId);
                     if (existing == null)
-                        ownedArmors.Add(new OwnedArmorEntry(entry.armorId, Mathf.Max(1, entry.count)));
+                        ownedArmors.Add(new OwnedArmorEntry(entry.armorId, Mathf.Max(1, entry.count), EnhancementCostCalculator.ClampLevel(entry.enhancementLevel)));
                     else
+                    {
                         existing.count += Mathf.Max(1, entry.count);
+                        existing.enhancementLevel = Mathf.Max(existing.enhancementLevel, EnhancementCostCalculator.ClampLevel(entry.enhancementLevel));
+                    }
                 }
             }
 
@@ -158,7 +183,7 @@ namespace WizardGrower.Armor
             {
                 OwnedArmorEntry entry = ownedArmors[i];
                 if (entry != null && entry.count > 0)
-                    copy.Add(new OwnedArmorEntry(entry.armorId, entry.count));
+                    copy.Add(new OwnedArmorEntry(entry.armorId, entry.count, EnhancementCostCalculator.ClampLevel(entry.enhancementLevel)));
             }
             return copy;
         }

@@ -7,15 +7,17 @@ namespace WizardGrower.Armor
     {
         public string armorId;
         public int count;
+        public int enhancementLevel;
 
         public OwnedArmorEntry()
         {
         }
 
-        public OwnedArmorEntry(string armorId, int count)
+        public OwnedArmorEntry(string armorId, int count, int enhancementLevel = 0)
         {
             this.armorId = armorId;
             this.count = count;
+            this.enhancementLevel = enhancementLevel;
         }
     }
 

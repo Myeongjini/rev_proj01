@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using WizardGrower.Enhancement;
 
 namespace WizardGrower.Weapons
 {
@@ -37,6 +38,27 @@ namespace WizardGrower.Weapons
         public bool Has(string weaponId)
         {
             return GetCount(weaponId) > 0;
+        }
+
+        public int GetEnhancementLevel(string weaponId)
+        {
+            OwnedWeaponEntry entry = FindEntry(weaponId);
+            return entry != null ? EnhancementCostCalculator.ClampLevel(entry.enhancementLevel) : 0;
+        }
+
+        public bool TrySetEnhancementLevel(string weaponId, int level)
+        {
+            OwnedWeaponEntry entry = FindEntry(weaponId);
+            if (entry == null || entry.count <= 0)
+                return false;
+
+            entry.enhancementLevel = EnhancementCostCalculator.ClampLevel(level);
+            WeaponDefinition weapon = database != null ? database.GetById(weaponId) : null;
+            WeaponCountChanged?.Invoke(weapon, entry.count);
+            if (equippedWeaponId == weaponId)
+                EquippedChanged?.Invoke(weapon);
+            InventoryChanged?.Invoke();
+            return true;
         }
 
         public void Add(string weaponId, int count = 1)
@@ -115,9 +137,12 @@ namespace WizardGrower.Weapons
 
                     OwnedWeaponEntry existing = FindEntry(entry.weaponId);
                     if (existing == null)
-                        ownedWeapons.Add(new OwnedWeaponEntry(entry.weaponId, Mathf.Max(1, entry.count)));
+                        ownedWeapons.Add(new OwnedWeaponEntry(entry.weaponId, Mathf.Max(1, entry.count), EnhancementCostCalculator.ClampLevel(entry.enhancementLevel)));
                     else
+                    {
                         existing.count += Mathf.Max(1, entry.count);
+                        existing.enhancementLevel = Mathf.Max(existing.enhancementLevel, EnhancementCostCalculator.ClampLevel(entry.enhancementLevel));
+                    }
                 }
             }
 
@@ -137,7 +162,7 @@ namespace WizardGrower.Weapons
             {
                 OwnedWeaponEntry entry = ownedWeapons[i];
                 if (entry != null && entry.count > 0)
-                    copy.Add(new OwnedWeaponEntry(entry.weaponId, entry.count));
+                    copy.Add(new OwnedWeaponEntry(entry.weaponId, entry.count, EnhancementCostCalculator.ClampLevel(entry.enhancementLevel)));
             }
             return copy;
         }

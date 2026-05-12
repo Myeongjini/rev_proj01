@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using WizardGrower.Accessory;
 using WizardGrower.Armor;
 using WizardGrower.Save;
 using WizardGrower.Weapons;
@@ -22,7 +23,9 @@ namespace WizardGrower.Player
 
         private PlayerStatsSnapshot baseSnapshot;
         private WeaponStats? equippedStats;
+        private int equippedWeaponEnhancementLevel;
         private ArmorStats equippedArmorStats;
+        private AccessoryStats equippedAccessoryStats;
 
         public event Action Changed;
         public event Action HealthChanged;
@@ -42,42 +45,42 @@ namespace WizardGrower.Player
         {
             EnsureBaseSnapshot();
             baseSnapshot.attackDamage += amount;
-            RecomputeWithEquipment(equippedStats, equippedArmorStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats, equippedAccessoryStats);
         }
 
         public void AddAutoFireRate(float amount)
         {
             EnsureBaseSnapshot();
             baseSnapshot.autoAttackInterval = Mathf.Max(0.05f, baseSnapshot.autoAttackInterval - amount);
-            RecomputeWithEquipment(equippedStats, equippedArmorStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats, equippedAccessoryStats);
         }
 
         public void AddManualFireRate(float amount)
         {
             EnsureBaseSnapshot();
             baseSnapshot.manualAttackInterval = Mathf.Max(0.05f, baseSnapshot.manualAttackInterval - amount);
-            RecomputeWithEquipment(equippedStats, equippedArmorStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats, equippedAccessoryStats);
         }
 
         public void AddCriticalChance(float amount)
         {
             EnsureBaseSnapshot();
             baseSnapshot.criticalChance = Mathf.Clamp01(baseSnapshot.criticalChance + amount);
-            RecomputeWithEquipment(equippedStats, equippedArmorStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats, equippedAccessoryStats);
         }
 
         public void AddCriticalMultiplier(float amount)
         {
             EnsureBaseSnapshot();
             baseSnapshot.criticalMultiplier = Mathf.Max(1f, baseSnapshot.criticalMultiplier + amount);
-            RecomputeWithEquipment(equippedStats, equippedArmorStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats, equippedAccessoryStats);
         }
 
         public void AddArmorPenetration(float amount)
         {
             EnsureBaseSnapshot();
             baseSnapshot.armorPenetration = Mathf.Max(0f, baseSnapshot.armorPenetration + amount);
-            RecomputeWithEquipment(equippedStats, equippedArmorStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats, equippedAccessoryStats);
         }
 
         public void AddMaxHealth(float amount)
@@ -85,7 +88,7 @@ namespace WizardGrower.Player
             EnsureBaseSnapshot();
             baseSnapshot.maxHealth = Mathf.Max(1f, baseSnapshot.maxHealth + amount);
             baseSnapshot.currentHealth = Mathf.Clamp(baseSnapshot.currentHealth + amount, 0f, baseSnapshot.maxHealth);
-            RecomputeWithEquipment(equippedStats, equippedArmorStats);
+            RecomputeWithEquipment(equippedStats, equippedArmorStats, equippedAccessoryStats);
         }
 
         public void Heal(float amount)
@@ -112,7 +115,9 @@ namespace WizardGrower.Player
                 return;
 
             equippedStats = null;
+            equippedWeaponEnhancementLevel = 0;
             equippedArmorStats = default;
+            equippedAccessoryStats = default;
             baseSnapshot = NormalizeSnapshot(snapshot);
             ApplyRuntimeSnapshot(baseSnapshot);
             RecalculateCombatPower();
@@ -128,15 +133,27 @@ namespace WizardGrower.Player
 
         public void RecomputeWithEquipped(WeaponStats? equipped)
         {
-            RecomputeWithEquipment(equipped, equippedArmorStats);
+            RecomputeWithEquipment(equipped, equippedWeaponEnhancementLevel, equippedArmorStats, equippedAccessoryStats);
         }
 
         public void RecomputeWithEquipment(WeaponStats? equipped, ArmorStats armorStats)
         {
+            RecomputeWithEquipment(equipped, equippedWeaponEnhancementLevel, armorStats, equippedAccessoryStats);
+        }
+
+        public void RecomputeWithEquipment(WeaponStats? equipped, ArmorStats armorStats, AccessoryStats accessoryStats)
+        {
+            RecomputeWithEquipment(equipped, equippedWeaponEnhancementLevel, armorStats, accessoryStats);
+        }
+
+        public void RecomputeWithEquipment(WeaponStats? equipped, int weaponEnhancementLevel, ArmorStats armorStats, AccessoryStats accessoryStats)
+        {
             EnsureBaseSnapshot();
             equippedStats = equipped;
+            equippedWeaponEnhancementLevel = Mathf.Max(0, weaponEnhancementLevel);
             equippedArmorStats = armorStats;
-            PlayerStatsSnapshot composed = ArmorStatComposer.Recompute(baseSnapshot, equippedStats, equippedArmorStats);
+            equippedAccessoryStats = accessoryStats;
+            PlayerStatsSnapshot composed = AccessoryStatComposer.Recompute(baseSnapshot, equippedStats, equippedWeaponEnhancementLevel, equippedArmorStats, equippedAccessoryStats);
             ApplyRuntimeSnapshot(composed);
             RecalculateCombatPower();
             HealthChanged?.Invoke();

@@ -1,4 +1,5 @@
 using UnityEngine;
+using WizardGrower.Enhancement;
 using WizardGrower.Save;
 
 namespace WizardGrower.Weapons
@@ -21,6 +22,11 @@ namespace WizardGrower.Weapons
         /// </summary>
         public static PlayerStatsSnapshot Recompute(PlayerStatsSnapshot baseSnapshot, WeaponStats? equipped)
         {
+            return Recompute(baseSnapshot, equipped, 0);
+        }
+
+        public static PlayerStatsSnapshot Recompute(PlayerStatsSnapshot baseSnapshot, WeaponStats? equipped, int enhancementLevel)
+        {
             PlayerStatsSnapshot source = baseSnapshot ?? new PlayerStatsSnapshot();
             PlayerStatsSnapshot result = new PlayerStatsSnapshot
             {
@@ -40,7 +46,7 @@ namespace WizardGrower.Weapons
 
             if (equipped.HasValue)
             {
-                WeaponStats bonus = equipped.Value;
+                WeaponStats bonus = ApplyEnhancement(equipped.Value, enhancementLevel);
                 result.attackDamage += bonus.attackDamage;
                 result.autoAttackDamage = result.attackDamage;
                 result.manualAttackDamage = result.attackDamage * 2f;
@@ -54,6 +60,19 @@ namespace WizardGrower.Weapons
 
             result.currentHealth = Mathf.Clamp(result.currentHealth <= 0f ? result.maxHealth : result.currentHealth, 0f, result.maxHealth);
             return result;
+        }
+
+        public static WeaponStats ApplyEnhancement(WeaponStats stats, int enhancementLevel)
+        {
+            float multiplier = EnhancementCostCalculator.GetStatMultiplier(enhancementLevel);
+            stats.attackDamage *= multiplier;
+            stats.attackSpeedBonus *= multiplier;
+            stats.criticalChance *= multiplier;
+            stats.criticalMultiplier *= multiplier;
+            stats.armorPenetration *= multiplier;
+            stats.maxHealth *= multiplier;
+            stats.maxMana *= multiplier;
+            return stats;
         }
     }
 }

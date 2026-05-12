@@ -75,6 +75,7 @@ namespace WizardGrower.Save
     {
         [FirestoreProperty("weaponId")] public string WeaponId { get; set; }
         [FirestoreProperty("count")] public int Count { get; set; }
+        [FirestoreProperty("enhancementLevel")] public int EnhancementLevel { get; set; }
     }
 
     [FirestoreData]
@@ -82,6 +83,7 @@ namespace WizardGrower.Save
     {
         [FirestoreProperty("armorId")] public string ArmorId { get; set; }
         [FirestoreProperty("count")] public int Count { get; set; }
+        [FirestoreProperty("enhancementLevel")] public int EnhancementLevel { get; set; }
     }
 
     [FirestoreData]
@@ -96,6 +98,7 @@ namespace WizardGrower.Save
     {
         [FirestoreProperty("accessoryId")] public string AccessoryId { get; set; }
         [FirestoreProperty("count")] public int Count { get; set; }
+        [FirestoreProperty("enhancementLevel")] public int EnhancementLevel { get; set; }
     }
 
     [FirestoreData]
