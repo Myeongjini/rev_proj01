@@ -128,7 +128,9 @@ namespace WizardGrower.UI
             }
             else if (feedbackLabel != null)
             {
-                feedbackLabel.text = "강화 조건을 확인해주세요";
+                feedbackLabel.text = service != null && !string.IsNullOrEmpty(service.LastFailureMessage)
+                    ? service.LastFailureMessage
+                    : "강화 조건을 확인해주세요";
             }
             Refresh();
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Firebase.Functions;
 using UnityEngine;
 using WizardGrower.Accessory;
 using WizardGrower.Armor;
@@ -29,6 +30,7 @@ namespace WizardGrower.Enhancement
         private CloudFunctionsClient cloudFunctions;
 
         public event Action<EnhancementSlotKind, string, int> EnhancementChanged;
+        public string LastFailureMessage { get; private set; } = string.Empty;
 
         public void Initialize(
             CurrencyWallet wallet,
@@ -69,50 +71,101 @@ namespace WizardGrower.Enhancement
 
         public async Task<bool> TryEnhanceAsync(EnhancementSlotKind slotKind, string itemId, int currentLevel, CancellationToken ct = default)
         {
+            LastFailureMessage = string.Empty;
             if (string.IsNullOrEmpty(itemId) || wallet == null || !HasOwnedItem(slotKind, itemId))
+            {
+                LastFailureMessage = "강화 조건을 확인해주세요.";
                 return false;
+            }
 
             int localLevel = GetEnhancementLevel(slotKind, itemId);
             int level = EnhancementCostCalculator.ClampLevel(Mathf.Max(localLevel, currentLevel));
             if (!EnhancementCostCalculator.CanEnhance(level))
+            {
+                LastFailureMessage = "최대 강화에 도달했습니다.";
                 return false;
+            }
 
             int cost = EnhancementCostCalculator.GetCost(level);
             if (wallet.EnhancementStone < cost)
+            {
+                LastFailureMessage = "강화석이 부족합니다.";
                 return false;
+            }
 
             int nextLevel = level + 1;
             int balanceAfter = -1;
-            if (cloudFunctions != null && cloudFunctions.IsReady)
+            try
             {
-                IDictionary<string, object> response = await cloudFunctions.CallAsync("enhanceItem", new Dictionary<string, object>
+                if (cloudFunctions != null && cloudFunctions.IsReady)
                 {
-                    { "slotKind", ToPayloadSlotKind(slotKind) },
-                    { "itemId", itemId },
-                    { "currentLevel", level }
-                }, ct);
-                nextLevel = ConvertToInt(response, "nextLevel", nextLevel);
-                balanceAfter = ConvertToInt(response, "balanceAfter", -1);
+                    IDictionary<string, object> response = await cloudFunctions.CallAsync("enhanceItem", new Dictionary<string, object>
+                    {
+                        { "slotKind", ToPayloadSlotKind(slotKind) },
+                        { "itemId", itemId },
+                        { "currentLevel", level }
+                    }, ct);
+                    nextLevel = ConvertToInt(response, "nextLevel", nextLevel);
+                    balanceAfter = ConvertToInt(response, "balanceAfter", -1);
+                }
+                else
+                {
+                    if (!Application.isEditor)
+                    {
+                        LastFailureMessage = "서버 연결이 필요합니다.";
+                        return false;
+                    }
+                    bool spent = await wallet.TrySpendEnhancementStoneAsync(cost, $"enhance_{ToPayloadSlotKind(slotKind)}_{itemId}_{level}", ct);
+                    if (!spent)
+                    {
+                        LastFailureMessage = string.IsNullOrEmpty(wallet.LastFailureMessage) ? "강화석이 부족합니다." : wallet.LastFailureMessage;
+                        return false;
+                    }
+                    balanceAfter = wallet.EnhancementStone;
+                }
             }
-            else
+            catch (OperationCanceledException)
             {
-                if (!Application.isEditor)
-                    return false;
-                bool spent = await wallet.TrySpendEnhancementStoneAsync(cost, $"enhance_{ToPayloadSlotKind(slotKind)}_{itemId}_{level}", ct);
-                if (!spent)
-                    return false;
-                balanceAfter = wallet.EnhancementStone;
+                LastFailureMessage = "서버 연결이 지연되고 있습니다. 잠시 후 다시 시도해주세요.";
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Server enhancement failed: {ex.GetBaseException().Message}");
+                LastFailureMessage = ToServerFailureMessage(ex);
+                return false;
             }
 
             nextLevel = EnhancementCostCalculator.ClampLevel(nextLevel);
             if (!ApplyLevel(slotKind, itemId, nextLevel))
+            {
+                LastFailureMessage = "강화 결과 적용에 실패했습니다.";
                 return false;
+            }
             if (balanceAfter >= 0)
                 wallet.SetEnhancementStone(balanceAfter);
 
             save?.Save();
             EnhancementChanged?.Invoke(slotKind, itemId, nextLevel);
             return true;
+        }
+
+        private static string ToServerFailureMessage(Exception ex)
+        {
+            FunctionsException functionsException = ex.GetBaseException() as FunctionsException;
+            if (functionsException == null)
+                return "서버 강화 처리에 실패했습니다. 다시 시도해주세요.";
+
+            if (functionsException.ErrorCode == FunctionsErrorCode.FailedPrecondition)
+                return "강화석이 부족합니다.";
+            if (functionsException.ErrorCode == FunctionsErrorCode.DeadlineExceeded
+                || functionsException.ErrorCode == FunctionsErrorCode.Unavailable
+                || functionsException.ErrorCode == FunctionsErrorCode.Cancelled)
+                return "서버 연결이 지연되고 있습니다. 잠시 후 다시 시도해주세요.";
+            if (functionsException.ErrorCode == FunctionsErrorCode.Unauthenticated)
+                return "로그인 세션이 필요합니다. LoginScene부터 다시 시작해주세요.";
+
+            return "서버 강화 처리에 실패했습니다. 다시 시도해주세요.";
         }
 
         private bool HasOwnedItem(EnhancementSlotKind slotKind, string itemId)

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Firebase.Functions;
 using UnityEngine;
 using WizardGrower.Cloud;
 using WizardGrower.Economy;
@@ -253,6 +254,11 @@ namespace WizardGrower.Weapons
                     Debug.LogWarning($"Server gacha timed out: {ex.GetBaseException().Message}");
                     return FailResult("서버 연결이 지연되고 있습니다. 잠시 후 다시 시도해주세요.");
                 }
+                catch (FunctionsException ex)
+                {
+                    Debug.LogWarning($"Server gacha failed: {ex.GetBaseException().Message}");
+                    return FailResult(ToGachaFailureMessage(ex));
+                }
                 catch (Exception ex)
                 {
                     Debug.LogWarning($"Server gacha failed: {ex.GetBaseException().Message}");
@@ -338,6 +344,19 @@ namespace WizardGrower.Weapons
                 }
             }
             return results;
+        }
+
+        private static string ToGachaFailureMessage(FunctionsException ex)
+        {
+            if (ex.ErrorCode == FunctionsErrorCode.FailedPrecondition)
+                return "젬이 부족합니다.";
+            if (ex.ErrorCode == FunctionsErrorCode.DeadlineExceeded
+                || ex.ErrorCode == FunctionsErrorCode.Unavailable
+                || ex.ErrorCode == FunctionsErrorCode.Cancelled)
+                return "서버 연결이 지연되고 있습니다. 잠시 후 다시 시도해주세요.";
+            if (ex.ErrorCode == FunctionsErrorCode.Unauthenticated)
+                return "로그인 세션이 필요합니다. LoginScene부터 다시 시작해주세요.";
+            return "서버 뽑기에 실패했습니다.";
         }
 
         private static string ExtractWeaponId(object entry)

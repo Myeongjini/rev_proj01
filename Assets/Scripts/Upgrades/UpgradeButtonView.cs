@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using WizardGrower.Economy;
 using WizardGrower.UI.Common;
 
 namespace WizardGrower.Upgrades
@@ -13,10 +14,10 @@ namespace WizardGrower.Upgrades
         [SerializeField] private Button button;
         [SerializeField] private TMP_Text label;
         [SerializeField] private Image icon;
-        [SerializeField] private float pendingTimeoutSeconds = 10f;
 
         private UpgradeSystem system;
         private UpgradeDefinition definition;
+        private CurrencyWallet wallet;
         private bool busy;
         private string failureMessage;
 
@@ -26,13 +27,14 @@ namespace WizardGrower.Upgrades
                 button = GetComponent<Button>();
         }
 
-        public void Bind(UpgradeSystem system, UpgradeDefinition definition, Sprite iconSprite)
+        public void Bind(UpgradeSystem system, UpgradeDefinition definition, Sprite iconSprite, CurrencyWallet wallet = null)
         {
             if (button != null)
                 button.onClick.RemoveAllListeners();
 
             this.system = system;
             this.definition = definition;
+            this.wallet = wallet;
             if (icon != null)
                 icon.sprite = iconSprite;
             if (button != null)
@@ -49,8 +51,18 @@ namespace WizardGrower.Upgrades
                 label.text = $"{definition.displayName}\n처리 중...";
             else if (!string.IsNullOrEmpty(failureMessage))
                 label.text = $"{definition.displayName}\n{failureMessage}";
+            else if (!CanAfford())
+                label.text = $"{definition.displayName}\n골드 부족";
             else
                 label.text = $"{definition.displayName}\nLv {system.GetLevel(definition)}  {system.GetCost(definition)}G";
+
+            if (button != null)
+                button.interactable = !busy && CanAfford();
+        }
+
+        private bool CanAfford()
+        {
+            return system != null && definition != null && wallet != null && wallet.Gold >= system.GetCost(definition);
         }
 
         private void OnClickBuy()
@@ -70,25 +82,18 @@ namespace WizardGrower.Upgrades
             Refresh();
 
             Task<bool> purchaseTask = system.TryPurchaseAsync(definition);
-            float elapsed = 0f;
-            while (!purchaseTask.IsCompleted && elapsed < Mathf.Max(1f, pendingTimeoutSeconds))
-            {
-                elapsed += Time.unscaledDeltaTime;
+            while (!purchaseTask.IsCompleted)
                 yield return null;
-            }
 
             try
             {
-                if (!purchaseTask.IsCompleted)
-                {
-                    failureMessage = "서버 지연";
-                    ServerStatusToast.Show(ServerStatusToast.ServerDelayed);
-                }
-                else if (purchaseTask.IsFaulted)
+                if (purchaseTask.IsFaulted)
                 {
                     Exception error = purchaseTask.Exception != null ? purchaseTask.Exception.GetBaseException() : null;
                     if (error != null)
                         Debug.LogException(error);
+                    failureMessage = ServerStatusToast.ResolveRewardFailureMessage();
+                    ServerStatusToast.Show(failureMessage);
                 }
                 else if (purchaseTask.Result)
                 {
@@ -96,15 +101,15 @@ namespace WizardGrower.Upgrades
                 }
                 else
                 {
-                    failureMessage = "구매 실패";
-                    ServerStatusToast.Show(ServerStatusToast.RewardFailed);
+                    failureMessage = ServerStatusToast.ResolveRewardFailureMessage();
+                    ServerStatusToast.Show(failureMessage);
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogException(ex);
-                failureMessage = "구매 실패";
-                ServerStatusToast.Show(ServerStatusToast.RewardFailed);
+                failureMessage = ServerStatusToast.ResolveRewardFailureMessage();
+                ServerStatusToast.Show(failureMessage);
             }
             finally
             {

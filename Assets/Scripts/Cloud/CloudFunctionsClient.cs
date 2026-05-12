@@ -17,7 +17,6 @@ namespace WizardGrower.Cloud
         private bool functionsSdkAvailable;
         private bool editorEmulatorUnavailable;
         private static bool loggedEditorEmulatorUnavailable;
-        [SerializeField] private int timeoutMilliseconds = 8000;
 
         public bool IsReady => initialized && functionsSdkAvailable && functionsInstance != null && !editorEmulatorUnavailable;
 
@@ -86,11 +85,13 @@ namespace WizardGrower.Cloud
             if (task == null)
                 throw new InvalidOperationException("Firebase Functions CallAsync did not return a Task.");
 
-            int timeout = Mathf.Max(1000, timeoutMilliseconds);
-            Task timeoutTask = Task.Delay(timeout, ct);
-            Task winner = await Task.WhenAny(task, timeoutTask);
-            if (winner == timeoutTask)
-                throw new TimeoutException($"Cloud Function '{functionName}' timed out after {timeout}ms.");
+            if (ct.CanBeCanceled)
+            {
+                Task cancellationTask = Task.Delay(Timeout.Infinite, ct);
+                Task winner = await Task.WhenAny(task, cancellationTask);
+                if (winner == cancellationTask)
+                    throw new OperationCanceledException(ct);
+            }
 
             await task;
             object result = task.GetType().GetProperty("Result")?.GetValue(task);

@@ -65,6 +65,7 @@ namespace WizardGrower.UI
         private PlayerMovementController movementController;
         private CombatPowerService combatPowerService;
         private PlayerWizard boundWizard;
+        private CurrencyWallet boundWallet;
         private readonly System.Collections.Generic.List<UpgradeButtonView> upgradeButtonViews = new System.Collections.Generic.List<UpgradeButtonView>();
         private float feedbackTimer;
 
@@ -105,13 +106,18 @@ namespace WizardGrower.UI
             this.manualAttackController = manualAttackController;
             this.movementController = movementController;
             this.combatPowerService = combatPowerService;
+            boundWallet = wallet;
             if (goldDungeonEntryPanel != null)
                 this.goldDungeonEntryPanel = goldDungeonEntryPanel;
             if (playerExpBarView != null)
                 this.playerExpBarView = playerExpBarView;
             boundWizard = wizard;
 
-            wallet.GoldChanged += gold => goldLabel.text = $"Gold {gold}";
+            wallet.GoldChanged += gold =>
+            {
+                goldLabel.text = $"Gold {gold}";
+                RefreshUpgradeButtons();
+            };
             if (gemLabel != null)
                 wallet.GemsChanged += gems => gemLabel.text = $"다이아 {gems}";
             if (enhancementStoneLabel != null)
@@ -286,7 +292,7 @@ namespace WizardGrower.UI
             {
                 Sprite icon = i < upgradeIcons.Length ? upgradeIcons[i] : null;
                 UpgradeButtonView view = Instantiate(upgradeButtonPrefab, upgradeButtonContainer);
-                view.Bind(system, system.Upgrades[i], icon);
+                view.Bind(system, system.Upgrades[i], icon, boundWallet);
                 upgradeButtonViews.Add(view);
             }
         }

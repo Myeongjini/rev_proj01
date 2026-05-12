@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using WizardGrower.Economy;
 
 namespace WizardGrower.UI.Common
 {
@@ -12,10 +13,19 @@ namespace WizardGrower.UI.Common
 
         public static event Action<string> MessageRequested;
 
+        public static string ResolveRewardFailureMessage()
+        {
+            string currencyFailure = CurrencyWallet.RecentFailureMessage;
+            return string.IsNullOrEmpty(currencyFailure) ? RewardFailed : currencyFailure;
+        }
+
         public static void Show(string message)
         {
             if (string.IsNullOrEmpty(message))
                 return;
+
+            if (message == RewardFailed)
+                message = ResolveRewardFailureMessage();
 
             MessageRequested?.Invoke(message);
             Debug.LogWarning(message);
