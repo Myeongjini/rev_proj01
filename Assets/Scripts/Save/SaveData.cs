@@ -12,7 +12,7 @@ namespace WizardGrower.Save
     [Serializable]
     public class SaveData
     {
-        public int saveVersion = 10;
+        public int saveVersion = 11;
         public string userId = "local";
         public long updatedAtUnixMs;
 

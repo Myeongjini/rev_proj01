@@ -111,7 +111,13 @@ namespace WizardGrower.Save
             if (data.saveVersion < 9)
                 MigrateArmorAndDefenseToV9(data);
 
-            data.saveVersion = Mathf.Max(data.saveVersion, 9);
+            if (data.saveVersion < 10)
+                MigrateAccessoriesToV10(data);
+
+            if (data.saveVersion < 11)
+                MigrateEnhancementStoneDungeonToV11(data);
+
+            data.saveVersion = Mathf.Max(data.saveVersion, 11);
 
             if (data.ownedWeapons.Count == 0)
                 data.ownedWeapons.Add(new OwnedWeaponEntry(WeaponInventory.StarterWeaponId, 1));
@@ -126,6 +132,7 @@ namespace WizardGrower.Save
             }
 
             data.gems = Mathf.Max(0, data.gems);
+            data.enhancementStone = Mathf.Max(0, data.enhancementStone);
             data.pityCounter = Mathf.Max(0, data.pityCounter);
             data.summonLevel = Mathf.Max(1, data.summonLevel);
             data.summonPullsInLevel = Mathf.Max(0, data.summonPullsInLevel);
@@ -144,9 +151,26 @@ namespace WizardGrower.Save
             data.offlineRewardPendingExp = System.Math.Max(0, data.offlineRewardPendingExp);
             NormalizeGoldDungeon(data);
             NormalizeEXPDungeon(data);
+            NormalizeEnhancementStoneDungeon(data);
             NormalizeArmor(data);
+            NormalizeAccessory(data);
+            NormalizeEnhancementLevels(data);
 
             return data;
+        }
+
+        private static void MigrateAccessoriesToV10(SaveData data)
+        {
+            NormalizeAccessory(data);
+            data.saveVersion = 10;
+        }
+
+        private static void MigrateEnhancementStoneDungeonToV11(SaveData data)
+        {
+            data.enhancementStone = Mathf.Max(0, data.enhancementStone);
+            NormalizeEnhancementLevels(data);
+            NormalizeEnhancementStoneDungeon(data);
+            data.saveVersion = 11;
         }
 
         private static void MigrateArmorAndDefenseToV9(SaveData data)
@@ -173,6 +197,34 @@ namespace WizardGrower.Save
             data.eliteSpawnCounter = Mathf.Max(0, data.eliteSpawnCounter);
             if (data.stats != null)
                 data.stats.defense = Mathf.Max(0f, data.stats.defense);
+        }
+
+        private static void NormalizeAccessory(SaveData data)
+        {
+            if (data.ownedAccessories == null)
+                data.ownedAccessories = new System.Collections.Generic.List<WizardGrower.Accessory.OwnedAccessoryEntry>();
+            if (data.equippedAccessories == null)
+                data.equippedAccessories = new System.Collections.Generic.List<WizardGrower.Accessory.EquippedAccessoryEntry>();
+            if (data.equippedAccessoryBySlot == null)
+                data.equippedAccessoryBySlot = new System.Collections.Generic.Dictionary<string, string>();
+        }
+
+        private static void NormalizeEnhancementLevels(SaveData data)
+        {
+            if (data.ownedWeapons != null)
+                for (int i = 0; i < data.ownedWeapons.Count; i++)
+                    if (data.ownedWeapons[i] != null)
+                        data.ownedWeapons[i].enhancementLevel = Mathf.Clamp(data.ownedWeapons[i].enhancementLevel, 0, 10);
+
+            if (data.ownedArmors != null)
+                for (int i = 0; i < data.ownedArmors.Count; i++)
+                    if (data.ownedArmors[i] != null)
+                        data.ownedArmors[i].enhancementLevel = Mathf.Clamp(data.ownedArmors[i].enhancementLevel, 0, 10);
+
+            if (data.ownedAccessories != null)
+                for (int i = 0; i < data.ownedAccessories.Count; i++)
+                    if (data.ownedAccessories[i] != null)
+                        data.ownedAccessories[i].enhancementLevel = Mathf.Clamp(data.ownedAccessories[i].enhancementLevel, 0, 10);
         }
 
         private static void MigratePlayerExpAndEXPDungeonToV7(SaveData data)
@@ -205,6 +257,15 @@ namespace WizardGrower.Save
             data.expDungeon.lastEntryDateUtcMs = System.Math.Max(0, data.expDungeon.lastEntryDateUtcMs);
             data.expDungeon.todayEntryCount = Mathf.Max(0, data.expDungeon.todayEntryCount);
             data.expDungeon.bestScore = System.Math.Max(0, data.expDungeon.bestScore);
+        }
+
+        private static void NormalizeEnhancementStoneDungeon(SaveData data)
+        {
+            if (data.enhancementStoneDungeon == null)
+                data.enhancementStoneDungeon = new WizardGrower.Dungeons.EnhancementStoneDungeonState();
+            data.enhancementStoneDungeon.lastEntryDateUtcMs = System.Math.Max(0, data.enhancementStoneDungeon.lastEntryDateUtcMs);
+            data.enhancementStoneDungeon.todayEntryCount = Mathf.Max(0, data.enhancementStoneDungeon.todayEntryCount);
+            data.enhancementStoneDungeon.bestScore = System.Math.Max(0, data.enhancementStoneDungeon.bestScore);
         }
 
         private static void MigrateOfflineRewardToV5(SaveData data)
