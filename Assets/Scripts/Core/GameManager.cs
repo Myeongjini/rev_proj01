@@ -29,6 +29,7 @@ namespace WizardGrower.Core
         [SerializeField] private GoldDungeonResultModal goldDungeonResultModalPrefab;
         [SerializeField] private EXPDungeonResultModal expDungeonResultModalPrefab;
         [SerializeField] private EnhancementStoneDungeonResultModal enhancementStoneDungeonResultModalPrefab;
+        [SerializeField] private EnhancementModal enhancementModalPrefab;
         [SerializeField] private OfflineRewardModal offlineRewardModalPrefab;
 
         private CombatCalculator calculator;
@@ -84,7 +85,7 @@ namespace WizardGrower.Core
             if (context.MissionService != null)
                 context.MissionService.Initialize(context.MissionDatabase, context.Wallet, context.EnemySpawner, context.StageManager, context.GachaService, weaponFusion, context.MissionResetService);
             EnsureGoldDungeonEntryPanel();
-            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService, context.AttendanceService, context.GoldDungeonEntryPanel, context.PlayerLevelService, context.PlayerExpBar, context.ArmorInventory, context.ArmorDatabase, armorFusion, context.AccessoryInventory, context.AccessoryDatabase, accessoryFusion);
+            context.HUD.Initialize(context.StageManager, context.Wallet, context.Wizard, context.Mana, context.EnemySpawner, context.BossStage, context.UpgradeSystem, context.ActiveSkill, context.ClickAttack, context.Movement, context.ChatService, context.WeaponInventory, context.WeaponDatabase, context.GachaService, context.GachaDefinition, combatPower, weaponFusion, context.SkillCastOrchestrator, context.MissionService, context.AttendanceService, context.GoldDungeonEntryPanel, context.PlayerLevelService, context.PlayerExpBar, context.ArmorInventory, context.ArmorDatabase, armorFusion, context.AccessoryInventory, context.AccessoryDatabase, accessoryFusion, context.EnhancementService, context.EnhancementModal);
             context.StageManager.Initialize(context.ChapterDatabase, context.EnemySpawner, context.Wallet, context.BossStage, context.Progression);
             context.SaveBinder.ApplyToGame(context.SaveService.CurrentData, context);
             if (context.OfflineTime != null)
@@ -94,6 +95,7 @@ namespace WizardGrower.Core
             EnsureGoldDungeonResultModal();
             EnsureEXPDungeonResultModal();
             EnsureEnhancementStoneDungeonResultModal();
+            EnsureEnhancementModal();
             if (context.WeaponVisual != null)
                 context.WeaponVisual.Bind(context.Wizard, context.WeaponInventory, context.ProjectileFactory);
             if (context.WeaponInventory != null)
@@ -438,6 +440,34 @@ namespace WizardGrower.Core
             }
 
             EnhancementStoneDungeonResultModal[] modals = FindObjectsByType<EnhancementStoneDungeonResultModal>(FindObjectsInactive.Include);
+            return modals != null && modals.Length > 0 ? modals[0] : null;
+        }
+
+        private void EnsureEnhancementModal()
+        {
+            EnhancementModal modal = context.EnhancementModal != null
+                ? context.EnhancementModal
+                : FindEnhancementModalInScene();
+            if (modal == null)
+                modal = InstantiateUiPrefab(enhancementModalPrefab, "EnhancementModal");
+            if (modal == null)
+                return;
+
+            modal.Bind(context.EnhancementService, context.Wallet);
+            context.SetEnhancementModal(modal);
+        }
+
+        private EnhancementModal FindEnhancementModalInScene()
+        {
+            Canvas canvas = context.HUD != null ? context.HUD.GetComponentInParent<Canvas>() : null;
+            if (canvas != null)
+            {
+                EnhancementModal modal = canvas.GetComponentInChildren<EnhancementModal>(true);
+                if (modal != null)
+                    return modal;
+            }
+
+            EnhancementModal[] modals = FindObjectsByType<EnhancementModal>(FindObjectsInactive.Include);
             return modals != null && modals.Length > 0 ? modals[0] : null;
         }
 

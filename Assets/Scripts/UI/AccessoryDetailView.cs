@@ -2,13 +2,13 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WizardGrower.Armor;
+using WizardGrower.Accessory;
 using WizardGrower.Enhancement;
 using WizardGrower.Weapons;
 
 namespace WizardGrower.UI
 {
-    public class ArmorDetailView : MonoBehaviour
+    public class AccessoryDetailView : MonoBehaviour
     {
         [SerializeField] private TMP_Text infoLabel;
         [SerializeField] private Button equipButton;
@@ -16,14 +16,14 @@ namespace WizardGrower.UI
         [SerializeField] private Button enhanceButton;
         [SerializeField] private TMP_Text enhanceButtonLabel;
 
-        private ArmorDefinition currentArmor;
+        private AccessoryDefinition currentAccessory;
         private int currentCount;
         private bool currentEquipped;
         private int currentEnhancementLevel;
         private bool currentCanEnhance;
 
-        public event Action<ArmorDefinition> EquipRequested;
-        public event Action<ArmorDefinition> EnhanceRequested;
+        public event Action<AccessoryDefinition> EquipRequested;
+        public event Action<AccessoryDefinition> EnhanceRequested;
 
         private void Awake()
         {
@@ -36,19 +36,19 @@ namespace WizardGrower.UI
 
         public void Clear()
         {
-            currentArmor = null;
+            currentAccessory = null;
             currentCount = 0;
             currentEquipped = false;
             currentEnhancementLevel = 0;
             currentCanEnhance = false;
             if (infoLabel != null)
-                infoLabel.text = "방어구를 선택하세요";
+                infoLabel.text = "장신구를 선택하세요";
             RefreshButton();
         }
 
-        public void Show(ArmorDefinition armor, int ownedCount, bool equipped, int enhancementLevel = 0, bool canEnhance = false)
+        public void Show(AccessoryDefinition accessory, int ownedCount, bool equipped, int enhancementLevel = 0, bool canEnhance = false)
         {
-            currentArmor = armor;
+            currentAccessory = accessory;
             currentCount = Mathf.Max(0, ownedCount);
             currentEquipped = equipped;
             currentEnhancementLevel = EnhancementCostCalculator.ClampLevel(enhancementLevel);
@@ -56,21 +56,21 @@ namespace WizardGrower.UI
 
             if (infoLabel != null)
             {
-                if (armor == null)
+                if (accessory == null)
                 {
-                    infoLabel.text = "방어구를 선택하세요";
+                    infoLabel.text = "장신구를 선택하세요";
                 }
                 else
                 {
-                    ArmorStats s = armor.statBonuses;
+                    AccessoryStats s = accessory.statBonuses;
                     infoLabel.text =
-                        $"{armor.displayName} +{currentEnhancementLevel}\n" +
-                        $"{ArmorSlotTabBar.SlotKo(armor.slot)} / {WeaponGradeLabels.Display(armor.upperGrade, armor.lowerGrade)}  x{currentCount}" +
+                        $"{accessory.displayName} +{currentEnhancementLevel}\n" +
+                        $"{AccessorySlotTabBar.SlotKo(accessory.slot)} / {WeaponGradeLabels.Display(accessory.upperGrade, accessory.lowerGrade)}  x{currentCount}" +
                         (currentEquipped ? "  장착중" : "") + "\n" +
-                        $"방어 +{s.defense:0}  공격 +{s.attackDamageBonus:0}\n" +
+                        $"공격 +{s.attackDamage:0.#}  관통 +{s.armorPenetration:0.#}\n" +
                         $"치확 +{s.criticalChance:P0}  치피 +{s.criticalMultiplier:0.##}\n" +
-                        $"HP +{s.maxHealth:0}  Mana +{s.maxMana:0}\n" +
-                        armor.flavorText;
+                        $"HP +{s.maxHealth:0.#}  Mana +{s.maxMana:0.#}\n" +
+                        accessory.flavorText;
                 }
             }
 
@@ -79,27 +79,27 @@ namespace WizardGrower.UI
 
         private void RefreshButton()
         {
-            bool canEquip = currentArmor != null && currentCount > 0 && !currentEquipped;
+            bool canEquip = currentAccessory != null && currentCount > 0 && !currentEquipped;
             if (equipButton != null)
                 equipButton.interactable = canEquip;
             if (equipButtonLabel != null)
                 equipButtonLabel.text = currentEquipped ? "장착중" : "장착";
             if (enhanceButton != null)
-                enhanceButton.interactable = currentArmor != null && currentCount > 0 && currentCanEnhance;
+                enhanceButton.interactable = currentAccessory != null && currentCount > 0 && currentCanEnhance;
             if (enhanceButtonLabel != null)
                 enhanceButtonLabel.text = currentEnhancementLevel >= EnhancementCostCalculator.MaxLevel ? "최대 강화" : "강화";
         }
 
         private void RequestEquip()
         {
-            if (currentArmor != null && currentCount > 0 && !currentEquipped)
-                EquipRequested?.Invoke(currentArmor);
+            if (currentAccessory != null && currentCount > 0 && !currentEquipped)
+                EquipRequested?.Invoke(currentAccessory);
         }
 
         private void RequestEnhance()
         {
-            if (currentArmor != null && currentCount > 0)
-                EnhanceRequested?.Invoke(currentArmor);
+            if (currentAccessory != null && currentCount > 0)
+                EnhanceRequested?.Invoke(currentAccessory);
         }
 
         private void ResolveReferences()

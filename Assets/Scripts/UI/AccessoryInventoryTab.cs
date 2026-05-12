@@ -2,30 +2,31 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WizardGrower.Armor;
+using WizardGrower.Accessory;
 using WizardGrower.Enhancement;
+using WizardGrower.Weapons;
 
 namespace WizardGrower.UI
 {
-    public class ArmorInventoryTab : MonoBehaviour
+    public class AccessoryInventoryTab : MonoBehaviour
     {
-        [SerializeField] private ArmorSlot currentSlot = ArmorSlot.Helmet;
-        [SerializeField] private ArmorSlotTabBar slotTabBar;
+        [SerializeField] private AccessorySlot currentSlot = AccessorySlot.Ring;
+        [SerializeField] private AccessorySlotTabBar slotTabBar;
         [SerializeField] private Transform slotContainer;
         [SerializeField] private WeaponSlotView slotPrefab;
-        [SerializeField] private ArmorDetailView detailView;
+        [SerializeField] private AccessoryDetailView detailView;
         [SerializeField] private Button synthesizeAllButton;
         [SerializeField] private TMP_Text emptyLabel;
 
         private readonly List<WeaponSlotView> slots = new List<WeaponSlotView>();
-        private ArmorInventory inventory;
-        private ArmorDatabase database;
-        private ArmorFusionService fusionService;
+        private AccessoryInventory inventory;
+        private AccessoryDatabase database;
+        private AccessoryFusionService fusionService;
         private EnhancementService enhancementService;
         private EnhancementModal enhancementModal;
-        private ArmorDefinition selectedArmor;
+        private AccessoryDefinition selectedAccessory;
 
-        public void Initialize(ArmorInventory inventory, ArmorDatabase database, ArmorFusionService fusionService, EnhancementService enhancementService = null, EnhancementModal enhancementModal = null)
+        public void Initialize(AccessoryInventory inventory, AccessoryDatabase database, AccessoryFusionService fusionService, EnhancementService enhancementService = null, EnhancementModal enhancementModal = null)
         {
             if (this.inventory != null)
                 this.inventory.InventoryChanged -= OnInventoryChanged;
@@ -81,10 +82,10 @@ namespace WizardGrower.UI
                 synthesizeAllButton.onClick.RemoveListener(OnSynthesizeAll);
         }
 
-        private void OnSlotChanged(ArmorSlot slot)
+        private void OnSlotChanged(AccessorySlot slot)
         {
             currentSlot = slot;
-            selectedArmor = null;
+            selectedAccessory = null;
             Rebuild();
             Refresh();
         }
@@ -98,16 +99,16 @@ namespace WizardGrower.UI
                 Destroy(slotContainer.GetChild(i).gameObject);
             slots.Clear();
 
-            IReadOnlyList<ArmorDefinition> row = database.GetRow(currentSlot, WizardGrower.Weapons.WeaponUpperGrade.Common);
+            IReadOnlyList<AccessoryDefinition> row = database.GetRow(currentSlot, WeaponUpperGrade.Common);
             for (int i = 0; i < row.Count; i++)
             {
-                ArmorDefinition armor = row[i];
-                if (armor == null)
+                AccessoryDefinition accessory = row[i];
+                if (accessory == null)
                     continue;
 
                 WeaponSlotView slot = Instantiate(slotPrefab, slotContainer);
-                slot.SelectedArmor += OnSlotSelected;
-                slot.BindArmor(inventory, armor);
+                slot.SelectedAccessory += OnSlotSelected;
+                slot.BindAccessory(inventory, accessory);
                 slots.Add(slot);
             }
         }
@@ -130,9 +131,9 @@ namespace WizardGrower.UI
             Refresh();
         }
 
-        private void OnSlotSelected(ArmorDefinition armor)
+        private void OnSlotSelected(AccessoryDefinition accessory)
         {
-            selectedArmor = armor;
+            selectedAccessory = accessory;
             RefreshDetail();
         }
 
@@ -141,29 +142,29 @@ namespace WizardGrower.UI
             if (detailView == null)
                 return;
 
-            if (selectedArmor == null)
+            if (selectedAccessory == null)
             {
                 detailView.Clear();
                 return;
             }
 
-            int count = inventory != null ? inventory.GetCount(selectedArmor.armorId) : 0;
-            bool equipped = inventory != null && inventory.GetEquippedId(selectedArmor.slot) == selectedArmor.armorId;
-            int level = inventory != null ? inventory.GetEnhancementLevel(selectedArmor.armorId) : 0;
-            detailView.Show(selectedArmor, count, equipped, level, enhancementService != null && enhancementService.CanEnhance(EnhancementSlotKind.Armor, selectedArmor.armorId));
+            int count = inventory != null ? inventory.GetCount(selectedAccessory.accessoryId) : 0;
+            bool equipped = inventory != null && inventory.GetEquippedId(selectedAccessory.slot) == selectedAccessory.accessoryId;
+            int level = inventory != null ? inventory.GetEnhancementLevel(selectedAccessory.accessoryId) : 0;
+            detailView.Show(selectedAccessory, count, equipped, level, enhancementService != null && enhancementService.CanEnhance(EnhancementSlotKind.Accessory, selectedAccessory.accessoryId));
         }
 
-        private void OnEquipRequested(ArmorDefinition armor)
+        private void OnEquipRequested(AccessoryDefinition accessory)
         {
-            if (inventory != null && armor != null && inventory.TryEquip(armor.slot, armor.armorId))
+            if (inventory != null && accessory != null && inventory.TryEquip(accessory.slot, accessory.accessoryId))
                 Refresh();
         }
 
-        private void OnEnhanceRequested(ArmorDefinition armor)
+        private void OnEnhanceRequested(AccessoryDefinition accessory)
         {
-            if (armor == null || enhancementModal == null)
+            if (accessory == null || enhancementModal == null)
                 return;
-            enhancementModal.ShowArmor(armor, inventory, Refresh);
+            enhancementModal.ShowAccessory(accessory, inventory, Refresh);
         }
 
         private void OnSynthesizeAll()

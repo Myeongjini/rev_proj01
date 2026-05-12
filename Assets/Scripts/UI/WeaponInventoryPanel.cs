@@ -3,7 +3,9 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using WizardGrower.Accessory;
 using WizardGrower.Armor;
+using WizardGrower.Enhancement;
 using WizardGrower.Weapons;
 
 namespace WizardGrower.UI
@@ -18,8 +20,10 @@ namespace WizardGrower.UI
         [SerializeField] private Button closeButton;
         [SerializeField] private Button weaponTabButton;
         [SerializeField] private Button armorTabButton;
+        [SerializeField] private Button accessoryTabButton;
         [SerializeField] private GameObject weaponContentRoot;
         [SerializeField] private ArmorInventoryTab armorInventoryTab;
+        [SerializeField] private AccessoryInventoryTab accessoryInventoryTab;
         [SerializeField] private WeaponFusionResultView fusionResultView;
         [SerializeField] private RectTransform drawerRoot;
         [SerializeField] private float openY = 0f;
@@ -33,6 +37,11 @@ namespace WizardGrower.UI
         private ArmorInventory armorInventory;
         private ArmorDatabase armorDatabase;
         private ArmorFusionService armorFusionService;
+        private AccessoryInventory accessoryInventory;
+        private AccessoryDatabase accessoryDatabase;
+        private AccessoryFusionService accessoryFusionService;
+        private EnhancementService enhancementService;
+        private EnhancementModal enhancementModal;
         private bool visible;
         private WeaponDefinition selectedWeapon;
         private Coroutine slideRoutine;
@@ -48,6 +57,8 @@ namespace WizardGrower.UI
             }
             if (detailView != null)
                 detailView.EquipRequested -= OnEquipRequested;
+            if (detailView != null)
+                detailView.EnhanceRequested -= OnEnhanceRequested;
 
             this.inventory = inventory;
             this.database = database;
@@ -64,6 +75,8 @@ namespace WizardGrower.UI
             }
             if (detailView != null)
                 detailView.EquipRequested += OnEquipRequested;
+            if (detailView != null)
+                detailView.EnhanceRequested += OnEnhanceRequested;
             if (synthesizeAllButton != null)
             {
                 synthesizeAllButton.onClick.RemoveListener(OnSynthesizeAll);
@@ -83,6 +96,11 @@ namespace WizardGrower.UI
             {
                 armorTabButton.onClick.RemoveListener(ShowArmorTab);
                 armorTabButton.onClick.AddListener(ShowArmorTab);
+            }
+            if (accessoryTabButton != null)
+            {
+                accessoryTabButton.onClick.RemoveListener(ShowAccessoryTab);
+                accessoryTabButton.onClick.AddListener(ShowAccessoryTab);
             }
             GridLayoutGroup grid = slotContainer != null ? slotContainer.GetComponent<GridLayoutGroup>() : null;
             if (grid != null)
@@ -104,8 +122,29 @@ namespace WizardGrower.UI
             armorDatabase = database;
             armorFusionService = fusionService;
             if (armorInventoryTab != null)
-                armorInventoryTab.Initialize(armorInventory, armorDatabase, armorFusionService);
+                armorInventoryTab.Initialize(armorInventory, armorDatabase, armorFusionService, enhancementService, enhancementModal);
             ShowWeaponTab();
+        }
+
+        public void InitializeAccessory(AccessoryInventory inventory, AccessoryDatabase database, AccessoryFusionService fusionService)
+        {
+            accessoryInventory = inventory;
+            accessoryDatabase = database;
+            accessoryFusionService = fusionService;
+            if (accessoryInventoryTab != null)
+                accessoryInventoryTab.Initialize(accessoryInventory, accessoryDatabase, accessoryFusionService, enhancementService, enhancementModal);
+            ShowWeaponTab();
+        }
+
+        public void InitializeEnhancement(EnhancementService enhancementService, EnhancementModal enhancementModal)
+        {
+            this.enhancementService = enhancementService;
+            this.enhancementModal = enhancementModal;
+            if (armorInventoryTab != null)
+                armorInventoryTab.Initialize(armorInventory, armorDatabase, armorFusionService, enhancementService, enhancementModal);
+            if (accessoryInventoryTab != null)
+                accessoryInventoryTab.Initialize(accessoryInventory, accessoryDatabase, accessoryFusionService, enhancementService, enhancementModal);
+            Refresh();
         }
 
         private void OnDestroy()
@@ -117,6 +156,8 @@ namespace WizardGrower.UI
             }
             if (detailView != null)
                 detailView.EquipRequested -= OnEquipRequested;
+            if (detailView != null)
+                detailView.EnhanceRequested -= OnEnhanceRequested;
             if (synthesizeAllButton != null)
                 synthesizeAllButton.onClick.RemoveListener(OnSynthesizeAll);
             if (closeButton != null)
@@ -125,6 +166,8 @@ namespace WizardGrower.UI
                 weaponTabButton.onClick.RemoveListener(ShowWeaponTab);
             if (armorTabButton != null)
                 armorTabButton.onClick.RemoveListener(ShowArmorTab);
+            if (accessoryTabButton != null)
+                accessoryTabButton.onClick.RemoveListener(ShowAccessoryTab);
         }
 
         public void Toggle()
@@ -250,13 +293,21 @@ namespace WizardGrower.UI
 
             int count = inventory != null ? inventory.GetCount(selectedWeapon.weaponId) : 0;
             bool equipped = inventory != null && inventory.EquippedWeaponId == selectedWeapon.weaponId;
-            detailView.Show(selectedWeapon, count, equipped);
+            int level = inventory != null ? inventory.GetEnhancementLevel(selectedWeapon.weaponId) : 0;
+            detailView.Show(selectedWeapon, count, equipped, level, enhancementService != null && enhancementService.CanEnhance(EnhancementSlotKind.Weapon, selectedWeapon.weaponId));
         }
 
         private void OnEquipRequested(WeaponDefinition weapon)
         {
             if (inventory != null && weapon != null && inventory.TryEquip(weapon.weaponId))
                 Refresh();
+        }
+
+        private void OnEnhanceRequested(WeaponDefinition weapon)
+        {
+            if (weapon == null || enhancementModal == null)
+                return;
+            enhancementModal.ShowWeapon(weapon, inventory, Refresh);
         }
 
         private void OnSynthesizeAll()
@@ -282,16 +333,33 @@ namespace WizardGrower.UI
                 weaponContentRoot.SetActive(true);
             if (armorInventoryTab != null)
                 armorInventoryTab.gameObject.SetActive(false);
+            if (accessoryInventoryTab != null)
+                accessoryInventoryTab.gameObject.SetActive(false);
         }
 
         private void ShowArmorTab()
         {
             if (weaponContentRoot != null)
                 weaponContentRoot.SetActive(false);
+            if (accessoryInventoryTab != null)
+                accessoryInventoryTab.gameObject.SetActive(false);
             if (armorInventoryTab != null)
             {
                 armorInventoryTab.gameObject.SetActive(true);
-                armorInventoryTab.Initialize(armorInventory, armorDatabase, armorFusionService);
+                armorInventoryTab.Initialize(armorInventory, armorDatabase, armorFusionService, enhancementService, enhancementModal);
+            }
+        }
+
+        private void ShowAccessoryTab()
+        {
+            if (weaponContentRoot != null)
+                weaponContentRoot.SetActive(false);
+            if (armorInventoryTab != null)
+                armorInventoryTab.gameObject.SetActive(false);
+            if (accessoryInventoryTab != null)
+            {
+                accessoryInventoryTab.gameObject.SetActive(true);
+                accessoryInventoryTab.Initialize(accessoryInventory, accessoryDatabase, accessoryFusionService, enhancementService, enhancementModal);
             }
         }
     }

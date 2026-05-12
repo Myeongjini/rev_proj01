@@ -97,7 +97,9 @@ namespace WizardGrower.UI
             ArmorFusionService armorFusionService = null,
             AccessoryInventory accessoryInventory = null,
             AccessoryDatabase accessoryDatabase = null,
-            AccessoryFusionService accessoryFusionService = null)
+            AccessoryFusionService accessoryFusionService = null,
+            WizardGrower.Enhancement.EnhancementService enhancementService = null,
+            EnhancementModal enhancementModal = null)
         {
             this.skillController = skillController;
             this.manualAttackController = manualAttackController;
@@ -146,6 +148,7 @@ namespace WizardGrower.UI
                 weaponInventoryPanel.Initialize(weaponInventory, weaponDatabase, weaponFusionService);
                 weaponInventoryPanel.InitializeArmor(armorInventory, armorDatabase, armorFusionService);
                 weaponInventoryPanel.InitializeAccessory(accessoryInventory, accessoryDatabase, accessoryFusionService);
+                weaponInventoryPanel.InitializeEnhancement(enhancementService, enhancementModal);
             }
             if (gachaPanel != null)
                 gachaPanel.Initialize(gachaService, gachaDefinition);

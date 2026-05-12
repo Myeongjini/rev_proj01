@@ -87,6 +87,7 @@ namespace WizardGrower.Core
         [field: SerializeField] public EXPDungeonResultModal EXPDungeonResultModal { get; private set; }
         [field: SerializeField] public EnhancementStoneDungeonService EnhancementStoneDungeonService { get; private set; }
         [field: SerializeField] public EnhancementStoneDungeonResultModal EnhancementStoneDungeonResultModal { get; private set; }
+        [field: SerializeField] public EnhancementModal EnhancementModal { get; private set; }
         [field: SerializeField] public PlayerLevelService PlayerLevelService { get; private set; }
         [field: SerializeField] public LevelUpPopupView LevelUpPopup { get; private set; }
         [field: SerializeField] public PlayerExpBarView PlayerExpBar { get; private set; }
@@ -221,6 +222,12 @@ namespace WizardGrower.Core
         {
             if (resultModal != null)
                 EnhancementStoneDungeonResultModal = resultModal;
+        }
+
+        public void SetEnhancementModal(EnhancementModal modal)
+        {
+            if (modal != null)
+                EnhancementModal = modal;
         }
 
         public void SetPlayerLevelServices(PlayerLevelService service, LevelUpPopupView popup = null, PlayerExpBarView expBar = null, SkillUnlockPopupView skillUnlockPopup = null)
