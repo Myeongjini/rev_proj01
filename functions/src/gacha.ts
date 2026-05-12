@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 import definition from "../data/gachaDefinitions.json";
 import {spendCurrencyInternal} from "./internal/grantCurrencyInternal";
@@ -64,7 +65,7 @@ export const rollGacha = onCall({region: "asia-northeast3"}, async (request) => 
       pulls.push(weapon);
       tx.set(userRef.collection("inventory").doc("weapons").collection("items").doc(weapon.weaponId), {
         weaponId: weapon.weaponId,
-        count: admin.firestore.FieldValue.increment(1),
+        count: FieldValue.increment(1),
         updatedAtMs: Date.now(),
       }, {merge: true});
       pullsInLevel++;

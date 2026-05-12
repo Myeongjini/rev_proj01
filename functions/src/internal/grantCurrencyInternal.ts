@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import {FieldValue} from "firebase-admin/firestore";
 
 export type CurrencyKind = "gold" | "gem" | "enhancement_stone";
 
@@ -70,7 +71,7 @@ function writeTransaction(
     delta,
     reason,
     source,
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    timestamp: FieldValue.serverTimestamp(),
     balanceAfter,
   });
 }
