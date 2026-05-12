@@ -248,6 +248,11 @@ namespace WizardGrower.Weapons
                     PullCompleted?.Invoke(serverPulled.Count);
                     return GachaPullResult.Ok(serverPulled);
                 }
+                catch (TimeoutException ex)
+                {
+                    Debug.LogWarning($"Server gacha timed out: {ex.GetBaseException().Message}");
+                    return FailResult("서버 연결이 지연되고 있습니다. 잠시 후 다시 시도해주세요.");
+                }
                 catch (Exception ex)
                 {
                     Debug.LogWarning($"Server gacha failed: {ex.GetBaseException().Message}");
@@ -260,7 +265,7 @@ namespace WizardGrower.Weapons
                 return await TryPullLocalAsync(count, cost, ct);
 #endif
 
-            return FailResult("서버 연결이 필요합니다. 잠시 후 다시 시도해주세요.");
+            return FailResult("서버 연결이 필요합니다.");
         }
 
         private bool TryPull(int count, int cost, out List<WeaponDefinition> pulled)

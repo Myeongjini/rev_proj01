@@ -11,6 +11,11 @@ namespace WizardGrower.Core
         Task ShowAsync();
     }
 
+    public interface ICancelableStartupPopup
+    {
+        void CancelStartupPopup();
+    }
+
     public class GameStartupPopupQueue : MonoBehaviour
     {
         [SerializeField] private int popupTimeoutMilliseconds = 15000;
@@ -38,6 +43,8 @@ namespace WizardGrower.Core
                         if (winner == timeoutTask)
                         {
                             Debug.LogWarning($"Startup popup timed out: {popup.GetType().Name}");
+                            if (popup is ICancelableStartupPopup cancelable)
+                                cancelable.CancelStartupPopup();
                             continue;
                         }
 

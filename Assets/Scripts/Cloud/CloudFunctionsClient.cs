@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,9 +15,11 @@ namespace WizardGrower.Cloud
         private object functionsInstance;
         private bool initialized;
         private bool functionsSdkAvailable;
+        private bool editorEmulatorUnavailable;
+        private static bool loggedEditorEmulatorUnavailable;
         [SerializeField] private int timeoutMilliseconds = 8000;
 
-        public bool IsReady => initialized && functionsSdkAvailable && functionsInstance != null;
+        public bool IsReady => initialized && functionsSdkAvailable && functionsInstance != null && !editorEmulatorUnavailable;
 
         public void Initialize(bool useEmulatorInEditor = true)
         {
@@ -29,6 +32,20 @@ namespace WizardGrower.Cloud
             {
                 Debug.LogWarning("Firebase Functions SDK is not installed. CloudFunctionsClient will use local fallbacks.");
                 return;
+            }
+
+            if (Application.isEditor && useEmulatorInEditor)
+            {
+                if (!IsTcpPortOpen("127.0.0.1", 5001, 200))
+                {
+                    editorEmulatorUnavailable = true;
+                    if (!loggedEditorEmulatorUnavailable)
+                    {
+                        Debug.LogWarning("Firebase Emulator not detected — currency/gacha calls will be local-only.");
+                        loggedEditorEmulatorUnavailable = true;
+                    }
+                    return;
+                }
             }
 
             functionsSdkAvailable = true;
@@ -108,6 +125,27 @@ namespace WizardGrower.Cloud
 
             MethodInfo useFunctionsEmulator = functions.GetType().GetMethod("UseFunctionsEmulator", new[] { typeof(string) });
             useFunctionsEmulator?.Invoke(functions, new object[] { "http://localhost:5001" });
+        }
+
+        private static bool IsTcpPortOpen(string host, int port, int timeoutMs)
+        {
+            try
+            {
+                using (TcpClient client = new TcpClient())
+                {
+                    IAsyncResult result = client.BeginConnect(host, port, null, null);
+                    bool connected = result.AsyncWaitHandle.WaitOne(Mathf.Max(50, timeoutMs));
+                    if (!connected)
+                        return false;
+
+                    client.EndConnect(result);
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private static IDictionary<string, object> NormalizeDictionary(object data)

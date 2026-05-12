@@ -3,6 +3,7 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using WizardGrower.UI.Common;
 using WizardGrower.Weapons;
 
 namespace WizardGrower.UI
@@ -183,12 +184,17 @@ namespace WizardGrower.UI
                 if (result.Success && result.PulledList.Count > 0 && resultPanel != null)
                     resultPanel.Show(result.PulledList);
                 else if (!result.Success && !string.IsNullOrEmpty(result.FailureMessage))
+                {
                     ShowFeedback(result.FailureMessage);
+                    if (IsServerFailureMessage(result.FailureMessage))
+                        ServerStatusToast.Show(result.FailureMessage);
+                }
             }
             catch (Exception ex)
             {
                 Debug.LogWarning($"Gacha pull failed: {ex.GetBaseException().Message}");
-                ShowFeedback("서버 뽑기에 실패했습니다.");
+                ShowFeedback(ServerStatusToast.GachaFailed);
+                ServerStatusToast.Show(ServerStatusToast.GachaFailed);
             }
             finally
             {
@@ -254,6 +260,14 @@ namespace WizardGrower.UI
 
             feedbackTimer = 1.5f;
             feedbackLabel.text = message;
+        }
+
+        private static bool IsServerFailureMessage(string message)
+        {
+            return message == ServerStatusToast.ServerRequired
+                || message == ServerStatusToast.ServerDelayed
+                || message == ServerStatusToast.GachaFailed
+                || message.Contains("서버");
         }
 
         private void EnsureThirtyPullButton()
