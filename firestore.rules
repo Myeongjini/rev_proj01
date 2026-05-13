@@ -18,8 +18,31 @@ service cloud.firestore {
         && data.lastUpdateUtcMs >= 0;
     }
 
+    function isValidUserProfile(data) {
+      return data.keys().hasOnly(['displayName', 'accountType', 'createdAtUnixMs', 'lastLoginAtUnixMs', 'locale'])
+        && data.keys().hasAll(['displayName', 'accountType', 'createdAtUnixMs', 'lastLoginAtUnixMs', 'locale'])
+        && data.displayName is string
+        && data.displayName.size() <= 30
+        && data.accountType is string
+        && data.accountType in ['anonymous', 'google']
+        && data.createdAtUnixMs is int
+        && data.createdAtUnixMs >= 0
+        && data.lastLoginAtUnixMs is int
+        && data.lastLoginAtUnixMs >= 0
+        && data.locale is string
+        && data.locale.size() <= 40;
+    }
+
     match /users/{userId} {
       allow read, write: if signedInAs(userId);
+
+      match /profile/{profileId} {
+        allow read: if signedInAs(userId);
+        allow create, update: if signedInAs(userId)
+          && profileId == "main"
+          && isValidUserProfile(request.resource.data);
+        allow delete: if false;
+      }
 
       match /wallet/{walletId} {
         allow read: if signedInAs(userId);
