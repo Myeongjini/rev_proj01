@@ -309,7 +309,7 @@ namespace WizardGrower.UI
                 return;
 
             Canvas canvas = GetComponentInParent<Canvas>();
-            Transform root = canvas != null ? canvas.transform : transform;
+            Transform root = ResolveUiRoot(canvas);
 
             if (achievementPanel == null)
             {
@@ -327,7 +327,7 @@ namespace WizardGrower.UI
                 return;
 
             Canvas canvas = GetComponentInParent<Canvas>();
-            Transform root = canvas != null ? canvas.transform : transform;
+            Transform root = ResolveUiRoot(canvas);
 
             if (attendancePanel == null)
             {
@@ -344,6 +344,15 @@ namespace WizardGrower.UI
             if (playerLevelService == null || playerExpBarView != null)
                 return;
 
+        }
+
+        private Transform ResolveUiRoot(Canvas canvas)
+        {
+            if (canvas == null)
+                return transform;
+
+            Transform safeArea = canvas.transform.Find("SafeArea");
+            return safeArea != null ? safeArea : canvas.transform;
         }
 
         private void BindSecondaryPanelCoordinator()

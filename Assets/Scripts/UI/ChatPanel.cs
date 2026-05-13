@@ -96,6 +96,9 @@ namespace WizardGrower.UI
         public void SetVisible(bool show)
         {
             visible = show;
+            if (show && !gameObject.activeSelf)
+                gameObject.SetActive(true);
+
             if (canvasGroup != null)
             {
                 canvasGroup.alpha = show ? 1f : 0f;
@@ -110,7 +113,11 @@ namespace WizardGrower.UI
             if (show)
                 Resubscribe();
             else
+            {
                 subscription?.Dispose();
+                if (canvasGroup != null)
+                    gameObject.SetActive(false);
+            }
         }
 
         public void SwitchChannel(ChatChannel channel)

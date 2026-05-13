@@ -1,11 +1,11 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
-using WizardGrower.Armor;
+using WizardGrower.Accessory;
 
 namespace WizardGrower.UI
 {
-    public class ArmorAcquiredPopupView : MonoBehaviour
+    public class AccessoryAcquiredPopupView : MonoBehaviour
     {
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private TMP_Text label;
@@ -22,7 +22,7 @@ namespace WizardGrower.UI
                 HideImmediate();
         }
 
-        public void Show(ArmorDefinition armor)
+        public void Show(AccessoryDefinition accessory)
         {
             if (!gameObject.activeSelf)
             {
@@ -36,13 +36,13 @@ namespace WizardGrower.UI
 
             if (routine != null)
                 StopCoroutine(routine);
-            routine = StartCoroutine(ShowRoutine(armor));
+            routine = StartCoroutine(ShowRoutine(accessory));
         }
 
-        private IEnumerator ShowRoutine(ArmorDefinition armor)
+        private IEnumerator ShowRoutine(AccessoryDefinition accessory)
         {
             if (label != null)
-                label.text = armor != null ? $"방어구 획득!\n{armor.displayName}" : "방어구 획득!";
+                label.text = accessory != null ? $"장신구 획득!\n{accessory.displayName}" : "장신구 획득!";
             if (canvasGroup != null)
             {
                 canvasGroup.alpha = 1f;

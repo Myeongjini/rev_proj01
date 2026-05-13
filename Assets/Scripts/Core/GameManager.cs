@@ -527,12 +527,21 @@ namespace WizardGrower.Core
             if (canvas == null)
                 canvas = FindAnyObjectByType<Canvas>();
 
-            Transform parent = canvas != null ? canvas.transform : context.transform;
+            Transform parent = ResolveUiParent(canvas);
             T instance = Instantiate(prefab, parent, false);
             instance.name = instanceName;
             instance.transform.SetAsLastSibling();
             instance.gameObject.SetActive(false);
             return instance;
+        }
+
+        private Transform ResolveUiParent(Canvas canvas)
+        {
+            if (canvas == null)
+                return context.transform;
+
+            Transform safeArea = canvas.transform.Find("SafeArea");
+            return safeArea != null ? safeArea : canvas.transform;
         }
 
         private void Update()

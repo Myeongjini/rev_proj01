@@ -17,9 +17,15 @@ namespace WizardGrower.UI
             if (mainCamera == null)
                 mainCamera = Camera.main;
 
-            DamageTextView view = Instantiate(damageTextPrefab, canvas.transform);
+            DamageTextView view = Instantiate(damageTextPrefab, ResolveTextParent());
             view.transform.position = mainCamera.WorldToScreenPoint(worldPosition + Vector3.up * 0.35f);
             view.Show(info.Amount, info.IsCritical);
+        }
+
+        private Transform ResolveTextParent()
+        {
+            Transform safeArea = canvas.transform.Find("SafeArea");
+            return safeArea != null ? safeArea : canvas.transform;
         }
     }
 }
